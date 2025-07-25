@@ -945,6 +945,81 @@
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
+        /* Recurring Expense Styles */
+        .recurring-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: var(--success-gradient);
+            color: white;
+            padding: 0.2rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .recurring-item {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+        .recurring-item:hover {
+            background: var(--hover-bg);
+            transform: translateX(4px);
+        }
+
+        .recurring-item-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+
+        .recurring-frequency {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 0.2rem 0.6rem;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .due-soon {
+            background: var(--warning-gradient);
+            color: var(--text-primary);
+        }
+
+        .overdue {
+            background: var(--danger-gradient);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .category-management {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .category-item:last-child {
+            border-bottom: none;
+        }
+
         /* Responsive Enhancements */
         @media (max-width: 768px) {
             .fab {
@@ -966,6 +1041,12 @@
             
             .input-icon {
                 display: none;
+            }
+            
+            .recurring-item-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
             }
         }
     </style>
@@ -1003,6 +1084,10 @@
                     <div class="quick-action" onclick="showInsights()">
                         <span>💡</span>
                         <span>Insights</span>
+                    </div>
+                    <div class="quick-action" onclick="showRecurringModal()">
+                        <span>🔄</span>
+                        <span>Recurring</span>
                     </div>
                     <div class="quick-action" onclick="clearAllData()">
                         <span>🗑️</span>
@@ -1089,7 +1174,7 @@
                             <div class="input-group">
                                 <span class="input-icon">📋</span>
                                 <label for="category">Category</label>
-                                <select id="category" required>
+                                <select id="category" required onchange="handleCategoryChange()">
                                     <option value="">Select category</option>
                                     <option value="Rent">🏠 Rent</option>
                                     <option value="Utilities">⚡ Utilities</option>
@@ -1102,7 +1187,20 @@
                                     <option value="Education">📚 Education</option>
                                     <option value="Insurance">🛡️ Insurance</option>
                                     <option value="Other">📝 Other</option>
+                                    <option value="__ADD_NEW__">➕ Add New Category</option>
                                 </select>
+                            </div>
+                            
+                            <!-- Custom Category Input (Hidden by default) -->
+                            <div class="input-group" id="customCategoryGroup" style="display: none;">
+                                <span class="input-icon">✨</span>
+                                <label for="customCategory">New Category Name</label>
+                                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                    <input type="text" id="customCategory" placeholder="Enter new category name">
+                                    <input type="text" id="customCategoryIcon" placeholder="🏷️" maxlength="2" style="width: 60px; text-align: center;">
+                                    <button type="button" onclick="addCustomCategory()" class="btn btn-success" style="min-width: auto; padding: 0.5rem 1rem;">Add</button>
+                                    <button type="button" onclick="cancelCustomCategory()" class="btn btn-secondary" style="min-width: auto; padding: 0.5rem 1rem;">Cancel</button>
+                                </div>
                             </div>
                             
                             <div class="input-group">
@@ -1126,6 +1224,36 @@
                                 <span class="input-icon">📝</span>
                                 <label for="description">Description (optional)</label>
                                 <input type="text" id="description" placeholder="e.g., Weekly grocery shopping">
+                            </div>
+                            
+                            <!-- Recurring Expense Options -->
+                            <div class="input-group" style="grid-column: 1 / -1;">
+                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                    <label class="toggle-switch">
+                                        <input type="checkbox" id="isRecurring" onchange="toggleRecurringOptions()">
+                                        <span class="toggle-slider"></span>
+                                    </label>
+                                    <label for="isRecurring" style="margin: 0; cursor: pointer; font-weight: 500;">🔄 Make this a recurring expense</label>
+                                </div>
+                                
+                                <div id="recurringOptions" style="display: none;">
+                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                        <div>
+                                            <label for="recurringFrequency">Frequency</label>
+                                            <select id="recurringFrequency">
+                                                <option value="weekly">📅 Weekly</option>
+                                                <option value="biweekly">📅 Bi-weekly</option>
+                                                <option value="monthly" selected>📅 Monthly</option>
+                                                <option value="quarterly">📅 Quarterly</option>
+                                                <option value="yearly">📅 Yearly</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label for="recurringEndDate">End Date (optional)</label>
+                                            <input type="date" id="recurringEndDate">
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
@@ -1205,6 +1333,29 @@
             </div>
         </div>
     </div>
+    
+    <!-- Recurring Expenses Modal -->
+    <div id="recurringModal" class="modal">
+        <div class="modal-content">
+            <h2>🔄 Recurring Expenses</h2>
+            <div id="recurringContent">
+                <div style="margin-bottom: 2rem;">
+                    <h3>📋 Active Recurring Expenses</h3>
+                    <div id="recurringList"></div>
+                </div>
+                <div>
+                    <h3>⚡ Quick Actions</h3>
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
+                        <button class="btn btn-success" onclick="processRecurringExpenses()">📅 Process Due Expenses</button>
+                        <button class="btn btn-warning" onclick="checkRecurringExpenses()">🔍 Check for Due Expenses</button>
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="btn" onclick="closeRecurringModal()">Close</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Global variables
@@ -1213,6 +1364,8 @@
         let editingExpenseId = null;
         let expenseChart = null;
         let filteredExpenses = [...expenses];
+        let customCategories = JSON.parse(localStorage.getItem('customCategories')) || [];
+        let recurringExpenses = JSON.parse(localStorage.getItem('recurringExpenses')) || [];
 
         // Category icons mapping
         const categoryIcons = {
@@ -1240,6 +1393,12 @@
                 document.body.classList.add('dark-mode');
                 document.getElementById('darkModeToggle').checked = true;
             }
+            
+            // Load custom categories
+            loadCustomCategories();
+            
+            // Check for due recurring expenses on load
+            checkRecurringExpenses();
             
             updateDashboard();
             renderExpensesList();
@@ -1331,6 +1490,10 @@
                 return;
             }
             
+            const isRecurring = document.getElementById('isRecurring').checked;
+            const recurringFrequency = document.getElementById('recurringFrequency').value;
+            const recurringEndDate = document.getElementById('recurringEndDate').value;
+
             const expense = {
                 id: editingExpenseId || Date.now(),
                 amount: amount,
@@ -1338,26 +1501,48 @@
                 person: person,
                 description: description,
                 date: date,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                isRecurring: isRecurring,
+                recurringFrequency: isRecurring ? recurringFrequency : null,
+                recurringEndDate: isRecurring && recurringEndDate ? recurringEndDate : null,
+                lastProcessedDate: isRecurring ? date : null
             };
             
             if (editingExpenseId) {
                 const index = expenses.findIndex(e => e.id === editingExpenseId);
                 expenses[index] = expense;
+                
+                // Update recurring expense if it exists
+                if (expense.isRecurring) {
+                    const recurringIndex = recurringExpenses.findIndex(r => r.originalExpenseId === editingExpenseId);
+                    if (recurringIndex !== -1) {
+                        recurringExpenses[recurringIndex] = createRecurringTemplate(expense);
+                        localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses));
+                    }
+                }
+                
                 editingExpenseId = null;
                 document.getElementById('cancelEdit').style.display = 'none';
                 showNotification('Expense updated successfully!', 'success');
             } else {
                 expenses.push(expense);
-                showNotification('Expense added successfully!', 'success');
+                
+                // Create recurring template if this is a recurring expense
+                if (isRecurring) {
+                    const recurringTemplate = createRecurringTemplate(expense);
+                    recurringExpenses.push(recurringTemplate);
+                    localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses));
+                    showNotification('Recurring expense created successfully!', 'success');
+                } else {
+                    showNotification('Expense added successfully!', 'success');
+                }
             }
             
             localStorage.setItem('familyExpenses', JSON.stringify(expenses));
             filteredExpenses = [...expenses];
             updateDashboard();
             renderExpensesList();
-            document.getElementById('expenseForm').reset();
-            document.getElementById('date').valueAsDate = new Date();
+            resetForm();
         }
 
         // Update dashboard statistics and charts
@@ -1530,6 +1715,7 @@
                                 <div>
                                     <strong>${safeCategory}</strong>
                                     ${safeDescription ? `- ${safeDescription}` : ''}
+                                    ${expense.isRecurring ? '<span class="recurring-indicator">🔄 Recurring</span>' : ''}
                                 </div>
                             </div>
                             <div class="expense-meta">
@@ -1561,7 +1747,7 @@
             renderExpensesList();
         }
 
-        // Edit expense
+        // Edit expense (enhanced with recurring support)
         function editExpense(id) {
             const expense = expenses.find(e => e.id === id);
             if (!expense) return;
@@ -1571,6 +1757,17 @@
             document.getElementById('person').value = expense.person;
             document.getElementById('description').value = expense.description;
             document.getElementById('date').value = expense.date;
+            
+            // Handle recurring options
+            if (expense.isRecurring) {
+                document.getElementById('isRecurring').checked = true;
+                document.getElementById('recurringOptions').style.display = 'block';
+                document.getElementById('recurringFrequency').value = expense.recurringFrequency || 'monthly';
+                document.getElementById('recurringEndDate').value = expense.recurringEndDate || '';
+            } else {
+                document.getElementById('isRecurring').checked = false;
+                document.getElementById('recurringOptions').style.display = 'none';
+            }
             
             editingExpenseId = id;
             document.getElementById('cancelEdit').style.display = 'inline-flex';
@@ -1860,9 +2057,16 @@
                 showInsights();
             }
             
+            // Ctrl/Cmd + R: Show recurring expenses
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                showRecurringModal();
+            }
+            
             // Escape: Close modal
             if (e.key === 'Escape') {
                 closeInsights();
+                closeRecurringModal();
             }
         });
 
@@ -1893,11 +2097,327 @@
             });
         });
 
+        // Custom Categories Functions
+        function loadCustomCategories() {
+            const categorySelect = document.getElementById('category');
+            const categoryFilter = document.getElementById('categoryFilter');
+            
+            // Remove existing custom categories
+            const customOptions = categorySelect.querySelectorAll('.custom-category');
+            customOptions.forEach(option => option.remove());
+            
+            const customFilterOptions = categoryFilter.querySelectorAll('.custom-category');
+            customFilterOptions.forEach(option => option.remove());
+            
+            // Add custom categories
+            customCategories.forEach(category => {
+                // Add to main select
+                const option = document.createElement('option');
+                option.value = category.name;
+                option.textContent = `${category.icon} ${category.name}`;
+                option.className = 'custom-category';
+                categorySelect.insertBefore(option, categorySelect.querySelector('option[value="__ADD_NEW__"]'));
+                
+                // Add to filter select
+                const filterOption = document.createElement('option');
+                filterOption.value = category.name;
+                filterOption.textContent = `${category.icon} ${category.name}`;
+                filterOption.className = 'custom-category';
+                categoryFilter.appendChild(filterOption);
+                
+                // Add to category icons mapping
+                categoryIcons[category.name] = category.icon;
+            });
+        }
+
+        function handleCategoryChange() {
+            const categorySelect = document.getElementById('category');
+            const customCategoryGroup = document.getElementById('customCategoryGroup');
+            
+            if (categorySelect.value === '__ADD_NEW__') {
+                customCategoryGroup.style.display = 'block';
+                document.getElementById('customCategory').focus();
+            } else {
+                customCategoryGroup.style.display = 'none';
+            }
+        }
+
+        function addCustomCategory() {
+            const nameInput = document.getElementById('customCategory');
+            const iconInput = document.getElementById('customCategoryIcon');
+            const categoryName = nameInput.value.trim();
+            const categoryIcon = iconInput.value.trim() || '🏷️';
+            
+            if (!categoryName) {
+                showNotification('Please enter a category name', 'error');
+                return;
+            }
+            
+            // Check if category already exists
+            const existingCategory = customCategories.find(cat => cat.name.toLowerCase() === categoryName.toLowerCase());
+            if (existingCategory) {
+                showNotification('Category already exists', 'error');
+                return;
+            }
+            
+            // Add new custom category
+            const newCategory = {
+                name: categoryName,
+                icon: categoryIcon,
+                id: Date.now()
+            };
+            
+            customCategories.push(newCategory);
+            localStorage.setItem('customCategories', JSON.stringify(customCategories));
+            
+            // Reload categories in selects
+            loadCustomCategories();
+            
+            // Select the new category
+            document.getElementById('category').value = categoryName;
+            
+            // Hide custom category input
+            cancelCustomCategory();
+            
+            showNotification(`Category "${categoryName}" added successfully!`, 'success');
+        }
+
+        function cancelCustomCategory() {
+            document.getElementById('customCategoryGroup').style.display = 'none';
+            document.getElementById('category').value = '';
+            document.getElementById('customCategory').value = '';
+            document.getElementById('customCategoryIcon').value = '';
+        }
+
+        function deleteCustomCategory(categoryName) {
+            if (confirm(`Are you sure you want to delete the category "${categoryName}"?`)) {
+                customCategories = customCategories.filter(cat => cat.name !== categoryName);
+                localStorage.setItem('customCategories', JSON.stringify(customCategories));
+                loadCustomCategories();
+                showNotification(`Category "${categoryName}" deleted`, 'success');
+            }
+        }
+
+        // Recurring Expenses Functions
+        function toggleRecurringOptions() {
+            const isRecurring = document.getElementById('isRecurring').checked;
+            const recurringOptions = document.getElementById('recurringOptions');
+            
+            recurringOptions.style.display = isRecurring ? 'block' : 'none';
+        }
+
+        function createRecurringTemplate(expense) {
+            return {
+                id: Date.now(),
+                originalExpenseId: expense.id,
+                amount: expense.amount,
+                category: expense.category,
+                person: expense.person,
+                description: expense.description,
+                frequency: expense.recurringFrequency,
+                startDate: expense.date,
+                endDate: expense.recurringEndDate,
+                lastProcessedDate: expense.date,
+                isActive: true,
+                created: new Date().toISOString()
+            };
+        }
+
+        function calculateNextDueDate(lastDate, frequency) {
+            const lastProcessed = new Date(lastDate);
+            const nextDue = new Date(lastProcessed);
+            
+            switch (frequency) {
+                case 'weekly':
+                    nextDue.setDate(nextDue.getDate() + 7);
+                    break;
+                case 'biweekly':
+                    nextDue.setDate(nextDue.getDate() + 14);
+                    break;
+                case 'monthly':
+                    nextDue.setMonth(nextDue.getMonth() + 1);
+                    break;
+                case 'quarterly':
+                    nextDue.setMonth(nextDue.getMonth() + 3);
+                    break;
+                case 'yearly':
+                    nextDue.setFullYear(nextDue.getFullYear() + 1);
+                    break;
+            }
+            
+            return nextDue;
+        }
+
+        function checkRecurringExpenses() {
+            const today = new Date();
+            const dueExpenses = [];
+            
+            recurringExpenses.forEach(recurring => {
+                if (!recurring.isActive) return;
+                
+                // Check if end date has passed
+                if (recurring.endDate && new Date(recurring.endDate) < today) {
+                    recurring.isActive = false;
+                    return;
+                }
+                
+                const nextDue = calculateNextDueDate(recurring.lastProcessedDate, recurring.frequency);
+                
+                if (nextDue <= today) {
+                    dueExpenses.push(recurring);
+                }
+            });
+            
+            if (dueExpenses.length > 0) {
+                showNotification(`${dueExpenses.length} recurring expense(s) are due!`, 'warning');
+            }
+            
+            // Save any inactive updates
+            localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses));
+            
+            return dueExpenses;
+        }
+
+        function processRecurringExpenses() {
+            const dueExpenses = checkRecurringExpenses();
+            
+            if (dueExpenses.length === 0) {
+                showNotification('No recurring expenses are due', 'success');
+                return;
+            }
+            
+            let processedCount = 0;
+            
+            dueExpenses.forEach(recurring => {
+                const nextDue = calculateNextDueDate(recurring.lastProcessedDate, recurring.frequency);
+                
+                // Create new expense
+                const newExpense = {
+                    id: Date.now() + Math.random(),
+                    amount: recurring.amount,
+                    category: recurring.category,
+                    person: recurring.person,
+                    description: `${recurring.description} (Recurring)`,
+                    date: nextDue.toISOString().split('T')[0],
+                    timestamp: new Date().toISOString(),
+                    isRecurring: true,
+                    recurringFrequency: recurring.frequency,
+                    parentRecurringId: recurring.id
+                };
+                
+                expenses.push(newExpense);
+                
+                // Update last processed date
+                recurring.lastProcessedDate = nextDue.toISOString().split('T')[0];
+                processedCount++;
+            });
+            
+            // Save updated data
+            localStorage.setItem('familyExpenses', JSON.stringify(expenses));
+            localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses));
+            
+            // Refresh display
+            filteredExpenses = [...expenses];
+            updateDashboard();
+            renderExpensesList();
+            
+            showNotification(`Processed ${processedCount} recurring expense(s)`, 'success');
+        }
+
+        function showRecurringModal() {
+            renderRecurringList();
+            document.getElementById('recurringModal').style.display = 'block';
+        }
+
+        function closeRecurringModal() {
+            document.getElementById('recurringModal').style.display = 'none';
+        }
+
+        function renderRecurringList() {
+            const recurringList = document.getElementById('recurringList');
+            
+            if (recurringExpenses.length === 0) {
+                recurringList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); font-style: italic;">No recurring expenses set up yet.</p>';
+                return;
+            }
+            
+            const activeRecurring = recurringExpenses.filter(r => r.isActive);
+            
+            if (activeRecurring.length === 0) {
+                recurringList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); font-style: italic;">No active recurring expenses.</p>';
+                return;
+            }
+            
+            recurringList.innerHTML = activeRecurring.map(recurring => {
+                const nextDue = calculateNextDueDate(recurring.lastProcessedDate, recurring.frequency);
+                const today = new Date();
+                const daysUntilDue = Math.ceil((nextDue - today) / (1000 * 60 * 60 * 24));
+                
+                let statusClass = 'recurring-frequency';
+                let statusText = `Next: ${nextDue.toLocaleDateString()}`;
+                
+                if (daysUntilDue < 0) {
+                    statusClass = 'recurring-frequency overdue';
+                    statusText = `Overdue by ${Math.abs(daysUntilDue)} day(s)`;
+                } else if (daysUntilDue <= 3) {
+                    statusClass = 'recurring-frequency due-soon';
+                    statusText = `Due in ${daysUntilDue} day(s)`;
+                }
+                
+                const icon = categoryIcons[recurring.category] || '📝';
+                
+                return `
+                    <div class="recurring-item">
+                        <div class="recurring-item-header">
+                            <div>
+                                <strong>${icon} ${recurring.category}</strong>
+                                <span style="margin-left: 0.5rem; color: var(--text-secondary);">€${recurring.amount.toFixed(2)}</span>
+                            </div>
+                            <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                <span class="${statusClass}">${statusText}</span>
+                                <button class="btn btn-danger" onclick="deactivateRecurring(${recurring.id})" style="min-width: auto; padding: 0.25rem 0.5rem; font-size: 0.8rem;">Stop</button>
+                            </div>
+                        </div>
+                        <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                            ${recurring.description} • ${recurring.frequency} • 👤 ${recurring.person}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function deactivateRecurring(recurringId) {
+            if (confirm('Are you sure you want to stop this recurring expense?')) {
+                const recurring = recurringExpenses.find(r => r.id === recurringId);
+                if (recurring) {
+                    recurring.isActive = false;
+                    localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses));
+                    renderRecurringList();
+                    showNotification('Recurring expense stopped', 'success');
+                }
+            }
+        }
+
+        // Enhanced form reset
+        function resetForm() {
+            document.getElementById('expenseForm').reset();
+            document.getElementById('date').valueAsDate = new Date();
+            document.getElementById('isRecurring').checked = false;
+            document.getElementById('recurringOptions').style.display = 'none';
+            document.getElementById('customCategoryGroup').style.display = 'none';
+        }
+
+
+
         // Close modal when clicking outside
         window.onclick = function(event) {
-            const modal = document.getElementById('insightsModal');
-            if (event.target === modal) {
+            const insightsModal = document.getElementById('insightsModal');
+            const recurringModal = document.getElementById('recurringModal');
+            
+            if (event.target === insightsModal) {
                 closeInsights();
+            } else if (event.target === recurringModal) {
+                closeRecurringModal();
             }
         };
     </script>
