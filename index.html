@@ -916,4 +916,295 @@
                 amount: amount,
                 category: category,
                 person: person,
-                description:
+                description: description,
+                date: date,
+                timestamp: new Date().toISOString()
+            };
+            
+            if (editingExpenseId) {
+                const index = expenses.findIndex(e => e.id === editingExpenseId);
+                expenses[index] = expense;
+                editingExpenseId = null;
+                document.getElementById('cancelEdit').style.display = 'none';
+                showNotification('Expense updated successfully!', 'success');
+            } else {
+                expenses.push(expense);
+                showNotification('Expense added successfully!', 'success');
+            }
+            
+            localStorage.setItem('familyExpenses', JSON.stringify(expenses));
+            filteredExpenses = [...expenses];
+            updateDashboard();
+            renderExpensesList();
+            document.getElementById('expenseForm').reset();
+            document.getElementById('date').valueAsDate = new Date();
+        }
+
+        // Update dashboard statistics and charts
+        function updateDashboard() {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const monthlyExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+            });
+            
+            const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
+            
+            // Update budget display
+            document.getElementById('budgetAmount').textContent = `€${monthlyBudget.toFixed(2)}`;
+            document.getElementById('monthlyTotal').textContent = `€${monthlyTotal.toFixed(2)}`;
+            document.getElementById('expenseCount').textContent = `${monthlyExpenses.length} expense${monthlyExpenses.length !== 1 ? 's' : ''}`;
+            
+            // Update budget progress
+            const budgetFill = document.getElementById('budgetFill');
+            const budgetCard = document.getElementById('budgetCard');
+            const budgetStatus = document.getElementById('budgetStatus');
+            
+            if (monthlyBudget > 0) {
+                const percentage = Math.min((monthlyTotal / monthlyBudget) * 100, 100);
+                budgetFill.style.width = `${percentage}%`;
+                
+                const remaining = monthlyBudget - monthlyTotal;
+                if (remaining >= 0) {
+                    budgetStatus.textContent = `€${remaining.toFixed(2)} remaining`;
+                    budgetCard.classList.remove('budget-warning');
+                } else {
+                    budgetStatus.textContent = `€${Math.abs(remaining).toFixed(2)} over budget`;
+                    budgetCard.classList.add('budget-warning');
+                }
+            } else {
+                budgetFill.style.width = '0%';
+                budgetStatus.textContent = 'Set your monthly budget';
+            }
+            
+            // Update statistics
+            const avgDaily = monthlyExpenses.length > 0 ? monthlyTotal / new Date().getDate() : 0;
+            document.getElementById('avgDaily').textContent = `€${avgDaily.toFixed(2)}`;
+            
+            // Calculate top category
+            const categoryTotals = {};
+            monthlyExpenses.forEach(expense => {
+                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+            });
+            
+            let topCategory = '-';
+            const categories = Object.keys(categoryTotals);
+            if (categories.length > 0) {
+                topCategory = categories.reduce((a, b) => 
+                    categoryTotals[a] > categoryTotals[b] ? a : b);
+            }
+            document.getElementById('topCategory').textContent = topCategory;
+            
+            // Days left in month
+            const today = new Date();
+            const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0).getDate();
+            const daysLeft = lastDay - today.getDate();
+            document.getElementById('daysLeft').textContent = daysLeft;
+            
+            // Update chart
+            updateExpenseChart(monthlyExpenses);
+        }
+
+        // Update expense chart
+        function updateExpenseChart(monthlyExpenses) {
+            const ctx = document.getElementById('expenseChart').getContext('2d');
+            
+            // Calculate category totals
+            const categoryTotals = {};
+            monthlyExpenses.forEach(expense => {
+                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+            });
+            
+            const labels = Object.keys(categoryTotals);
+            const data = Object.values(categoryTotals);
+            const colors = [
+                '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF',
+                '#FF9F40', '#FF6384', '#C9CBCF', '#4BC0C0', '#FF6384', '#36A2EB'
+            ];
+            
+            if (expenseChart) {
+                expenseChart.destroy();
+            }
+            
+            if (labels.length === 0) {
+                return;
+            }
+            
+            expenseChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // HTML escape function to prevent XSS
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+        }
+
+        // Render expenses list
+        function renderExpensesList() {
+            const expensesList = document.getElementById('expensesList');
+            
+            if (filteredExpenses.length === 0) {
+                expensesList.innerHTML = '<div class="no-expenses">No expenses found matching your filters.</div>';
+                return;
+            }
+            
+            // Sort expenses by date (newest first)
+            const sortedExpenses = [...filteredExpenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            expensesList.innerHTML = sortedExpenses.map(expense => {
+                const icon = categoryIcons[expense.category] || '📝';
+                const formattedDate = new Date(expense.date).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+                
+                // Escape user input to prevent XSS
+                const safeCategory = escapeHtml(expense.category);
+                const safeDescription = expense.description ? escapeHtml(expense.description) : '';
+                const safePerson = escapeHtml(expense.person);
+                
+                return `
+                    <div class="expense-item fade-in">
+                        <div class="expense-details">
+                            <div class="expense-main">
+                                <div class="expense-category-icon">${icon}</div>
+                                <div>
+                                    <strong>${safeCategory}</strong>
+                                    ${safeDescription ? `- ${safeDescription}` : ''}
+                                </div>
+                            </div>
+                            <div class="expense-meta">
+                                <span>👤 ${safePerson}</span>
+                                <span>📅 ${formattedDate}</span>
+                            </div>
+                        </div>
+                        <div class="expense-amount">€${expense.amount.toFixed(2)}</div>
+                        <div class="expense-actions">
+                            <button class="btn btn-warning" onclick="editExpense(${expense.id})">✏️</button>
+                            <button class="btn btn-danger" onclick="deleteExpense(${expense.id})">🗑️</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Filter expenses
+        function filterExpenses() {
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            const personFilter = document.getElementById('personFilter').value;
+            
+            filteredExpenses = expenses.filter(expense => {
+                const categoryMatch = !categoryFilter || expense.category === categoryFilter;
+                const personMatch = !personFilter || expense.person === personFilter;
+                return categoryMatch && personMatch;
+            });
+            
+            renderExpensesList();
+        }
+
+        // Edit expense
+        function editExpense(id) {
+            const expense = expenses.find(e => e.id === id);
+            if (!expense) return;
+            
+            document.getElementById('amount').value = expense.amount;
+            document.getElementById('category').value = expense.category;
+            document.getElementById('person').value = expense.person;
+            document.getElementById('description').value = expense.description;
+            document.getElementById('date').value = expense.date;
+            
+            editingExpenseId = id;
+            document.getElementById('cancelEdit').style.display = 'inline-flex';
+            
+            // Scroll to form
+            document.querySelector('.expense-form').scrollIntoView({ behavior: 'smooth' });
+            showNotification('Editing expense...', 'success');
+        }
+
+        // Cancel edit
+        function cancelEdit() {
+            editingExpenseId = null;
+            document.getElementById('cancelEdit').style.display = 'none';
+            document.getElementById('expenseForm').reset();
+            document.getElementById('date').valueAsDate = new Date();
+            showNotification('Edit cancelled', 'success');
+        }
+
+        // Delete expense
+        function deleteExpense(id) {
+            if (confirm('Are you sure you want to delete this expense?')) {
+                expenses = expenses.filter(e => e.id !== id);
+                filteredExpenses = filteredExpenses.filter(e => e.id !== id);
+                localStorage.setItem('familyExpenses', JSON.stringify(expenses));
+                updateDashboard();
+                renderExpensesList();
+                showNotification('Expense deleted successfully!', 'success');
+            }
+        }
+
+        // Export to CSV
+        function exportToCSV() {
+            if (expenses.length === 0) {
+                showNotification('No expenses to export', 'error');
+                return;
+            }
+            
+            const headers = ['Date', 'Category', 'Amount', 'Person', 'Description'];
+            const csvContent = [
+                headers.join(','),
+                ...expenses.map(expense => [
+                    expense.date,
+                    expense.category,
+                    expense.amount,
+                    expense.person,
+                    `"${expense.description || ''}"`
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `family-expenses-${new Date().toISOString().split('T')[0]}.csv`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+            
+            showNotification('Expenses exported successfully!', 'success');
+        }
+    </script>
+</body>
+</html>
