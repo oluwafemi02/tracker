@@ -1081,6 +1081,14 @@
                         <span>🚗</span>
                         <span>Quick Transport</span>
                     </div>
+                    <div class="quick-action" onclick="showForm('Mortgage')">
+                        <span>🏡</span>
+                        <span>Quick Mortgage</span>
+                    </div>
+                    <div class="quick-action" onclick="showForm('Car Loan/Lease')">
+                        <span>🚙</span>
+                        <span>Quick Car Loan</span>
+                    </div>
                     <div class="quick-action" onclick="showInsights()">
                         <span>💡</span>
                         <span>Insights</span>
@@ -1177,15 +1185,18 @@
                                 <select id="category" required onchange="handleCategoryChange()">
                                     <option value="">Select category</option>
                                     <option value="Rent">🏠 Rent</option>
+                                    <option value="Mortgage">🏡 Mortgage</option>
                                     <option value="Utilities">⚡ Utilities</option>
                                     <option value="Groceries">🛒 Groceries</option>
                                     <option value="Transportation">🚗 Transportation</option>
+                                    <option value="Car Loan/Lease">🚙 Car Loan/Lease</option>
                                     <option value="Healthcare">🏥 Healthcare</option>
                                     <option value="Entertainment">🎬 Entertainment</option>
                                     <option value="Dining">🍽️ Dining</option>
                                     <option value="Shopping">🛍️ Shopping</option>
                                     <option value="Education">📚 Education</option>
                                     <option value="Insurance">🛡️ Insurance</option>
+                                    <option value="Other Loan">💳 Other Loan</option>
                                     <option value="Other">📝 Other</option>
                                     <option value="__ADD_NEW__">➕ Add New Category</option>
                                 </select>
@@ -1274,15 +1285,18 @@
                                 <select id="categoryFilter" onchange="filterExpenses()">
                                     <option value="">All Categories</option>
                                     <option value="Rent">🏠 Rent</option>
+                                    <option value="Mortgage">🏡 Mortgage</option>
                                     <option value="Utilities">⚡ Utilities</option>
                                     <option value="Groceries">🛒 Groceries</option>
                                     <option value="Transportation">🚗 Transportation</option>
+                                    <option value="Car Loan/Lease">🚙 Car Loan/Lease</option>
                                     <option value="Healthcare">🏥 Healthcare</option>
                                     <option value="Entertainment">🎬 Entertainment</option>
                                     <option value="Dining">🍽️ Dining</option>
                                     <option value="Shopping">🛍️ Shopping</option>
                                     <option value="Education">📚 Education</option>
                                     <option value="Insurance">🛡️ Insurance</option>
+                                    <option value="Other Loan">💳 Other Loan</option>
                                     <option value="Other">📝 Other</option>
                                 </select>
                             </div>
@@ -1370,15 +1384,18 @@
         // Category icons mapping
         const categoryIcons = {
             'Rent': '🏠',
+            'Mortgage': '🏡',
             'Utilities': '⚡',
             'Groceries': '🛒',
             'Transportation': '🚗',
+            'Car Loan/Lease': '🚙',
             'Healthcare': '🏥',
             'Entertainment': '🎬',
             'Dining': '🍽️',
             'Shopping': '🛍️',
             'Education': '📚',
             'Insurance': '🛡️',
+            'Other Loan': '💳',
             'Other': '📝'
         };
 
