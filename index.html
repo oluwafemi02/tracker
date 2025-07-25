@@ -14,22 +14,30 @@
             --warning-gradient: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
             --danger-gradient: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
             --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            --income-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+            --neutral-gradient: linear-gradient(135deg, #bdc3c7 0%, #2c3e50 100%);
             
             --text-primary: #2c3e50;
             --text-secondary: #6c757d;
             --text-light: #95a5a6;
+            --text-white: #ffffff;
             
             --background: #f8fafc;
             --card-bg: #ffffff;
             --border-color: #e2e8f0;
+            --hover-bg: #f1f5f9;
             
             --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
             --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
             --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
             --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.1);
+            --shadow-inner: inset 0 2px 4px rgba(0, 0, 0, 0.06);
             
             --border-radius: 12px;
+            --border-radius-lg: 16px;
+            --border-radius-xl: 20px;
             --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --transition-fast: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         * {
@@ -617,6 +625,349 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        /* Enhanced Animations */
+        .bounce-in {
+            animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.3) rotate(-5deg); opacity: 0; }
+            50% { transform: scale(1.05) rotate(2deg); }
+            70% { transform: scale(0.9) rotate(-1deg); }
+            100% { transform: scale(1) rotate(0deg); opacity: 1; }
+        }
+
+        .slide-in-right {
+            animation: slideInRight 0.4s ease-out;
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Enhanced Card Styles */
+        .card-enhanced {
+            background: var(--card-bg);
+            border-radius: var(--border-radius-lg);
+            padding: 2rem;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .card-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .card-enhanced:hover::before {
+            opacity: 1;
+        }
+
+        .card-enhanced:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-xl);
+        }
+
+        /* Modern Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--border-color);
+            transition: var(--transition);
+            border-radius: 30px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background: white;
+            transition: var(--transition);
+            border-radius: 50%;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        input:checked + .toggle-slider {
+            background: var(--primary-gradient);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+
+        /* Enhanced Progress Bar */
+        .progress-container {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            height: 16px;
+            margin: 1rem 0;
+            overflow: hidden;
+            position: relative;
+            box-shadow: var(--shadow-inner);
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            border-radius: 50px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+        }
+
+        .progress-text {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 2px 6px;
+            border-radius: 10px;
+            margin-right: 4px;
+        }
+
+        /* Modern Input Styles */
+        .input-group {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 1rem 1rem 1rem 3rem;
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            background: var(--card-bg);
+            font-family: inherit;
+        }
+
+        .input-group input:focus,
+        .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            z-index: 10;
+        }
+
+        /* Enhanced Expense Item */
+        .expense-item-enhanced {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .expense-item-enhanced::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: var(--primary-gradient);
+            transform: scaleY(0);
+            transition: var(--transition);
+        }
+
+        .expense-item-enhanced:hover::before {
+            transform: scaleY(1);
+        }
+
+        .expense-item-enhanced:hover {
+            background: var(--hover-bg);
+            transform: translateX(8px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* Floating Action Button */
+        .fab {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fab:hover {
+            transform: scale(1.1) rotate(90deg);
+            box-shadow: var(--shadow-xl);
+        }
+
+        /* Enhanced Statistics Cards */
+        .stat-card-enhanced {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius-lg);
+            text-align: center;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card-enhanced::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--primary-gradient);
+            opacity: 0;
+            transition: var(--transition);
+            z-index: 1;
+        }
+
+        .stat-card-enhanced:hover::before {
+            opacity: 0.05;
+        }
+
+        .stat-card-enhanced:hover {
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stat-card-enhanced > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        /* Dark Mode Support */
+        .dark-mode {
+            --background: #1a202c;
+            --card-bg: #2d3748;
+            --text-primary: #f7fafc;
+            --text-secondary: #a0aec0;
+            --border-color: #4a5568;
+            --hover-bg: #4a5568;
+        }
+
+        /* Modern Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(10px);
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: var(--border-radius-xl);
+            width: 90%;
+            max-width: 600px;
+            box-shadow: var(--shadow-xl);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: scale(0.8) translateY(-50px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* Responsive Enhancements */
+        @media (max-width: 768px) {
+            .fab {
+                bottom: 1rem;
+                right: 1rem;
+                width: 50px;
+                height: 50px;
+                font-size: 1.2rem;
+            }
+            
+            .card-enhanced:hover {
+                transform: translateY(-4px) scale(1.01);
+            }
+            
+            .input-group input,
+            .input-group select {
+                padding: 1rem;
+            }
+            
+            .input-icon {
+                display: none;
+            }
+        }
     </style>
 </head>
 <body>
@@ -624,6 +975,13 @@
         <div class="header">
             <h1>💰 Family Expense Tracker</h1>
             <p class="subtitle">Track, manage, and optimize your family's spending</p>
+            <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 1rem;">
+                <span style="font-size: 0.9rem; color: var(--text-secondary);">Dark Mode</span>
+                <label class="toggle-switch">
+                    <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
         </div>
 
         <div class="main-grid">
@@ -641,6 +999,10 @@
                     <div class="quick-action" onclick="showForm('Transportation')">
                         <span>🚗</span>
                         <span>Quick Transport</span>
+                    </div>
+                    <div class="quick-action" onclick="showInsights()">
+                        <span>💡</span>
+                        <span>Insights</span>
                     </div>
                     <div class="quick-action" onclick="clearAllData()">
                         <span>🗑️</span>
@@ -665,8 +1027,10 @@
                     <div class="card budget-card" id="budgetCard">
                         <h2><span class="card-icon">🎯</span> Monthly Budget</h2>
                         <div class="total-display" id="budgetAmount">€0</div>
-                        <div class="budget-progress">
-                            <div class="budget-fill" id="budgetFill"></div>
+                        <div class="progress-container">
+                            <div class="progress-fill" id="budgetFill">
+                                <span class="progress-text" id="progressText">0%</span>
+                            </div>
                         </div>
                         <div id="budgetStatus">Set your monthly budget</div>
                     </div>
@@ -687,33 +1051,43 @@
 
                 <!-- Statistics -->
                 <div class="stats-grid">
-                    <div class="stat-card">
+                    <div class="stat-card-enhanced">
+                        <span class="stat-icon">📊</span>
                         <div class="stat-value" id="avgDaily">€0</div>
                         <div class="stat-label">Avg Daily</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card-enhanced">
+                        <span class="stat-icon">🏆</span>
                         <div class="stat-value" id="topCategory">-</div>
                         <div class="stat-label">Top Category</div>
                     </div>
-                    <div class="stat-card">
+                    <div class="stat-card-enhanced">
+                        <span class="stat-icon">⏰</span>
                         <div class="stat-value" id="daysLeft">0</div>
                         <div class="stat-label">Days Left</div>
+                    </div>
+                    <div class="stat-card-enhanced">
+                        <span class="stat-icon">📈</span>
+                        <div class="stat-value" id="weeklyAvg">€0</div>
+                        <div class="stat-label">Weekly Avg</div>
                     </div>
                 </div>
             </div>
 
             <div class="right-panel">
                 <!-- Add Expense Form -->
-                <div class="expense-form">
+                <div class="expense-form card-enhanced">
                     <h2><span class="card-icon">➕</span> Add New Expense</h2>
                     <form id="expenseForm">
                         <div class="form-grid">
-                            <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-icon">💰</span>
                                 <label for="amount">Amount (€)</label>
-                                <input type="number" id="amount" step="0.01" required>
+                                <input type="number" id="amount" step="0.01" required placeholder="0.00">
                             </div>
                             
-                            <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-icon">📋</span>
                                 <label for="category">Category</label>
                                 <select id="category" required>
                                     <option value="">Select category</option>
@@ -731,7 +1105,8 @@
                                 </select>
                             </div>
                             
-                            <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-icon">👥</span>
                                 <label for="person">Person</label>
                                 <select id="person" required>
                                     <option value="">Select person</option>
@@ -741,20 +1116,22 @@
                                 </select>
                             </div>
                             
-                            <div class="form-group">
+                            <div class="input-group">
+                                <span class="input-icon">📅</span>
                                 <label for="date">Date</label>
                                 <input type="date" id="date" required>
                             </div>
                             
-                            <div class="form-group full-width">
+                            <div class="input-group" style="grid-column: 1 / -1;">
+                                <span class="input-icon">📝</span>
                                 <label for="description">Description (optional)</label>
                                 <input type="text" id="description" placeholder="e.g., Weekly grocery shopping">
                             </div>
                         </div>
                         
                         <div class="btn-actions">
-                            <button type="button" id="cancelEdit" onclick="cancelEdit()" style="display: none;" class="btn btn-secondary">Cancel</button>
-                            <button type="submit" class="btn">💾 Save Expense</button>
+                            <button type="button" id="cancelEdit" onclick="cancelEdit()" style="display: none;" class="btn btn-secondary">✖️ Cancel</button>
+                            <button type="submit" class="btn bounce-in">💾 Save Expense</button>
                         </div>
                     </form>
                 </div>
@@ -803,6 +1180,31 @@
 
     <!-- Notification -->
     <div id="notification" class="notification"></div>
+    
+    <!-- Floating Action Button -->
+    <button class="fab" onclick="scrollToForm()" title="Add New Expense">
+        ➕
+    </button>
+    
+    <!-- Insights Modal -->
+    <div id="insightsModal" class="modal">
+        <div class="modal-content">
+            <h2>📊 Spending Insights</h2>
+            <div id="insightsContent">
+                <div class="insight-item">
+                    <h3>💡 Smart Recommendations</h3>
+                    <div id="recommendations"></div>
+                </div>
+                <div class="insight-item" style="margin-top: 2rem;">
+                    <h3>📈 Spending Trends</h3>
+                    <div id="trends"></div>
+                </div>
+            </div>
+            <div style="text-align: center; margin-top: 2rem;">
+                <button class="btn" onclick="closeInsights()">Close</button>
+            </div>
+        </div>
+    </div>
 
     <script>
         // Global variables
@@ -831,6 +1233,14 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('date').valueAsDate = new Date();
             document.getElementById('monthlyBudget').value = monthlyBudget;
+            
+            // Load dark mode preference
+            const isDarkMode = localStorage.getItem('darkMode') === 'true';
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+                document.getElementById('darkModeToggle').checked = true;
+            }
+            
             updateDashboard();
             renderExpensesList();
             
@@ -843,6 +1253,16 @@
                         this.classList.add('loading');
                         setTimeout(() => this.classList.remove('loading'), 300);
                     }
+                });
+            });
+            
+            // Add input animations
+            document.querySelectorAll('input, select').forEach(input => {
+                input.addEventListener('focus', function() {
+                    this.parentElement.classList.add('bounce-in');
+                });
+                input.addEventListener('blur', function() {
+                    this.parentElement.classList.remove('bounce-in');
                 });
             });
         });
@@ -960,10 +1380,12 @@
             const budgetFill = document.getElementById('budgetFill');
             const budgetCard = document.getElementById('budgetCard');
             const budgetStatus = document.getElementById('budgetStatus');
+            const progressText = document.getElementById('progressText');
             
             if (monthlyBudget > 0) {
                 const percentage = Math.min((monthlyTotal / monthlyBudget) * 100, 100);
                 budgetFill.style.width = `${percentage}%`;
+                progressText.textContent = `${Math.round(percentage)}%`;
                 
                 const remaining = monthlyBudget - monthlyTotal;
                 if (remaining >= 0) {
@@ -975,12 +1397,17 @@
                 }
             } else {
                 budgetFill.style.width = '0%';
+                progressText.textContent = '0%';
                 budgetStatus.textContent = 'Set your monthly budget';
             }
             
             // Update statistics
             const avgDaily = monthlyExpenses.length > 0 ? monthlyTotal / new Date().getDate() : 0;
             document.getElementById('avgDaily').textContent = `€${avgDaily.toFixed(2)}`;
+            
+            // Calculate weekly average
+            const weeklyAvg = monthlyExpenses.length > 0 ? monthlyTotal / (new Date().getDate() / 7) : 0;
+            document.getElementById('weeklyAvg').textContent = `€${weeklyAvg.toFixed(2)}`;
             
             // Calculate top category
             const categoryTotals = {};
@@ -1096,7 +1523,7 @@
                 const safePerson = escapeHtml(expense.person);
                 
                 return `
-                    <div class="expense-item fade-in">
+                    <div class="expense-item-enhanced slide-in-right">
                         <div class="expense-details">
                             <div class="expense-main">
                                 <div class="expense-category-icon">${icon}</div>
@@ -1112,8 +1539,8 @@
                         </div>
                         <div class="expense-amount">€${expense.amount.toFixed(2)}</div>
                         <div class="expense-actions">
-                            <button class="btn btn-warning" onclick="editExpense(${expense.id})">✏️</button>
-                            <button class="btn btn-danger" onclick="deleteExpense(${expense.id})">🗑️</button>
+                            <button class="btn btn-warning" onclick="editExpense(${expense.id})" title="Edit expense">✏️</button>
+                            <button class="btn btn-danger" onclick="deleteExpense(${expense.id})" title="Delete expense">🗑️</button>
                         </div>
                     </div>
                 `;
@@ -1205,6 +1632,274 @@
             
             showNotification('Expenses exported successfully!', 'success');
         }
+
+        // Dark mode toggle
+        function toggleDarkMode() {
+            const isDarkMode = document.getElementById('darkModeToggle').checked;
+            document.body.classList.toggle('dark-mode', isDarkMode);
+            localStorage.setItem('darkMode', isDarkMode);
+            
+            if (isDarkMode) {
+                showNotification('Dark mode enabled 🌙', 'success');
+            } else {
+                showNotification('Light mode enabled ☀️', 'success');
+            }
+        }
+
+        // Scroll to form function
+        function scrollToForm() {
+            document.querySelector('.expense-form').scrollIntoView({ 
+                behavior: 'smooth',
+                block: 'center'
+            });
+            document.getElementById('amount').focus();
+        }
+
+        // Show insights modal
+        function showInsights() {
+            generateInsights();
+            document.getElementById('insightsModal').style.display = 'block';
+        }
+
+        // Close insights modal
+        function closeInsights() {
+            document.getElementById('insightsModal').style.display = 'none';
+        }
+
+        // Generate spending insights
+        function generateInsights() {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const monthlyExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+            });
+
+            const recommendations = document.getElementById('recommendations');
+            const trends = document.getElementById('trends');
+
+            // Generate recommendations
+            let recommendationText = '';
+            if (monthlyExpenses.length === 0) {
+                recommendationText = '💡 Start tracking your expenses to get personalized insights!';
+            } else {
+                const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
+                const avgDaily = monthlyTotal / new Date().getDate();
+                
+                if (monthlyBudget > 0) {
+                    const budgetUsed = (monthlyTotal / monthlyBudget) * 100;
+                    if (budgetUsed > 80) {
+                        recommendationText = '⚠️ You\'ve used over 80% of your budget. Consider reducing non-essential expenses.';
+                    } else if (budgetUsed < 50) {
+                        recommendationText = '✅ Great job! You\'re well within your budget. Consider saving the extra amount.';
+                    } else {
+                        recommendationText = '📊 You\'re on track with your budget. Keep monitoring your spending.';
+                    }
+                } else {
+                    recommendationText = '🎯 Set a monthly budget to get better insights and recommendations.';
+                }
+
+                // Category-based recommendations
+                const categoryTotals = {};
+                monthlyExpenses.forEach(expense => {
+                    categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+                });
+
+                const topCategory = Object.keys(categoryTotals).reduce((a, b) => 
+                    categoryTotals[a] > categoryTotals[b] ? a : b, '');
+                
+                if (topCategory && categoryTotals[topCategory] > monthlyTotal * 0.4) {
+                    recommendationText += `<br><br>💰 ${topCategory} represents a large portion of your spending. Look for ways to optimize these expenses.`;
+                }
+            }
+
+            recommendations.innerHTML = recommendationText;
+
+            // Generate trends
+            let trendsText = '';
+            if (monthlyExpenses.length >= 5) {
+                const last7Days = monthlyExpenses.filter(expense => {
+                    const expenseDate = new Date(expense.date);
+                    const today = new Date();
+                    const diffTime = Math.abs(today - expenseDate);
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    return diffDays <= 7;
+                });
+
+                const recentTotal = last7Days.reduce((total, expense) => total + expense.amount, 0);
+                const recentAvg = recentTotal / 7;
+                const monthlyAvg = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0) / new Date().getDate();
+
+                if (recentAvg > monthlyAvg * 1.2) {
+                    trendsText = '📈 Your spending has increased in the last week. Consider reviewing recent purchases.';
+                } else if (recentAvg < monthlyAvg * 0.8) {
+                    trendsText = '📉 Your spending has decreased in the last week. Great job on controlling expenses!';
+                } else {
+                    trendsText = '📊 Your spending pattern is consistent with your monthly average.';
+                }
+
+                // Most active day
+                const dayTotals = {};
+                monthlyExpenses.forEach(expense => {
+                    const day = new Date(expense.date).toLocaleDateString('en-US', { weekday: 'long' });
+                    dayTotals[day] = (dayTotals[day] || 0) + expense.amount;
+                });
+
+                const mostActiveDay = Object.keys(dayTotals).reduce((a, b) => 
+                    dayTotals[a] > dayTotals[b] ? a : b, '');
+
+                if (mostActiveDay) {
+                    trendsText += `<br><br>📅 ${mostActiveDay} is your most expensive day of the week.`;
+                }
+            } else {
+                trendsText = '📊 Add more expenses to see detailed spending trends and patterns.';
+            }
+
+            trends.innerHTML = trendsText;
+        }
+
+        // Enhanced form validation
+        function validateExpenseForm() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const category = document.getElementById('category').value;
+            const person = document.getElementById('person').value;
+            const date = document.getElementById('date').value;
+
+            if (!amount || amount <= 0) {
+                showNotification('Please enter a valid amount greater than 0', 'error');
+                return false;
+            }
+
+            if (amount > 10000) {
+                if (!confirm('This is a large amount (€' + amount.toFixed(2) + '). Are you sure this is correct?')) {
+                    return false;
+                }
+            }
+
+            if (!category) {
+                showNotification('Please select a category', 'error');
+                return false;
+            }
+
+            if (!person) {
+                showNotification('Please select a person', 'error');
+                return false;
+            }
+
+            if (!date) {
+                showNotification('Please select a date', 'error');
+                return false;
+            }
+
+            // Check if date is in the future
+            const selectedDate = new Date(date);
+            const today = new Date();
+            today.setHours(23, 59, 59, 999); // Set to end of today
+
+            if (selectedDate > today) {
+                if (!confirm('The selected date is in the future. Do you want to continue?')) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        // Auto-save functionality
+        let autoSaveTimer;
+        function autoSave() {
+            clearTimeout(autoSaveTimer);
+            autoSaveTimer = setTimeout(() => {
+                const formData = {
+                    amount: document.getElementById('amount').value,
+                    category: document.getElementById('category').value,
+                    person: document.getElementById('person').value,
+                    date: document.getElementById('date').value,
+                    description: document.getElementById('description').value
+                };
+                
+                if (formData.amount || formData.category || formData.person || formData.description) {
+                    localStorage.setItem('expenseFormDraft', JSON.stringify(formData));
+                }
+            }, 1000);
+        }
+
+        // Load draft on page load
+        function loadDraft() {
+            const draft = localStorage.getItem('expenseFormDraft');
+            if (draft) {
+                const formData = JSON.parse(draft);
+                document.getElementById('amount').value = formData.amount || '';
+                document.getElementById('category').value = formData.category || '';
+                document.getElementById('person').value = formData.person || '';
+                document.getElementById('date').value = formData.date || new Date().toISOString().split('T')[0];
+                document.getElementById('description').value = formData.description || '';
+                
+                if (formData.amount || formData.category || formData.person || formData.description) {
+                    showNotification('Draft restored from previous session', 'success');
+                }
+            }
+        }
+
+        // Clear draft
+        function clearDraft() {
+            localStorage.removeItem('expenseFormDraft');
+        }
+
+        // Keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + N: Focus on new expense form
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+                e.preventDefault();
+                scrollToForm();
+            }
+            
+            // Ctrl/Cmd + I: Show insights
+            if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+                e.preventDefault();
+                showInsights();
+            }
+            
+            // Escape: Close modal
+            if (e.key === 'Escape') {
+                closeInsights();
+            }
+        });
+
+        // Update the form submission to include validation
+        const originalHandleExpenseSubmit = handleExpenseSubmit;
+        handleExpenseSubmit = function(e) {
+            e.preventDefault();
+            
+            if (!validateExpenseForm()) {
+                return;
+            }
+            
+            // Clear draft after successful submission
+            clearDraft();
+            
+            // Call original function
+            originalHandleExpenseSubmit.call(this, e);
+        };
+
+        // Add auto-save listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDraft();
+            
+            // Add auto-save to form inputs
+            document.querySelectorAll('#expenseForm input, #expenseForm select').forEach(input => {
+                input.addEventListener('input', autoSave);
+                input.addEventListener('change', autoSave);
+            });
+        });
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('insightsModal');
+            if (event.target === modal) {
+                closeInsights();
+            }
+        };
     </script>
 </body>
 </html>
