@@ -1020,6 +1020,202 @@
             border-bottom: none;
         }
 
+        /* Navigation Tabs */
+        .nav-tabs {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            margin: 2rem 0 1rem 0;
+            flex-wrap: wrap;
+        }
+
+        .nav-tab {
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: var(--border-radius);
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text-secondary);
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            backdrop-filter: blur(10px);
+            border: 2px solid transparent;
+        }
+
+        .nav-tab:hover {
+            background: rgba(102, 126, 234, 0.1);
+            color: var(--text-primary);
+            transform: translateY(-2px);
+        }
+
+        .nav-tab.active {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: var(--shadow-md);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .nav-tab.active:hover {
+            transform: translateY(-2px) scale(1.02);
+        }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Enhanced Budget Summary */
+        .budget-summary {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius-lg);
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+        }
+
+        .budget-summary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, rgba(255, 255, 255, 0.1) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.1) 75%);
+            background-size: 20px 20px;
+            animation: move 2s linear infinite;
+        }
+
+        @keyframes move {
+            0% { background-position: 0 0; }
+            100% { background-position: 20px 20px; }
+        }
+
+        .budget-summary > * {
+            position: relative;
+            z-index: 2;
+        }
+
+        .budget-amount {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 1rem 0;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .budget-status {
+            font-size: 1.2rem;
+            margin-bottom: 1rem;
+            opacity: 0.9;
+        }
+
+        .budget-progress-main {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            height: 20px;
+            margin: 1.5rem 0;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .budget-fill-main {
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+            border-radius: 50px;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 12px;
+        }
+
+        .budget-text-main {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            background: rgba(255, 255, 255, 0.9);
+            padding: 4px 8px;
+            border-radius: 12px;
+            margin-right: 8px;
+            text-shadow: none;
+        }
+
+        .warning-budget {
+            background: var(--danger-gradient);
+            animation: pulse 2s infinite;
+        }
+
+        /* Quick Stats Grid */
+        .quick-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .quick-stat-card {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: var(--border-radius-lg);
+            text-align: center;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--primary-gradient);
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .quick-stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .quick-stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .quick-stat-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .quick-stat-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
+        }
+
+        .quick-stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
         /* Responsive Enhancements */
         @media (max-width: 768px) {
             .fab {
@@ -1048,6 +1244,29 @@
                 align-items: flex-start;
                 gap: 0.5rem;
             }
+            
+            .nav-tabs {
+                gap: 0.25rem;
+                margin: 1rem 0;
+            }
+            
+            .nav-tab {
+                padding: 0.75rem 1rem;
+                font-size: 0.9rem;
+                min-width: auto;
+            }
+            
+            .budget-amount {
+                font-size: 2rem;
+            }
+            
+            .budget-summary {
+                padding: 1.5rem;
+            }
+            
+            .quick-stats {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -1056,6 +1275,14 @@
         <div class="header">
             <h1>💰 Family Expense Tracker</h1>
             <p class="subtitle">Track, manage, and optimize your family's spending</p>
+            
+            <!-- Navigation Tabs -->
+            <div class="nav-tabs">
+                <button class="nav-tab active" onclick="switchTab('main')">📋 Expenses</button>
+                <button class="nav-tab" onclick="switchTab('dashboard')">📊 Dashboard</button>
+                <button class="nav-tab" onclick="switchTab('settings')">⚙️ Settings</button>
+            </div>
+            
             <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 1rem;">
                 <span style="font-size: 0.9rem; color: var(--text-secondary);">Dark Mode</span>
                 <label class="toggle-switch">
@@ -1065,255 +1292,310 @@
             </div>
         </div>
 
-        <div class="main-grid">
-            <div class="left-panel">
-                <!-- Quick Actions -->
-                <div class="quick-actions">
-                    <div class="quick-action" onclick="showForm('Groceries')">
-                        <span>🛒</span>
-                        <span>Quick Groceries</span>
-                    </div>
-                    <div class="quick-action" onclick="showForm('Utilities')">
-                        <span>⚡</span>
-                        <span>Quick Utilities</span>
-                    </div>
-                    <div class="quick-action" onclick="showForm('Transportation')">
-                        <span>🚗</span>
-                        <span>Quick Transport</span>
-                    </div>
-                    <div class="quick-action" onclick="showForm('Mortgage')">
-                        <span>🏡</span>
-                        <span>Quick Mortgage</span>
-                    </div>
-                    <div class="quick-action" onclick="showForm('Car Loan/Lease')">
-                        <span>🚙</span>
-                        <span>Quick Car Loan</span>
-                    </div>
-                    <div class="quick-action" onclick="showInsights()">
-                        <span>💡</span>
-                        <span>Insights</span>
-                    </div>
-                    <div class="quick-action" onclick="showRecurringModal()">
-                        <span>🔄</span>
-                        <span>Recurring</span>
-                    </div>
-                    <div class="quick-action" onclick="clearAllData()">
-                        <span>🗑️</span>
-                        <span>Clear All</span>
+        <!-- Main Tab Content -->
+        <div id="mainTab" class="tab-content active">
+            <!-- Budget Summary -->
+            <div class="budget-summary" id="budgetSummaryMain">
+                <h2 style="margin: 0 0 1rem 0; font-size: 1.5rem;">💰 Monthly Budget Overview</h2>
+                <div class="budget-amount" id="budgetAmountMain">€0</div>
+                <div class="budget-status" id="budgetStatusMain">Set your monthly budget to get started</div>
+                <div class="budget-progress-main">
+                    <div class="budget-fill-main" id="budgetFillMain">
+                        <span class="budget-text-main" id="budgetTextMain">0%</span>
                     </div>
                 </div>
-
-                <!-- Settings Panel -->
-                <div class="settings-panel">
-                    <h2><span class="card-icon">⚙️</span> Settings</h2>
-                    <div class="settings-grid">
-                        <div class="form-group">
-                            <label for="monthlyBudget">Monthly Budget (€)</label>
-                            <input type="number" id="monthlyBudget" placeholder="1500" min="0">
-                        </div>
-                        <button class="btn" onclick="setBudget()">💾 Set Budget</button>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 1rem;">
+                    <div>
+                        <strong>Spent: </strong><span id="spentAmountMain">€0</span>
                     </div>
-                </div>
-
-                <!-- Dashboard -->
-                <div class="dashboard">
-                    <div class="card budget-card" id="budgetCard">
-                        <h2><span class="card-icon">🎯</span> Monthly Budget</h2>
-                        <div class="total-display" id="budgetAmount">€0</div>
-                        <div class="progress-container">
-                            <div class="progress-fill" id="budgetFill">
-                                <span class="progress-text" id="progressText">0%</span>
-                            </div>
-                        </div>
-                        <div id="budgetStatus">Set your monthly budget</div>
-                    </div>
-
-                    <div class="card">
-                        <h2><span class="card-icon">📊</span> This Month's Total</h2>
-                        <div class="total-display" id="monthlyTotal">€0</div>
-                        <div id="expenseCount">0 expenses</div>
-                    </div>
-
-                    <div class="card">
-                        <h2><span class="card-icon">📈</span> Expense Breakdown</h2>
-                        <div class="chart-container">
-                            <canvas id="expenseChart"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Statistics -->
-                <div class="stats-grid">
-                    <div class="stat-card-enhanced">
-                        <span class="stat-icon">📊</span>
-                        <div class="stat-value" id="avgDaily">€0</div>
-                        <div class="stat-label">Avg Daily</div>
-                    </div>
-                    <div class="stat-card-enhanced">
-                        <span class="stat-icon">🏆</span>
-                        <div class="stat-value" id="topCategory">-</div>
-                        <div class="stat-label">Top Category</div>
-                    </div>
-                    <div class="stat-card-enhanced">
-                        <span class="stat-icon">⏰</span>
-                        <div class="stat-value" id="daysLeft">0</div>
-                        <div class="stat-label">Days Left</div>
-                    </div>
-                    <div class="stat-card-enhanced">
-                        <span class="stat-icon">📈</span>
-                        <div class="stat-value" id="weeklyAvg">€0</div>
-                        <div class="stat-label">Weekly Avg</div>
+                    <div>
+                        <strong>Remaining: </strong><span id="remainingAmountMain">€0</span>
                     </div>
                 </div>
             </div>
 
-            <div class="right-panel">
-                <!-- Add Expense Form -->
-                <div class="expense-form card-enhanced">
-                    <h2><span class="card-icon">➕</span> Add New Expense</h2>
-                    <form id="expenseForm">
-                        <div class="form-grid">
-                            <div class="input-group">
-                                <span class="input-icon">💰</span>
-                                <label for="amount">Amount (€)</label>
-                                <input type="number" id="amount" step="0.01" required placeholder="0.00">
-                            </div>
-                            
-                            <div class="input-group">
-                                <span class="input-icon">📋</span>
-                                <label for="category">Category</label>
-                                <select id="category" required onchange="handleCategoryChange()">
-                                    <option value="">Select category</option>
-                                    <option value="Rent">🏠 Rent</option>
-                                    <option value="Mortgage">🏡 Mortgage</option>
-                                    <option value="Utilities">⚡ Utilities</option>
-                                    <option value="Groceries">🛒 Groceries</option>
-                                    <option value="Transportation">🚗 Transportation</option>
-                                    <option value="Car Loan/Lease">🚙 Car Loan/Lease</option>
-                                    <option value="Healthcare">🏥 Healthcare</option>
-                                    <option value="Entertainment">🎬 Entertainment</option>
-                                    <option value="Dining">🍽️ Dining</option>
-                                    <option value="Shopping">🛍️ Shopping</option>
-                                    <option value="Education">📚 Education</option>
-                                    <option value="Insurance">🛡️ Insurance</option>
-                                    <option value="Other Loan">💳 Other Loan</option>
-                                    <option value="Other">📝 Other</option>
-                                    <option value="__ADD_NEW__">➕ Add New Category</option>
-                                </select>
-                            </div>
-                            
-                            <!-- Custom Category Input (Hidden by default) -->
-                            <div class="input-group" id="customCategoryGroup" style="display: none;">
-                                <span class="input-icon">✨</span>
-                                <label for="customCategory">New Category Name</label>
-                                <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                    <input type="text" id="customCategory" placeholder="Enter new category name">
-                                    <input type="text" id="customCategoryIcon" placeholder="🏷️" maxlength="2" style="width: 60px; text-align: center;">
-                                    <button type="button" onclick="addCustomCategory()" class="btn btn-success" style="min-width: auto; padding: 0.5rem 1rem;">Add</button>
-                                    <button type="button" onclick="cancelCustomCategory()" class="btn btn-secondary" style="min-width: auto; padding: 0.5rem 1rem;">Cancel</button>
-                                </div>
-                            </div>
-                            
-                            <div class="input-group">
-                                <span class="input-icon">👥</span>
-                                <label for="person">Person</label>
-                                <select id="person" required>
-                                    <option value="">Select person</option>
-                                    <option value="You">👤 You</option>
-                                    <option value="Partner">👥 Partner</option>
-                                    <option value="Both">💏 Both</option>
-                                </select>
-                            </div>
-                            
-                            <div class="input-group">
-                                <span class="input-icon">📅</span>
-                                <label for="date">Date</label>
-                                <input type="date" id="date" required>
-                            </div>
-                            
-                            <div class="input-group" style="grid-column: 1 / -1;">
-                                <span class="input-icon">📝</span>
-                                <label for="description">Description (optional)</label>
-                                <input type="text" id="description" placeholder="e.g., Weekly grocery shopping">
-                            </div>
-                            
-                            <!-- Recurring Expense Options -->
-                            <div class="input-group" style="grid-column: 1 / -1;">
-                                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                                    <label class="toggle-switch">
-                                        <input type="checkbox" id="isRecurring" onchange="toggleRecurringOptions()">
-                                        <span class="toggle-slider"></span>
-                                    </label>
-                                    <label for="isRecurring" style="margin: 0; cursor: pointer; font-weight: 500;">🔄 Make this a recurring expense</label>
+            <!-- Quick Stats -->
+            <div class="quick-stats">
+                <div class="quick-stat-card">
+                    <span class="quick-stat-icon">📊</span>
+                    <div class="quick-stat-value" id="monthlyTotalMain">€0</div>
+                    <div class="quick-stat-label">This Month</div>
+                </div>
+                <div class="quick-stat-card">
+                    <span class="quick-stat-icon">📅</span>
+                    <div class="quick-stat-value" id="avgDailyMain">€0</div>
+                    <div class="quick-stat-label">Daily Average</div>
+                </div>
+                <div class="quick-stat-card">
+                    <span class="quick-stat-icon">📝</span>
+                    <div class="quick-stat-value" id="expenseCountMain">0</div>
+                    <div class="quick-stat-label">Expenses</div>
+                </div>
+                <div class="quick-stat-card">
+                    <span class="quick-stat-icon">🏆</span>
+                    <div class="quick-stat-value" id="topCategoryMain">-</div>
+                    <div class="quick-stat-label">Top Category</div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="quick-actions">
+                <div class="quick-action" onclick="showForm('Groceries')">
+                    <span>🛒</span>
+                    <span>Quick Groceries</span>
+                </div>
+                <div class="quick-action" onclick="showForm('Utilities')">
+                    <span>⚡</span>
+                    <span>Quick Utilities</span>
+                </div>
+                <div class="quick-action" onclick="showForm('Transportation')">
+                    <span>🚗</span>
+                    <span>Quick Transport</span>
+                </div>
+                <div class="quick-action" onclick="showForm('Mortgage')">
+                    <span>🏡</span>
+                    <span>Quick Mortgage</span>
+                </div>
+                <div class="quick-action" onclick="showForm('Car Loan/Lease')">
+                    <span>🚙</span>
+                    <span>Quick Car Loan</span>
+                </div>
+                <div class="quick-action" onclick="showInsights()">
+                    <span>💡</span>
+                    <span>Insights</span>
+                </div>
+                <div class="quick-action" onclick="showRecurringModal()">
+                    <span>🔄</span>
+                    <span>Recurring</span>
+                </div>
+            </div>
+
+            <div class="main-grid">
+                <div class="left-panel">
+                    <!-- Add Expense Form -->
+                    <div class="expense-form card-enhanced">
+                        <h2><span class="card-icon">➕</span> Add New Expense</h2>
+                        <form id="expenseForm">
+                            <div class="form-grid">
+                                <div class="input-group">
+                                    <span class="input-icon">💰</span>
+                                    <label for="amount">Amount (€)</label>
+                                    <input type="number" id="amount" step="0.01" required placeholder="0.00">
                                 </div>
                                 
-                                <div id="recurringOptions" style="display: none;">
-                                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-                                        <div>
-                                            <label for="recurringFrequency">Frequency</label>
-                                            <select id="recurringFrequency">
-                                                <option value="weekly">📅 Weekly</option>
-                                                <option value="biweekly">📅 Bi-weekly</option>
-                                                <option value="monthly" selected>📅 Monthly</option>
-                                                <option value="quarterly">📅 Quarterly</option>
-                                                <option value="yearly">📅 Yearly</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label for="recurringEndDate">End Date (optional)</label>
-                                            <input type="date" id="recurringEndDate">
+                                <div class="input-group">
+                                    <span class="input-icon">📋</span>
+                                    <label for="category">Category</label>
+                                    <select id="category" required onchange="handleCategoryChange()">
+                                        <option value="">Select category</option>
+                                        <option value="Rent">🏠 Rent</option>
+                                        <option value="Mortgage">🏡 Mortgage</option>
+                                        <option value="Utilities">⚡ Utilities</option>
+                                        <option value="Groceries">🛒 Groceries</option>
+                                        <option value="Transportation">🚗 Transportation</option>
+                                        <option value="Car Loan/Lease">🚙 Car Loan/Lease</option>
+                                        <option value="Healthcare">🏥 Healthcare</option>
+                                        <option value="Entertainment">🎬 Entertainment</option>
+                                        <option value="Dining">🍽️ Dining</option>
+                                        <option value="Shopping">🛍️ Shopping</option>
+                                        <option value="Education">📚 Education</option>
+                                        <option value="Insurance">🛡️ Insurance</option>
+                                        <option value="Other Loan">💳 Other Loan</option>
+                                        <option value="Other">📝 Other</option>
+                                        <option value="__ADD_NEW__">➕ Add New Category</option>
+                                    </select>
+                                </div>
+                                
+                                <!-- Custom Category Input (Hidden by default) -->
+                                <div class="input-group" id="customCategoryGroup" style="display: none;">
+                                    <span class="input-icon">✨</span>
+                                    <label for="customCategory">New Category Name</label>
+                                    <div style="display: flex; gap: 0.5rem; align-items: center;">
+                                        <input type="text" id="customCategory" placeholder="Enter new category name">
+                                        <input type="text" id="customCategoryIcon" placeholder="🏷️" maxlength="2" style="width: 60px; text-align: center;">
+                                        <button type="button" onclick="addCustomCategory()" class="btn btn-success" style="min-width: auto; padding: 0.5rem 1rem;">Add</button>
+                                        <button type="button" onclick="cancelCustomCategory()" class="btn btn-secondary" style="min-width: auto; padding: 0.5rem 1rem;">Cancel</button>
+                                    </div>
+                                </div>
+                                
+                                <div class="input-group">
+                                    <span class="input-icon">👥</span>
+                                    <label for="person">Person</label>
+                                    <select id="person" required>
+                                        <option value="">Select person</option>
+                                        <option value="You">👤 You</option>
+                                        <option value="Partner">👥 Partner</option>
+                                        <option value="Both">💏 Both</option>
+                                    </select>
+                                </div>
+                                
+                                <div class="input-group">
+                                    <span class="input-icon">📅</span>
+                                    <label for="date">Date</label>
+                                    <input type="date" id="date" required>
+                                </div>
+                                
+                                <div class="input-group" style="grid-column: 1 / -1;">
+                                    <span class="input-icon">📝</span>
+                                    <label for="description">Description (optional)</label>
+                                    <input type="text" id="description" placeholder="e.g., Weekly grocery shopping">
+                                </div>
+                                
+                                <!-- Recurring Expense Options -->
+                                <div class="input-group" style="grid-column: 1 / -1;">
+                                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                                        <label class="toggle-switch">
+                                            <input type="checkbox" id="isRecurring" onchange="toggleRecurringOptions()">
+                                            <span class="toggle-slider"></span>
+                                        </label>
+                                        <label for="isRecurring" style="margin: 0; cursor: pointer; font-weight: 500;">🔄 Make this a recurring expense</label>
+                                    </div>
+                                    
+                                    <div id="recurringOptions" style="display: none;">
+                                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                                            <div>
+                                                <label for="recurringFrequency">Frequency</label>
+                                                <select id="recurringFrequency">
+                                                    <option value="weekly">📅 Weekly</option>
+                                                    <option value="biweekly">📅 Bi-weekly</option>
+                                                    <option value="monthly" selected>📅 Monthly</option>
+                                                    <option value="quarterly">📅 Quarterly</option>
+                                                    <option value="yearly">📅 Yearly</option>
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <label for="recurringEndDate">End Date (optional)</label>
+                                                <input type="date" id="recurringEndDate">
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                        
-                        <div class="btn-actions">
-                            <button type="button" id="cancelEdit" onclick="cancelEdit()" style="display: none;" class="btn btn-secondary">✖️ Cancel</button>
-                            <button type="submit" class="btn bounce-in">💾 Save Expense</button>
-                        </div>
-                    </form>
+                            
+                            <div class="btn-actions">
+                                <button type="button" id="cancelEdit" onclick="cancelEdit()" style="display: none;" class="btn btn-secondary">✖️ Cancel</button>
+                                <button type="submit" class="btn bounce-in">💾 Save Expense</button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
 
-                <!-- Expense List -->
-                <div class="expense-list">
-                    <div class="expense-list-header">
-                        <h2><span class="card-icon">📋</span> Recent Expenses</h2>
-                        <div class="expense-filters">
-                            <div class="filter-group">
-                                <label>Filter by Category</label>
-                                <select id="categoryFilter" onchange="filterExpenses()">
-                                    <option value="">All Categories</option>
-                                    <option value="Rent">🏠 Rent</option>
-                                    <option value="Mortgage">🏡 Mortgage</option>
-                                    <option value="Utilities">⚡ Utilities</option>
-                                    <option value="Groceries">🛒 Groceries</option>
-                                    <option value="Transportation">🚗 Transportation</option>
-                                    <option value="Car Loan/Lease">🚙 Car Loan/Lease</option>
-                                    <option value="Healthcare">🏥 Healthcare</option>
-                                    <option value="Entertainment">🎬 Entertainment</option>
-                                    <option value="Dining">🍽️ Dining</option>
-                                    <option value="Shopping">🛍️ Shopping</option>
-                                    <option value="Education">📚 Education</option>
-                                    <option value="Insurance">🛡️ Insurance</option>
-                                    <option value="Other Loan">💳 Other Loan</option>
-                                    <option value="Other">📝 Other</option>
-                                </select>
+                <div class="right-panel">
+                    <!-- Expense List -->
+                    <div class="expense-list">
+                        <div class="expense-list-header">
+                            <h2><span class="card-icon">📋</span> Recent Expenses</h2>
+                            <div class="expense-filters">
+                                <div class="filter-group">
+                                    <label>Filter by Category</label>
+                                    <select id="categoryFilter" onchange="filterExpenses()">
+                                        <option value="">All Categories</option>
+                                        <option value="Rent">🏠 Rent</option>
+                                        <option value="Mortgage">🏡 Mortgage</option>
+                                        <option value="Utilities">⚡ Utilities</option>
+                                        <option value="Groceries">🛒 Groceries</option>
+                                        <option value="Transportation">🚗 Transportation</option>
+                                        <option value="Car Loan/Lease">🚙 Car Loan/Lease</option>
+                                        <option value="Healthcare">🏥 Healthcare</option>
+                                        <option value="Entertainment">🎬 Entertainment</option>
+                                        <option value="Dining">🍽️ Dining</option>
+                                        <option value="Shopping">🛍️ Shopping</option>
+                                        <option value="Education">📚 Education</option>
+                                        <option value="Insurance">🛡️ Insurance</option>
+                                        <option value="Other Loan">💳 Other Loan</option>
+                                        <option value="Other">📝 Other</option>
+                                    </select>
+                                </div>
+                                <div class="filter-group">
+                                    <label>Filter by Person</label>
+                                    <select id="personFilter" onchange="filterExpenses()">
+                                        <option value="">All People</option>
+                                        <option value="You">👤 You</option>
+                                        <option value="Partner">👥 Partner</option>
+                                        <option value="Both">💏 Both</option>
+                                    </select>
+                                </div>
+                                <button class="btn btn-success" onclick="exportToCSV()">📥 Export CSV</button>
                             </div>
-                            <div class="filter-group">
-                                <label>Filter by Person</label>
-                                <select id="personFilter" onchange="filterExpenses()">
-                                    <option value="">All People</option>
-                                    <option value="You">👤 You</option>
-                                    <option value="Partner">👥 Partner</option>
-                                    <option value="Both">💏 Both</option>
-                                </select>
-                            </div>
-                            <button class="btn btn-success" onclick="exportToCSV()">📥 Export CSV</button>
+                        </div>
+                        <div id="expensesList">
+                            <div class="no-expenses">No expenses added yet. Add your first expense above!</div>
                         </div>
                     </div>
-                    <div id="expensesList">
-                        <div class="no-expenses">No expenses added yet. Add your first expense above!</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Tab Content -->
+        <div id="dashboardTab" class="tab-content">
+            <div class="dashboard">
+                <div class="card budget-card" id="budgetCard">
+                    <h2><span class="card-icon">🎯</span> Monthly Budget</h2>
+                    <div class="total-display" id="budgetAmount">€0</div>
+                    <div class="progress-container">
+                        <div class="progress-fill" id="budgetFill">
+                            <span class="progress-text" id="progressText">0%</span>
+                        </div>
+                    </div>
+                    <div id="budgetStatus">Set your monthly budget</div>
+                </div>
+
+                <div class="card">
+                    <h2><span class="card-icon">📊</span> This Month's Total</h2>
+                    <div class="total-display" id="monthlyTotal">€0</div>
+                    <div id="expenseCount">0 expenses</div>
+                </div>
+
+                <div class="card">
+                    <h2><span class="card-icon">📈</span> Expense Breakdown</h2>
+                    <div class="chart-container">
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Statistics -->
+            <div class="stats-grid">
+                <div class="stat-card-enhanced">
+                    <span class="stat-icon">📊</span>
+                    <div class="stat-value" id="avgDaily">€0</div>
+                    <div class="stat-label">Avg Daily</div>
+                </div>
+                <div class="stat-card-enhanced">
+                    <span class="stat-icon">🏆</span>
+                    <div class="stat-value" id="topCategory">-</div>
+                    <div class="stat-label">Top Category</div>
+                </div>
+                <div class="stat-card-enhanced">
+                    <span class="stat-icon">⏰</span>
+                    <div class="stat-value" id="daysLeft">0</div>
+                    <div class="stat-label">Days Left</div>
+                </div>
+                <div class="stat-card-enhanced">
+                    <span class="stat-icon">📈</span>
+                    <div class="stat-value" id="weeklyAvg">€0</div>
+                    <div class="stat-label">Weekly Avg</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Tab Content -->
+        <div id="settingsTab" class="tab-content">
+            <div class="settings-panel">
+                <h2><span class="card-icon">⚙️</span> Settings & Configuration</h2>
+                <div class="settings-grid">
+                    <div class="form-group">
+                        <label for="monthlyBudget">Monthly Budget (€)</label>
+                        <input type="number" id="monthlyBudget" placeholder="1500" min="0">
+                    </div>
+                    <button class="btn" onclick="setBudget()">💾 Set Budget</button>
+                </div>
+                
+                <div style="margin-top: 2rem;">
+                    <h3>🗑️ Data Management</h3>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                        <button class="btn btn-warning" onclick="exportToCSV()">📥 Export All Data</button>
+                        <button class="btn btn-danger" onclick="clearAllData()">🗑️ Clear All Data</button>
                     </div>
                 </div>
             </div>
@@ -2080,6 +2362,30 @@
                 showRecurringModal();
             }
             
+            // Ctrl/Cmd + D: Switch to dashboard
+            if ((e.ctrlKey || e.metaKey) && e.key === 'd') {
+                e.preventDefault();
+                document.querySelector('.nav-tab[onclick*="dashboard"]').click();
+            }
+            
+            // Ctrl/Cmd + 1: Switch to main tab
+            if ((e.ctrlKey || e.metaKey) && e.key === '1') {
+                e.preventDefault();
+                document.querySelector('.nav-tab[onclick*="main"]').click();
+            }
+            
+            // Ctrl/Cmd + 2: Switch to dashboard tab
+            if ((e.ctrlKey || e.metaKey) && e.key === '2') {
+                e.preventDefault();
+                document.querySelector('.nav-tab[onclick*="dashboard"]').click();
+            }
+            
+            // Ctrl/Cmd + 3: Switch to settings tab
+            if ((e.ctrlKey || e.metaKey) && e.key === '3') {
+                e.preventDefault();
+                document.querySelector('.nav-tab[onclick*="settings"]').click();
+            }
+            
             // Escape: Close modal
             if (e.key === 'Escape') {
                 closeInsights();
@@ -2425,6 +2731,124 @@
         }
 
 
+
+        // Tab switching functionality
+        function switchTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Remove active class from all nav tabs
+            const navTabs = document.querySelectorAll('.nav-tab');
+            navTabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab content
+            document.getElementById(tabName + 'Tab').classList.add('active');
+            
+            // Add active class to clicked nav tab
+            event.target.classList.add('active');
+            
+            // Update dashboard if switching to dashboard tab
+            if (tabName === 'dashboard') {
+                updateDashboard();
+            }
+        }
+
+        // Update main page budget summary
+        function updateMainBudgetSummary() {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const monthlyExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+            });
+            
+            const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
+            const remaining = monthlyBudget - monthlyTotal;
+            
+            // Update main page elements
+            document.getElementById('budgetAmountMain').textContent = `€${monthlyBudget.toFixed(2)}`;
+            document.getElementById('spentAmountMain').textContent = `€${monthlyTotal.toFixed(2)}`;
+            document.getElementById('remainingAmountMain').textContent = `€${remaining.toFixed(2)}`;
+            document.getElementById('monthlyTotalMain').textContent = `€${monthlyTotal.toFixed(2)}`;
+            document.getElementById('expenseCountMain').textContent = monthlyExpenses.length;
+            
+            // Update budget status and progress
+            const budgetSummary = document.getElementById('budgetSummaryMain');
+            const budgetFillMain = document.getElementById('budgetFillMain');
+            const budgetTextMain = document.getElementById('budgetTextMain');
+            const budgetStatusMain = document.getElementById('budgetStatusMain');
+            
+            if (monthlyBudget > 0) {
+                const percentage = Math.min((monthlyTotal / monthlyBudget) * 100, 100);
+                budgetFillMain.style.width = `${percentage}%`;
+                budgetTextMain.textContent = `${Math.round(percentage)}%`;
+                
+                if (remaining >= 0) {
+                    budgetStatusMain.textContent = `€${remaining.toFixed(2)} remaining this month`;
+                    budgetSummary.classList.remove('warning-budget');
+                } else {
+                    budgetStatusMain.textContent = `€${Math.abs(remaining).toFixed(2)} over budget this month`;
+                    budgetSummary.classList.add('warning-budget');
+                }
+            } else {
+                budgetFillMain.style.width = '0%';
+                budgetTextMain.textContent = '0%';
+                budgetStatusMain.textContent = 'Set your monthly budget in Settings to track progress';
+                budgetSummary.classList.remove('warning-budget');
+            }
+            
+            // Update quick stats
+            const avgDaily = monthlyExpenses.length > 0 ? monthlyTotal / new Date().getDate() : 0;
+            document.getElementById('avgDailyMain').textContent = `€${avgDaily.toFixed(2)}`;
+            
+            // Calculate top category for main page
+            const categoryTotals = {};
+            monthlyExpenses.forEach(expense => {
+                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+            });
+            
+            let topCategory = '-';
+            const categories = Object.keys(categoryTotals);
+            if (categories.length > 0) {
+                topCategory = categories.reduce((a, b) => 
+                    categoryTotals[a] > categoryTotals[b] ? a : b);
+            }
+            document.getElementById('topCategoryMain').textContent = topCategory;
+        }
+
+        // Enhanced updateDashboard to also update main page
+        const originalUpdateDashboard = updateDashboard;
+        updateDashboard = function() {
+            // Call original dashboard update
+            originalUpdateDashboard();
+            
+            // Also update main page summary
+            updateMainBudgetSummary();
+        };
+
+        // Scroll to form function (updated for new layout)
+        function scrollToForm() {
+            // Switch to main tab if not already there
+            if (!document.getElementById('mainTab').classList.contains('active')) {
+                switchTab('main');
+                // Update the active nav tab manually since event.target won't work here
+                document.querySelectorAll('.nav-tab').forEach(tab => tab.classList.remove('active'));
+                document.querySelector('.nav-tab[onclick*="main"]').classList.add('active');
+            }
+            
+            setTimeout(() => {
+                document.querySelector('.expense-form').scrollIntoView({ 
+                    behavior: 'smooth',
+                    block: 'center'
+                });
+                document.getElementById('amount').focus();
+            }, 100);
+        }
 
         // Close modal when clicking outside
         window.onclick = function(event) {
