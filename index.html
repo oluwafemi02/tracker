@@ -701,6 +701,8 @@
              }
          }
 
+
+
          /* Keyboard Shortcuts Styles */
          .keyboard-shortcuts {
              display: grid;
@@ -2426,6 +2428,33 @@
                     </div>
                 </div>
                 
+                <div style="margin-top: 2rem;">
+                    <h3>🔔 Notification Settings</h3>
+                    <div id="notificationStatus" style="margin-bottom: 1rem; padding: 0.75rem; border-radius: var(--border-radius); border: 1px solid var(--border-color);"></div>
+                    
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1rem;">
+                        <button class="btn btn-primary" id="testNotificationBtn">
+                            📱 Test Notification
+                        </button>
+                        <button class="btn btn-warning" id="checkRemindersBtn">
+                            🔍 Check Reminders Now
+                        </button>
+                        <button class="btn btn-secondary" id="createTestReminderBtn">
+                            🧪 Create Test Reminder
+                        </button>
+                    </div>
+                    
+                    <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                        <p><strong>📍 Automatic Reminders:</strong></p>
+                        <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                            <li>3 days before each recurring expense</li>
+                            <li>1 day before each recurring expense</li>
+                            <li>When expenses become overdue</li>
+                            <li>Checked every hour automatically</li>
+                        </ul>
+                    </div>
+                </div>
+
                 <div style="margin-top: 2rem;">
                     <h3>🗑️ Data Management</h3>
                     <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
@@ -4504,8 +4533,13 @@
             // Check budget status daily
             setInterval(checkBudgetAndNotify, 24 * 60 * 60 * 1000); // 24 hours
             
-            // Check for recurring expense reminders
+            // Check for recurring expense reminders every hour
             setInterval(checkRecurringReminders, 60 * 60 * 1000); // 1 hour
+            
+            // Also check immediately when app loads
+            setTimeout(checkRecurringReminders, 5000); // 5 seconds after load
+            
+            console.log('🔔 Notification system initialized - will check recurring expenses every hour');
         }
 
         // Check budget and send notification if needed
@@ -4537,12 +4571,311 @@
             }
         }
 
-        // Handle URL parameters for deep linking
+        // Check recurring expenses and send reminders
+        function checkRecurringReminders() {
+            if (Notification.permission !== 'granted') {
+                console.log('📵 Notifications not permitted - cannot send reminders');
+                return;
+            }
+
+            if (!recurringExpenses || recurringExpenses.length === 0) {
+                console.log('📝 No recurring expenses to check');
+                return;
+            }
+
+            const today = new Date();
+            const todayDateString = today.toDateString();
+            
+            // Get or initialize notification tracking
+            let notificationHistory = JSON.parse(localStorage.getItem('notificationHistory') || '{}');
+            
+            console.log(`🔍 Checking ${recurringExpenses.length} recurring expenses for reminders...`);
+
+            recurringExpenses.forEach(recurring => {
+                if (!recurring.isActive) return;
+
+                const nextDueDate = calculateNextDueDate(recurring.lastProcessedDate, recurring.frequency);
+                const daysUntilDue = Math.ceil((nextDueDate - today) / (1000 * 60 * 60 * 24));
+                
+                const expenseId = recurring.id;
+                const nextDueDateString = nextDueDate.toDateString();
+                
+                // Create unique keys for 3-day and 1-day reminders
+                const reminder3DayKey = `${expenseId}_3day_${nextDueDateString}`;
+                const reminder1DayKey = `${expenseId}_1day_${nextDueDateString}`;
+                
+                // Check for 3-day reminder
+                if (daysUntilDue === 3 && !notificationHistory[reminder3DayKey]) {
+                    const icon = categoryIcons[recurring.category] || '📝';
+                    
+                    new Notification('Upcoming Expense Reminder', {
+                        body: `${icon} ${recurring.category} (€${recurring.amount.toFixed(2)}) is due in 3 days on ${nextDueDate.toLocaleDateString()}`,
+                        icon: '/icons/icon-192x192.png',
+                        badge: '/icons/badge-72x72.png',
+                        tag: `recurring-3day-${expenseId}`,
+                        requireInteraction: false,
+                        actions: [
+                            {
+                                action: 'add-expense',
+                                title: 'Add Now'
+                            },
+                            {
+                                action: 'view-recurring',
+                                title: 'View Details'
+                            }
+                        ],
+                        data: {
+                            type: 'recurring-reminder',
+                            recurringId: expenseId,
+                            daysUntilDue: 3,
+                            category: recurring.category,
+                            amount: recurring.amount
+                        }
+                    });
+                    
+                    // Mark as sent
+                    notificationHistory[reminder3DayKey] = {
+                        sent: true,
+                        timestamp: Date.now(),
+                        type: '3-day-reminder'
+                    };
+                    
+                    console.log(`📱 Sent 3-day reminder for: ${recurring.category} (€${recurring.amount})`);
+                }
+                
+                // Check for 1-day reminder
+                if (daysUntilDue === 1 && !notificationHistory[reminder1DayKey]) {
+                    const icon = categoryIcons[recurring.category] || '📝';
+                    
+                    new Notification('Expense Due Tomorrow!', {
+                        body: `${icon} ${recurring.category} (€${recurring.amount.toFixed(2)}) is due tomorrow!`,
+                        icon: '/icons/icon-192x192.png',
+                        badge: '/icons/badge-72x72.png',
+                        tag: `recurring-1day-${expenseId}`,
+                        requireInteraction: true, // More urgent
+                        actions: [
+                            {
+                                action: 'add-expense',
+                                title: 'Add Now'
+                            },
+                            {
+                                action: 'remind-later',
+                                title: 'Remind Later'
+                            }
+                        ],
+                        data: {
+                            type: 'recurring-reminder',
+                            recurringId: expenseId,
+                            daysUntilDue: 1,
+                            category: recurring.category,
+                            amount: recurring.amount
+                        }
+                    });
+                    
+                    // Mark as sent
+                    notificationHistory[reminder1DayKey] = {
+                        sent: true,
+                        timestamp: Date.now(),
+                        type: '1-day-reminder'
+                    };
+                    
+                    console.log(`📱 Sent 1-day reminder for: ${recurring.category} (€${recurring.amount})`);
+                }
+                
+                // Check for overdue expenses
+                if (daysUntilDue < 0) {
+                    const overdueDays = Math.abs(daysUntilDue);
+                    const overdueKey = `${expenseId}_overdue_${nextDueDateString}`;
+                    
+                    if (!notificationHistory[overdueKey]) {
+                        const icon = categoryIcons[recurring.category] || '📝';
+                        
+                        new Notification('Overdue Expense!', {
+                            body: `${icon} ${recurring.category} (€${recurring.amount.toFixed(2)}) is overdue by ${overdueDays} day${overdueDays > 1 ? 's' : ''}!`,
+                            icon: '/icons/icon-192x192.png',
+                            badge: '/icons/badge-72x72.png',
+                            tag: `recurring-overdue-${expenseId}`,
+                            requireInteraction: true,
+                            actions: [
+                                {
+                                    action: 'add-expense',
+                                    title: 'Add Now'
+                                },
+                                {
+                                    action: 'view-recurring',
+                                    title: 'Manage'
+                                }
+                            ],
+                            data: {
+                                type: 'recurring-overdue',
+                                recurringId: expenseId,
+                                daysOverdue: overdueDays,
+                                category: recurring.category,
+                                amount: recurring.amount
+                            }
+                        });
+                        
+                        notificationHistory[overdueKey] = {
+                            sent: true,
+                            timestamp: Date.now(),
+                            type: 'overdue-reminder'
+                        };
+                        
+                        console.log(`📱 Sent overdue reminder for: ${recurring.category} (€${recurring.amount}) - ${overdueDays} days overdue`);
+                    }
+                }
+            });
+            
+            // Clean up old notification history (older than 30 days)
+            const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+            Object.keys(notificationHistory).forEach(key => {
+                if (notificationHistory[key].timestamp < thirtyDaysAgo) {
+                    delete notificationHistory[key];
+                }
+            });
+            
+            // Save updated notification history
+            localStorage.setItem('notificationHistory', JSON.stringify(notificationHistory));
+            
+            console.log('✅ Recurring expense reminder check completed');
+        }
+
+        // Test notification function
+        function testNotification() {
+            if (Notification.permission !== 'granted') {
+                requestNotificationPermission().then(() => {
+                    if (Notification.permission === 'granted') {
+                        sendTestNotification();
+                    }
+                });
+            } else {
+                sendTestNotification();
+            }
+        }
+
+        function sendTestNotification() {
+            new Notification('Test Notification 📱', {
+                body: 'Notifications are working! You will receive reminders for recurring expenses.',
+                icon: '/icons/icon-192x192.png',
+                badge: '/icons/badge-72x72.png',
+                tag: 'test-notification',
+                requireInteraction: false,
+                actions: [
+                    {
+                        action: 'view',
+                        title: 'View App'
+                    },
+                    {
+                        action: 'dismiss',
+                        title: 'Dismiss'
+                    }
+                ]
+            });
+            
+            showNotification('Test notification sent! 📱', 'success');
+            updateNotificationStatus();
+        }
+
+        // Update notification status display
+        function updateNotificationStatus() {
+            const statusDiv = document.getElementById('notificationStatus');
+            if (!statusDiv) return;
+
+            const permission = Notification.permission;
+            let statusText = '';
+            let statusClass = '';
+
+            if (permission === 'granted') {
+                statusText = '✅ Notifications enabled - You will receive reminders for recurring expenses';
+                statusClass = 'status-success';
+                statusDiv.style.backgroundColor = 'var(--success-light, #d4edda)';
+                statusDiv.style.color = 'var(--success-dark, #155724)';
+                statusDiv.style.borderColor = 'var(--success-color, #28a745)';
+            } else if (permission === 'denied') {
+                statusText = '❌ Notifications blocked - Please enable in browser settings to receive reminders';
+                statusClass = 'status-error';
+                statusDiv.style.backgroundColor = 'var(--danger-light, #f8d7da)';
+                statusDiv.style.color = 'var(--danger-dark, #721c24)';
+                statusDiv.style.borderColor = 'var(--danger-color, #dc3545)';
+            } else {
+                statusText = '⚠️ Notifications not enabled - Click "Test Notification" to enable reminders';
+                statusClass = 'status-warning';
+                statusDiv.style.backgroundColor = 'var(--warning-light, #fff3cd)';
+                statusDiv.style.color = 'var(--warning-dark, #856404)';
+                statusDiv.style.borderColor = 'var(--warning-color, #ffc107)';
+            }
+
+            statusDiv.textContent = statusText;
+            statusDiv.className = statusClass;
+
+            // Show reminder count if there are active recurring expenses
+            const activeRecurring = recurringExpenses.filter(r => r.isActive);
+            if (activeRecurring.length > 0 && permission === 'granted') {
+                statusDiv.textContent += ` (${activeRecurring.length} recurring expense${activeRecurring.length > 1 ? 's' : ''} being monitored)`;
+                         }
+         }
+
+         // Create a test recurring expense that will trigger a reminder soon
+         function createTestReminder() {
+             // Create a test recurring expense due in 3 days
+             const testDate = new Date();
+             testDate.setDate(testDate.getDate() - 27); // Set last processed to 27 days ago for monthly (30 days)
+             
+             const testRecurring = {
+                 id: Date.now(),
+                 category: 'Test Reminder',
+                 amount: 25.00,
+                 description: 'Test recurring expense for notifications',
+                 person: 'Test User',
+                 frequency: 'Monthly',
+                 isActive: true,
+                 startDate: testDate.toISOString().split('T')[0],
+                 lastProcessedDate: testDate.toISOString().split('T')[0],
+                 endDate: null
+             };
+             
+             recurringExpenses.push(testRecurring);
+             localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses));
+             
+             showNotification('🧪 Test reminder created! Due in 3 days. Check console for details.', 'success');
+             console.log('🧪 Test recurring expense created:', testRecurring);
+             console.log('📅 This expense will trigger a reminder in 3 days');
+             
+             // Update the notification status to show the new recurring expense
+             updateNotificationStatus();
+             
+             // Refresh recurring list if modal is open
+             if (document.getElementById('recurringModal').style.display === 'block') {
+                 renderRecurringList();
+             }
+         }
+
+         // Handle URL parameters for deep linking
         function handleURLParameters() {
             const urlParams = new URLSearchParams(window.location.search);
             
             if (urlParams.get('action') === 'add') {
                 scrollToForm();
+                
+                // Pre-fill form if category and amount are provided (from notification)
+                const category = urlParams.get('category');
+                const amount = urlParams.get('amount');
+                
+                if (category) {
+                    const categorySelect = document.getElementById('category');
+                    if (categorySelect) {
+                        categorySelect.value = decodeURIComponent(category);
+                    }
+                }
+                
+                if (amount) {
+                    const amountInput = document.getElementById('amount');
+                    if (amountInput) {
+                        amountInput.value = amount;
+                    }
+                }
+                
+                console.log('📝 Pre-filled form from notification:', { category, amount });
             } else if (urlParams.get('tab')) {
                 const tab = urlParams.get('tab');
                 if (tab === 'dashboard' || tab === 'settings') {
@@ -4552,6 +4885,35 @@
                 showRecurringModal();
             }
         }
+
+        // Listen for messages from service worker
+        navigator.serviceWorker.addEventListener('message', event => {
+            console.log('📨 Message from SW:', event.data);
+            
+            if (event.data.type === 'notification-action') {
+                const { action, data, url } = event.data;
+                
+                if (action === 'add-expense' && data && data.category) {
+                    // Pre-fill the form
+                    scrollToForm();
+                    
+                    const categorySelect = document.getElementById('category');
+                    const amountInput = document.getElementById('amount');
+                    
+                    if (categorySelect && data.category) {
+                        categorySelect.value = data.category;
+                    }
+                    
+                    if (amountInput && data.amount) {
+                        amountInput.value = data.amount;
+                    }
+                    
+                    console.log('📝 Pre-filled form from SW message:', data);
+                } else if (action === 'view-recurring') {
+                    showRecurringModal();
+                }
+            }
+        });
 
         // Show update notification when new version is available
         function showUpdateNotification() {
@@ -4702,6 +5064,23 @@
             if (closeInsightsBtn) {
                 closeInsightsBtn.addEventListener('click', closeInsights);
             }
+
+            // Notification test buttons
+            const testNotificationBtn = document.getElementById('testNotificationBtn');
+            const checkRemindersBtn = document.getElementById('checkRemindersBtn');
+            const createTestReminderBtn = document.getElementById('createTestReminderBtn');
+            
+            if (testNotificationBtn) {
+                testNotificationBtn.addEventListener('click', testNotification);
+            }
+            
+            if (checkRemindersBtn) {
+                checkRemindersBtn.addEventListener('click', checkRecurringReminders);
+            }
+            
+            if (createTestReminderBtn) {
+                createTestReminderBtn.addEventListener('click', createTestReminder);
+            }
         }
 
         // Enhanced DOMContentLoaded to include PWA features
@@ -4711,6 +5090,9 @@
             
             // Handle URL parameters for deep linking
             handleURLParameters();
+            
+            // Initialize notification status display
+            setTimeout(updateNotificationStatus, 1000);
             
             // Setup notification permission request
             if ('Notification' in window && Notification.permission === 'default') {

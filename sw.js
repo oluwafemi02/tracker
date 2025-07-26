@@ -176,20 +176,39 @@ self.addEventListener('notificationclick', event => {
   if (event.action === 'view' || event.action === 'view-dashboard') {
     url = '/?tab=dashboard';
   } else if (event.action === 'add-expense') {
-    url = '/?action=add';
+    // For recurring expenses, pre-fill the form
+    if (event.notification.data && event.notification.data.category) {
+      url = `/?action=add&category=${encodeURIComponent(event.notification.data.category)}&amount=${event.notification.data.amount}`;
+    } else {
+      url = '/?action=add';
+    }
+  } else if (event.action === 'view-recurring') {
+    url = '/?action=recurring';
   } else if (event.action === 'remind-later') {
-    // Schedule another notification for later
-    scheduleReminderNotification();
+    // Schedule another notification for later (2 hours)
+    scheduleReminderNotification(event.notification.data);
     return;
   } else if (event.action === 'dismiss') {
     return;
+  } else if (!event.action) {
+    // No action specified, just open the app
+    if (event.notification.data && event.notification.data.type === 'recurring-reminder') {
+      url = '/?action=recurring';
+    }
   }
 
   event.waitUntil(
     clients.matchAll().then(clientList => {
       // Check if app is already open
       for (const client of clientList) {
-        if (client.url === url && 'focus' in client) {
+        if (client.url.includes('/') && 'focus' in client) {
+          // Send message to existing client to handle the action
+          client.postMessage({
+            type: 'notification-action',
+            action: event.action || 'open',
+            data: event.notification.data,
+            url: url
+          });
           return client.focus();
         }
       }
@@ -263,15 +282,39 @@ async function syncBudgetData() {
   // Implementation for budget sync
 }
 
-function scheduleReminderNotification() {
+function scheduleReminderNotification(data) {
   // Schedule a reminder notification for later
+  console.log('⏰ Scheduling reminder notification for later', data);
+  
   setTimeout(() => {
-    self.registration.showNotification('Expense Reminder', {
-      body: 'Don\'t forget to add your recurring expense!',
+    let title = 'Expense Reminder';
+    let body = 'Don\'t forget to add your pending expense!';
+    
+    if (data && data.category) {
+      const icon = '📝'; // Default icon since we can't access categoryIcons here
+      title = 'Recurring Expense Reminder';
+      body = `${icon} Don't forget: ${data.category} (€${data.amount}) is still pending!`;
+    }
+    
+    self.registration.showNotification(title, {
+      body: body,
       icon: '/icons/icon-192x192.png',
-      tag: 'recurring-reminder'
+      badge: '/icons/badge-72x72.png',
+      tag: 'reminder-later',
+      requireInteraction: true,
+      actions: [
+        {
+          action: 'add-expense',
+          title: 'Add Now'
+        },
+        {
+          action: 'dismiss',
+          title: 'Dismiss'
+        }
+      ],
+      data: data
     });
-  }, 30 * 60 * 1000); // 30 minutes later
+  }, 2 * 60 * 60 * 1000); // 2 hours later
 }
 
 // Message handling for communication with main app
