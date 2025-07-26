@@ -3,7 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Family Expense Tracker</title>
+    <title>Expense Tracker Pro</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Track, manage, and optimize your spending with smart insights and analytics">
+    <meta name="theme-color" content="#667eea">
+    <meta name="color-scheme" content="light dark">
+    
+    <!-- Apple PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="ExpenseTracker">
+    <meta name="format-detection" content="telephone=no">
+    
+    <!-- Microsoft PWA Meta Tags -->
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="msapplication-tap-highlight" content="no">
+    
+    <!-- Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#667eea">
+    
+    <!-- Preconnect for performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -698,12 +727,130 @@
              box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
          }
 
-         .shortcut-desc {
-             color: var(--text-secondary);
-             font-size: 0.9rem;
-             margin-left: 1rem;
-             flex: 1;
-         }
+                   .shortcut-desc {
+              color: var(--text-secondary);
+              font-size: 0.9rem;
+              margin-left: 1rem;
+              flex: 1;
+          }
+
+          /* PWA Specific Styles */
+          .install-button {
+              position: fixed !important;
+              bottom: 20px !important;
+              right: 20px !important;
+              z-index: 1000 !important;
+              background: var(--primary-gradient) !important;
+              color: white !important;
+              border: none !important;
+              border-radius: 50px !important;
+              padding: 1rem 1.5rem !important;
+              font-weight: 600 !important;
+              box-shadow: var(--shadow-xl) !important;
+              transition: var(--transition) !important;
+              cursor: pointer !important;
+          }
+
+          .install-button:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+          }
+
+          @keyframes bounce {
+              0%, 20%, 50%, 80%, 100% {
+                  transform: translateY(0);
+              }
+              40% {
+                  transform: translateY(-10px);
+              }
+              60% {
+                  transform: translateY(-5px);
+              }
+          }
+
+          .update-banner {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              background: var(--primary-gradient);
+              color: white;
+              padding: 1rem;
+              z-index: 1001;
+              box-shadow: var(--shadow-lg);
+              animation: slideDown 0.3s ease-out;
+          }
+
+          .update-content {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 1rem;
+              max-width: 600px;
+              margin: 0 auto;
+          }
+
+          .update-content .btn {
+              padding: 0.5rem 1rem;
+              font-size: 0.9rem;
+              min-width: auto;
+          }
+
+          @keyframes slideDown {
+              from {
+                  transform: translateY(-100%);
+              }
+              to {
+                  transform: translateY(0);
+              }
+          }
+
+          /* PWA Mode specific styles */
+          .pwa-mode {
+              padding-top: env(safe-area-inset-top);
+              padding-bottom: env(safe-area-inset-bottom);
+          }
+
+          .pwa-mode .container {
+              padding-top: calc(2rem + env(safe-area-inset-top));
+              padding-bottom: calc(2rem + env(safe-area-inset-bottom));
+          }
+
+          /* Offline indicator */
+          .offline-indicator {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              background: #ff6b6b;
+              color: white;
+              padding: 0.5rem;
+              text-align: center;
+              font-size: 0.9rem;
+              z-index: 1000;
+              animation: slideDown 0.3s ease-out;
+          }
+
+          /* Touch-friendly enhancements for mobile */
+          @media (hover: none) and (pointer: coarse) {
+              .btn {
+                  min-height: 44px;
+                  min-width: 44px;
+              }
+              
+              .search-input-wrapper {
+                  padding: 1rem;
+              }
+              
+              .view-mode-btn {
+                  padding: 1rem;
+              }
+              
+              .pagination-controls button {
+                  min-height: 44px;
+                  padding: 0.75rem 1rem;
+              }
+          }
 
         .filter-group label {
             font-size: 0.8rem;
@@ -3998,6 +4145,237 @@
                 closeRecurringModal();
             }
         };
+
+        // PWA Installation and Notification Management
+        let deferredPrompt;
+        let swRegistration = null;
+        let notificationPermission = 'default';
+
+        // Register Service Worker and setup PWA features
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    swRegistration = await navigator.serviceWorker.register('/sw.js');
+                    console.log('✅ Service Worker registered:', swRegistration);
+                    
+                    // Check for updates
+                    swRegistration.addEventListener('updatefound', () => {
+                        const newWorker = swRegistration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                showUpdateNotification();
+                            }
+                        });
+                    });
+                } catch (error) {
+                    console.error('❌ Service Worker registration failed:', error);
+                }
+            });
+        }
+
+        // PWA Install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('💾 PWA install prompt available');
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallButton();
+        });
+
+        // Handle successful PWA installation
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ PWA installed successfully');
+            hideInstallButton();
+            showNotification('App installed! You can now use Expense Tracker offline.', 'success');
+        });
+
+        // Show/hide install button
+        function showInstallButton() {
+            // Create install button if it doesn't exist
+            if (!document.getElementById('installButton')) {
+                const installBtn = document.createElement('button');
+                installBtn.id = 'installButton';
+                installBtn.className = 'btn btn-primary install-button';
+                installBtn.innerHTML = '📱 Install App';
+                installBtn.onclick = installPWA;
+                installBtn.style.cssText = `
+                    position: fixed;
+                    bottom: 20px;
+                    right: 20px;
+                    z-index: 1000;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    box-shadow: var(--shadow-lg);
+                    animation: bounce 2s infinite;
+                `;
+                document.body.appendChild(installBtn);
+            }
+        }
+
+        function hideInstallButton() {
+            const installBtn = document.getElementById('installButton');
+            if (installBtn) {
+                installBtn.remove();
+            }
+        }
+
+        // Install PWA
+        async function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                
+                if (outcome === 'accepted') {
+                    console.log('✅ User accepted PWA install');
+                } else {
+                    console.log('❌ User declined PWA install');
+                }
+                
+                deferredPrompt = null;
+                hideInstallButton();
+            }
+        }
+
+        // Notification Permission Management
+        async function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                console.log('❌ This browser does not support notifications');
+                return false;
+            }
+
+            if (Notification.permission === 'granted') {
+                return true;
+            }
+
+            if (Notification.permission === 'denied') {
+                showNotification('Notifications are blocked. Please enable them in your browser settings.', 'error');
+                return false;
+            }
+
+            try {
+                const permission = await Notification.requestPermission();
+                notificationPermission = permission;
+                
+                if (permission === 'granted') {
+                    console.log('✅ Notification permission granted');
+                    setupPushNotifications();
+                    return true;
+                } else {
+                    console.log('❌ Notification permission denied');
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Error requesting notification permission:', error);
+                return false;
+            }
+        }
+
+        // Setup Push Notifications
+        async function setupPushNotifications() {
+            if (!swRegistration) {
+                console.log('❌ Service Worker not registered');
+                return;
+            }
+
+            try {
+                // Setup local notifications
+                setupLocalNotifications();
+                
+            } catch (error) {
+                console.error('❌ Error setting up push notifications:', error);
+            }
+        }
+
+        // Setup local notifications for budget alerts and reminders
+        function setupLocalNotifications() {
+            // Check budget status daily
+            setInterval(checkBudgetAndNotify, 24 * 60 * 60 * 1000); // 24 hours
+            
+            // Check for recurring expense reminders
+            setInterval(checkRecurringReminders, 60 * 60 * 1000); // 1 hour
+        }
+
+        // Check budget and send notification if needed
+        function checkBudgetAndNotify() {
+            if (Notification.permission !== 'granted') return;
+
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const monthlyExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+            });
+
+            const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
+            const budgetUsedPercentage = monthlyBudget > 0 ? (monthlyTotal / monthlyBudget) * 100 : 0;
+
+            if (budgetUsedPercentage >= 80 && budgetUsedPercentage < 100) {
+                new Notification('Budget Alert', {
+                    body: `You've used ${Math.round(budgetUsedPercentage)}% of your monthly budget.`,
+                    icon: '/icons/icon-192x192.png',
+                    tag: 'budget-warning'
+                });
+            } else if (budgetUsedPercentage >= 100) {
+                new Notification('Budget Exceeded!', {
+                    body: `You've exceeded your monthly budget by €${Math.abs(monthlyBudget - monthlyTotal).toFixed(2)}.`,
+                    icon: '/icons/icon-192x192.png',
+                    tag: 'budget-exceeded'
+                });
+            }
+        }
+
+        // Handle URL parameters for deep linking
+        function handleURLParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.get('action') === 'add') {
+                scrollToForm();
+            } else if (urlParams.get('tab')) {
+                const tab = urlParams.get('tab');
+                if (tab === 'dashboard' || tab === 'settings') {
+                    switchTab(tab);
+                }
+            } else if (urlParams.get('action') === 'recurring') {
+                showRecurringModal();
+            }
+        }
+
+        // Show update notification when new version is available
+        function showUpdateNotification() {
+            showNotification('🔄 New version available! Refresh to update.', 'info');
+        }
+
+        // Enhanced DOMContentLoaded to include PWA features
+        document.addEventListener('DOMContentLoaded', function() {
+            // Handle URL parameters for deep linking
+            handleURLParameters();
+            
+            // Setup notification permission request
+            if ('Notification' in window && Notification.permission === 'default') {
+                // Show notification permission request after user interacts with the app
+                setTimeout(() => {
+                    if (expenses.length > 0 || monthlyBudget > 0) {
+                        requestNotificationPermission();
+                    }
+                }, 30000); // Wait 30 seconds before asking
+            }
+            
+            // Check if running as PWA
+            if (window.matchMedia('(display-mode: standalone)').matches || 
+                window.navigator.standalone === true) {
+                console.log('✅ Running as PWA');
+                document.body.classList.add('pwa-mode');
+            }
+            
+            // Online/offline status handling
+            window.addEventListener('online', () => {
+                showNotification('You\'re back online!', 'success');
+            });
+            
+            window.addEventListener('offline', () => {
+                showNotification('You\'re offline. Changes will sync when you\'re back online.', 'info');
+            });
+        });
     </script>
 </body>
 </html>
