@@ -5,6 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Expense Tracker Pro</title>
     
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:;">
+    <meta http-equiv="X-Content-Type-Options" content="nosniff">
+    <meta http-equiv="X-Frame-Options" content="DENY">
+    <meta http-equiv="X-XSS-Protection" content="1; mode=block">
+    <meta name="referrer" content="strict-origin-when-cross-origin">
+    
     <!-- PWA Meta Tags -->
     <meta name="description" content="Track, manage, and optimize your spending with smart insights and analytics">
     <meta name="theme-color" content="#667eea">
@@ -1927,9 +1934,9 @@
             
             <!-- Navigation Tabs -->
             <div class="nav-tabs">
-                <button class="nav-tab active" onclick="switchTab('main')">📋 Expenses</button>
-                <button class="nav-tab" onclick="switchTab('dashboard')">📊 Dashboard</button>
-                <button class="nav-tab" onclick="switchTab('settings')">⚙️ Settings</button>
+                <button class="nav-tab active" data-tab="main">📋 Expenses</button>
+                <button class="nav-tab" data-tab="dashboard">📊 Dashboard</button>
+                <button class="nav-tab" data-tab="settings">⚙️ Settings</button>
             </div>
             
             <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 1rem;">
@@ -2000,31 +2007,31 @@
 
             <!-- Quick Actions -->
             <div class="quick-actions">
-                <div class="quick-action" onclick="showForm('Groceries')">
+                <div class="quick-action" data-action="quick-form" data-category="Groceries">
                     <span>🛒</span>
                     <span>Quick Groceries</span>
                 </div>
-                <div class="quick-action" onclick="showForm('Utilities')">
+                <div class="quick-action" data-action="quick-form" data-category="Utilities">
                     <span>⚡</span>
                     <span>Quick Utilities</span>
                 </div>
-                <div class="quick-action" onclick="showForm('Transportation')">
+                <div class="quick-action" data-action="quick-form" data-category="Transportation">
                     <span>🚗</span>
                     <span>Quick Transport</span>
                 </div>
-                <div class="quick-action" onclick="showForm('Mortgage')">
+                <div class="quick-action" data-action="quick-form" data-category="Mortgage">
                     <span>🏡</span>
                     <span>Quick Mortgage</span>
                 </div>
-                <div class="quick-action" onclick="showForm('Car Loan/Lease')">
+                <div class="quick-action" data-action="quick-form" data-category="Car Loan/Lease">
                     <span>🚙</span>
                     <span>Quick Car Loan</span>
                 </div>
-                <div class="quick-action" onclick="showInsights()">
+                <div class="quick-action" data-action="show-insights">
                     <span>💡</span>
                     <span>Insights</span>
                 </div>
-                <div class="quick-action" onclick="showRecurringModal()">
+                <div class="quick-action" data-action="show-recurring">
                     <span>🔄</span>
                     <span>Recurring</span>
                 </div>
@@ -2073,8 +2080,8 @@
                                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                                         <input type="text" id="customCategory" placeholder="Enter new category name">
                                         <input type="text" id="customCategoryIcon" placeholder="🏷️" maxlength="2" style="width: 60px; text-align: center;">
-                                        <button type="button" onclick="addCustomCategory()" class="btn btn-success" style="min-width: auto; padding: 0.5rem 1rem;">Add</button>
-                                        <button type="button" onclick="cancelCustomCategory()" class="btn btn-secondary" style="min-width: auto; padding: 0.5rem 1rem;">Cancel</button>
+                                        <button type="button" id="addCustomCategoryBtn" class="btn btn-success" style="min-width: auto; padding: 0.5rem 1rem;">Add</button>
+                                        <button type="button" id="cancelCustomCategoryBtn" class="btn btn-secondary" style="min-width: auto; padding: 0.5rem 1rem;">Cancel</button>
                                     </div>
                                 </div>
                                 
@@ -2133,7 +2140,7 @@
                             </div>
                             
                             <div class="btn-actions">
-                                <button type="button" id="cancelEdit" onclick="cancelEdit()" style="display: none;" class="btn btn-secondary">✖️ Cancel</button>
+                                <button type="button" id="cancelEdit" style="display: none;" class="btn btn-secondary">✖️ Cancel</button>
                                 <button type="submit" class="btn bounce-in">💾 Save Expense</button>
                             </div>
                         </form>
@@ -2148,21 +2155,21 @@
                             
                             <!-- Smart Search Bar -->
                             <div class="search-container">
-                                <div class="search-input-wrapper">
-                                    <span class="search-icon">🔍</span>
-                                    <input type="text" id="searchInput" placeholder="Search expenses..." onkeyup="handleSearch()" autocomplete="off">
-                                    <button id="clearSearch" onclick="clearSearch()" style="display: none;">✖️</button>
-                                </div>
+                                                            <div class="search-input-wrapper">
+                                <span class="search-icon">🔍</span>
+                                <input type="text" id="searchInput" placeholder="Search expenses..." autocomplete="off">
+                                <button id="clearSearch" style="display: none;">✖️</button>
+                            </div>
                                 <div id="searchResults" class="search-results"></div>
                             </div>
                             
                             <!-- View Mode Toggle -->
                             <div class="view-mode-toggle">
-                                <button id="recentModeBtn" class="view-mode-btn active" onclick="setViewMode('recent')">
+                                <button id="recentModeBtn" class="view-mode-btn active" data-view-mode="recent">
                                     <span class="view-icon">📅</span>
                                     <span>Recent (30 days)</span>
                                 </button>
-                                <button id="allModeBtn" class="view-mode-btn" onclick="setViewMode('all')">
+                                <button id="allModeBtn" class="view-mode-btn" data-view-mode="all">
                                     <span class="view-icon">📋</span>
                                     <span>All Expenses</span>
                                 </button>
@@ -2198,7 +2205,7 @@
                                         <option value="Both">💏 Both</option>
                                     </select>
                                 </div>
-                                <button class="btn btn-success" onclick="exportToCSV()">📥 Export CSV</button>
+                                <button class="btn btn-success" id="exportCSVBtn">📥 Export CSV</button>
                             </div>
                         </div>
                         
@@ -2293,7 +2300,7 @@
                         <label for="monthlyBudget">Monthly Budget (€)</label>
                         <input type="number" id="monthlyBudget" placeholder="1500" min="0">
                     </div>
-                    <button class="btn" onclick="setBudget()">💾 Set Budget</button>
+                    <button class="btn" id="setBudgetBtn">💾 Set Budget</button>
                 </div>
                 
                 <div style="margin-top: 2rem;">
@@ -2757,57 +2764,131 @@
                 } else {
                     message = 'No expenses added yet. Add your first expense above!';
                 }
-                expensesList.innerHTML = `<div class="no-expenses">${message}</div>`;
+                const noExpensesDiv = document.createElement('div');
+                noExpensesDiv.className = 'no-expenses';
+                noExpensesDiv.textContent = message;
+                expensesList.innerHTML = '';
+                expensesList.appendChild(noExpensesDiv);
                 return;
             }
             
             // Sort expenses by date (newest first)
             const sortedExpenses = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
             
-            expensesList.innerHTML = sortedExpenses.map(expense => {
-                const icon = categoryIcons[expense.category] || '📝';
-                const formattedDate = new Date(expense.date).toLocaleDateString('en-US', {
-                    month: 'short',
-                    day: 'numeric',
-                    year: 'numeric'
-                });
-                
-                // Escape user input to prevent XSS and apply search highlighting
-                const safeCategory = escapeHtml(expense.category);
-                const safeDescription = expense.description ? escapeHtml(expense.description) : '';
-                const safePerson = escapeHtml(expense.person);
-                
-                // Apply search highlighting
-                const highlightedCategory = highlightSearchTerms(safeCategory, searchTerm);
-                const highlightedDescription = safeDescription ? highlightSearchTerms(safeDescription, searchTerm) : '';
-                const highlightedPerson = highlightSearchTerms(safePerson, searchTerm);
-                const highlightedDate = highlightSearchTerms(formattedDate, searchTerm);
-                const highlightedAmount = highlightSearchTerms(`€${expense.amount.toFixed(2)}`, searchTerm);
-                
-                return `
-                    <div class="expense-item-enhanced slide-in-right">
-                        <div class="expense-details">
-                            <div class="expense-main">
-                                <div class="expense-category-icon">${icon}</div>
-                                <div>
-                                    <strong>${highlightedCategory}</strong>
-                                    ${highlightedDescription ? `- ${highlightedDescription}` : ''}
-                                    ${expense.isRecurring ? '<span class="recurring-indicator">🔄 Recurring</span>' : ''}
-                                </div>
-                            </div>
-                            <div class="expense-meta">
-                                <span>👤 ${highlightedPerson}</span>
-                                <span>📅 ${highlightedDate}</span>
-                            </div>
-                        </div>
-                        <div class="expense-amount">${highlightedAmount}</div>
-                        <div class="expense-actions">
-                            <button class="btn btn-warning" onclick="editExpense(${expense.id})" title="Edit expense">✏️</button>
-                            <button class="btn btn-danger" onclick="deleteExpense(${expense.id})" title="Delete expense">🗑️</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            // Clear existing content
+            expensesList.innerHTML = '';
+            
+            // Create expense items securely
+            sortedExpenses.forEach(expense => {
+                const expenseElement = createExpenseElement(expense);
+                expensesList.appendChild(expenseElement);
+            });
+        }
+
+        // Secure function to create expense DOM elements
+        function createExpenseElement(expense) {
+            const icon = categoryIcons[expense.category] || '📝';
+            const formattedDate = new Date(expense.date).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            
+            // Create main container
+            const expenseDiv = document.createElement('div');
+            expenseDiv.className = 'expense-item-enhanced slide-in-right';
+            
+            // Create details section
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'expense-details';
+            
+            // Create main section
+            const mainDiv = document.createElement('div');
+            mainDiv.className = 'expense-main';
+            
+            // Icon
+            const iconDiv = document.createElement('div');
+            iconDiv.className = 'expense-category-icon';
+            iconDiv.textContent = icon;
+            
+            // Category and description
+            const contentDiv = document.createElement('div');
+            const categoryStrong = document.createElement('strong');
+            
+            // Apply search highlighting safely
+            const safeCategory = escapeHtml(expense.category);
+            const highlightedCategory = highlightSearchTerms(safeCategory, searchTerm);
+            categoryStrong.innerHTML = highlightedCategory;
+            contentDiv.appendChild(categoryStrong);
+            
+            if (expense.description) {
+                const safeDescription = escapeHtml(expense.description);
+                const highlightedDescription = highlightSearchTerms(safeDescription, searchTerm);
+                const descSpan = document.createElement('span');
+                descSpan.innerHTML = ` - ${highlightedDescription}`;
+                contentDiv.appendChild(descSpan);
+            }
+            
+            if (expense.isRecurring) {
+                const recurringSpan = document.createElement('span');
+                recurringSpan.className = 'recurring-indicator';
+                recurringSpan.textContent = '🔄 Recurring';
+                contentDiv.appendChild(recurringSpan);
+            }
+            
+            mainDiv.appendChild(iconDiv);
+            mainDiv.appendChild(contentDiv);
+            
+            // Meta section
+            const metaDiv = document.createElement('div');
+            metaDiv.className = 'expense-meta';
+            
+            const personSpan = document.createElement('span');
+            const safePerson = escapeHtml(expense.person);
+            const highlightedPerson = highlightSearchTerms(safePerson, searchTerm);
+            personSpan.innerHTML = `👤 ${highlightedPerson}`;
+            
+            const dateSpan = document.createElement('span');
+            const highlightedDate = highlightSearchTerms(formattedDate, searchTerm);
+            dateSpan.innerHTML = `📅 ${highlightedDate}`;
+            
+            metaDiv.appendChild(personSpan);
+            metaDiv.appendChild(dateSpan);
+            
+            detailsDiv.appendChild(mainDiv);
+            detailsDiv.appendChild(metaDiv);
+            
+            // Amount section
+            const amountDiv = document.createElement('div');
+            amountDiv.className = 'expense-amount';
+            const highlightedAmount = highlightSearchTerms(`€${expense.amount.toFixed(2)}`, searchTerm);
+            amountDiv.innerHTML = highlightedAmount;
+            
+            // Actions section
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'expense-actions';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-warning';
+            editBtn.title = 'Edit expense';
+            editBtn.textContent = '✏️';
+            editBtn.addEventListener('click', () => editExpense(expense.id));
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-danger';
+            deleteBtn.title = 'Delete expense';
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.addEventListener('click', () => deleteExpense(expense.id));
+            
+            actionsDiv.appendChild(editBtn);
+            actionsDiv.appendChild(deleteBtn);
+            
+            // Assemble final element
+            expenseDiv.appendChild(detailsDiv);
+            expenseDiv.appendChild(amountDiv);
+            expenseDiv.appendChild(actionsDiv);
+            
+            return expenseDiv;
         }
 
         // Filter expenses (updated for new features)
@@ -3652,7 +3733,7 @@
                     closeInsights();
                     closeRecurringModal();
                     if (searchTerm) {
-                        clearSearch();
+                        clearSearchFunction();
                     }
                 }
             });
@@ -3674,7 +3755,7 @@
             filterAndRenderExpenses();
         }
 
-        function clearSearch() {
+        function clearSearchFunction() {
             document.getElementById('searchInput').value = '';
             document.getElementById('clearSearch').style.display = 'none';
             searchTerm = '';
@@ -4195,8 +4276,8 @@
                 const installBtn = document.createElement('button');
                 installBtn.id = 'installButton';
                 installBtn.className = 'btn btn-primary install-button';
-                installBtn.innerHTML = '📱 Install App';
-                installBtn.onclick = installPWA;
+                installBtn.textContent = '📱 Install App';
+                installBtn.addEventListener('click', installPWA);
                 installBtn.style.cssText = `
                     position: fixed;
                     bottom: 20px;
@@ -4345,8 +4426,134 @@
             showNotification('🔄 New version available! Refresh to update.', 'info');
         }
 
+        // Setup secure event listeners (replaces inline onclick handlers)
+        function setupEventListeners() {
+            // Navigation tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    if (tabName) {
+                        switchTab(tabName);
+                        // Update active state
+                        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                    }
+                });
+            });
+
+            // Quick actions
+            document.querySelectorAll('.quick-action').forEach(action => {
+                action.addEventListener('click', function() {
+                    const actionType = this.getAttribute('data-action');
+                    const category = this.getAttribute('data-category');
+                    
+                    if (actionType === 'quick-form' && category) {
+                        showForm(category);
+                    } else if (actionType === 'show-insights') {
+                        showInsights();
+                    } else if (actionType === 'show-recurring') {
+                        showRecurringModal();
+                    }
+                });
+            });
+
+            // Search functionality
+            const searchInput = document.getElementById('searchInput');
+            const clearSearch = document.getElementById('clearSearch');
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', handleSearch);
+                searchInput.addEventListener('keyup', handleSearch);
+            }
+            
+            if (clearSearch) {
+                clearSearch.addEventListener('click', function() {
+                    clearSearchFunction();
+                });
+            }
+
+            // View mode toggle
+            document.querySelectorAll('.view-mode-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const mode = this.getAttribute('data-view-mode');
+                    if (mode) {
+                        setViewMode(mode);
+                    }
+                });
+            });
+
+            // Filter selects
+            const categoryFilter = document.getElementById('categoryFilter');
+            const personFilter = document.getElementById('personFilter');
+            
+            if (categoryFilter) {
+                categoryFilter.addEventListener('change', filterExpenses);
+            }
+            
+            if (personFilter) {
+                personFilter.addEventListener('change', filterExpenses);
+            }
+
+            // Dark mode toggle
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('change', toggleDarkMode);
+            }
+
+            // Pagination buttons
+            const prevPageBtn = document.getElementById('prevPageBtn');
+            const nextPageBtn = document.getElementById('nextPageBtn');
+            
+            if (prevPageBtn) {
+                prevPageBtn.addEventListener('click', () => changePage(-1));
+            }
+            
+            if (nextPageBtn) {
+                nextPageBtn.addEventListener('click', () => changePage(1));
+            }
+
+            // FAB button
+            const fabBtn = document.querySelector('.fab');
+            if (fabBtn) {
+                fabBtn.addEventListener('click', scrollToForm);
+            }
+
+            // Custom category buttons
+            const addCustomCategoryBtn = document.getElementById('addCustomCategoryBtn');
+            const cancelCustomCategoryBtn = document.getElementById('cancelCustomCategoryBtn');
+            
+            if (addCustomCategoryBtn) {
+                addCustomCategoryBtn.addEventListener('click', addCustomCategory);
+            }
+            
+            if (cancelCustomCategoryBtn) {
+                cancelCustomCategoryBtn.addEventListener('click', cancelCustomCategory);
+            }
+
+            // Cancel edit button
+            const cancelEditBtn = document.getElementById('cancelEdit');
+            if (cancelEditBtn) {
+                cancelEditBtn.addEventListener('click', cancelEdit);
+            }
+
+            // Export CSV button
+            const exportCSVBtn = document.getElementById('exportCSVBtn');
+            if (exportCSVBtn) {
+                exportCSVBtn.addEventListener('click', exportToCSV);
+            }
+
+            // Set budget button
+            const setBudgetBtn = document.getElementById('setBudgetBtn');
+            if (setBudgetBtn) {
+                setBudgetBtn.addEventListener('click', setBudget);
+            }
+        }
+
         // Enhanced DOMContentLoaded to include PWA features
         document.addEventListener('DOMContentLoaded', function() {
+            // Setup secure event listeners
+            setupEventListeners();
+            
             // Handle URL parameters for deep linking
             handleURLParameters();
             
