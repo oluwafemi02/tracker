@@ -1426,8 +1426,11 @@
             border-radius: var(--border-radius-xl);
             width: 90%;
             max-width: 600px;
+            max-height: 85vh;
             box-shadow: var(--shadow-xl);
             animation: modalFadeIn 0.3s ease-out;
+            overflow-y: auto;
+            position: relative;
         }
 
         @keyframes modalFadeIn {
@@ -1449,19 +1452,97 @@
             margin-left: 0.5rem;
         }
 
-        .recurring-item {
-            background: var(--card-bg);
+        /* Recurring Modal Specific Styles */
+        #recurringContent {
+            max-height: 60vh;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        #recurringList {
+            max-height: 40vh;
+            overflow-y: auto;
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
             padding: 1rem;
-            margin-bottom: 1rem;
-            transition: var(--transition);
+            background: var(--bg-secondary);
+            margin-top: 1rem;
+        }
+
+        .recurring-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
         }
 
         .recurring-item:hover {
-            background: var(--hover-bg);
-            transform: translateX(4px);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
         }
+
+        .recurring-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .recurring-details {
+            flex: 1;
+        }
+
+        .recurring-details h4 {
+            margin: 0 0 0.25rem 0;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .recurring-details p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .recurring-amount {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            margin-right: 1rem;
+        }
+
+        /* Mobile responsive for recurring modal */
+        @media (max-width: 768px) {
+            .modal-content {
+                margin: 2% auto;
+                padding: 1.5rem;
+                width: 95%;
+                max-height: 90vh;
+            }
+
+            #recurringContent {
+                max-height: 70vh;
+            }
+
+            #recurringList {
+                max-height: 50vh;
+            }
+
+            .recurring-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .recurring-amount {
+                margin-right: 0;
+                align-self: flex-end;
+            }
+        }
+
+
 
         .recurring-item-header {
             display: flex;
@@ -2379,7 +2460,7 @@
                 </div>
             </div>
             <div style="text-align: center; margin-top: 2rem;">
-                <button class="btn" onclick="closeInsights()">Close</button>
+                <button class="btn" id="closeInsightsBtn">Close</button>
             </div>
         </div>
     </div>
@@ -2396,13 +2477,13 @@
                 <div>
                     <h3>⚡ Quick Actions</h3>
                     <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1rem;">
-                        <button class="btn btn-success" onclick="processRecurringExpenses()">📅 Process Due Expenses</button>
-                        <button class="btn btn-warning" onclick="checkRecurringExpenses()">🔍 Check for Due Expenses</button>
+                        <button class="btn btn-success" id="processRecurringBtn">📅 Process Due Expenses</button>
+                        <button class="btn btn-warning" id="checkRecurringBtn">🔍 Check for Due Expenses</button>
                     </div>
                 </div>
             </div>
             <div style="text-align: center; margin-top: 2rem;">
-                <button class="btn" onclick="closeRecurringModal()">Close</button>
+                <button class="btn" id="closeRecurringBtn">Close</button>
             </div>
         </div>
     </div>
@@ -3512,54 +3593,105 @@
         function renderRecurringList() {
             const recurringList = document.getElementById('recurringList');
             
+            // Clear existing content
+            recurringList.innerHTML = '';
+            
             if (recurringExpenses.length === 0) {
-                recurringList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); font-style: italic;">No recurring expenses set up yet.</p>';
+                const emptyMessage = document.createElement('p');
+                emptyMessage.style.cssText = 'text-align: center; color: var(--text-secondary); font-style: italic; padding: 2rem;';
+                emptyMessage.textContent = 'No recurring expenses set up yet.';
+                recurringList.appendChild(emptyMessage);
                 return;
             }
             
             const activeRecurring = recurringExpenses.filter(r => r.isActive);
             
             if (activeRecurring.length === 0) {
-                recurringList.innerHTML = '<p style="text-align: center; color: var(--text-secondary); font-style: italic;">No active recurring expenses.</p>';
+                const emptyMessage = document.createElement('p');
+                emptyMessage.style.cssText = 'text-align: center; color: var(--text-secondary); font-style: italic; padding: 2rem;';
+                emptyMessage.textContent = 'No active recurring expenses.';
+                recurringList.appendChild(emptyMessage);
                 return;
             }
             
-            recurringList.innerHTML = activeRecurring.map(recurring => {
-                const nextDue = calculateNextDueDate(recurring.lastProcessedDate, recurring.frequency);
-                const today = new Date();
-                const daysUntilDue = Math.ceil((nextDue - today) / (1000 * 60 * 60 * 24));
-                
-                let statusClass = 'recurring-frequency';
-                let statusText = `Next: ${nextDue.toLocaleDateString()}`;
-                
-                if (daysUntilDue < 0) {
-                    statusClass = 'recurring-frequency overdue';
-                    statusText = `Overdue by ${Math.abs(daysUntilDue)} day(s)`;
-                } else if (daysUntilDue <= 3) {
-                    statusClass = 'recurring-frequency due-soon';
-                    statusText = `Due in ${daysUntilDue} day(s)`;
+            // Create scrollable container with items
+            activeRecurring.forEach(recurring => {
+                const recurringElement = createRecurringElement(recurring);
+                recurringList.appendChild(recurringElement);
+            });
+        }
+
+        // Secure function to create recurring expense DOM elements
+        function createRecurringElement(recurring) {
+            const nextDue = calculateNextDueDate(recurring.lastProcessedDate, recurring.frequency);
+            const today = new Date();
+            const daysUntilDue = Math.ceil((nextDue - today) / (1000 * 60 * 60 * 24));
+            
+            let statusClass = 'recurring-frequency';
+            let statusText = `Next: ${nextDue.toLocaleDateString()}`;
+            
+            if (daysUntilDue < 0) {
+                statusClass = 'recurring-frequency overdue';
+                statusText = `Overdue by ${Math.abs(daysUntilDue)} day(s)`;
+            } else if (daysUntilDue <= 3) {
+                statusClass = 'recurring-frequency due-soon';
+                statusText = `Due in ${daysUntilDue} day(s)`;
+            }
+            
+            const icon = categoryIcons[recurring.category] || '📝';
+            
+            // Create main container
+            const itemDiv = document.createElement('div');
+            itemDiv.className = 'recurring-item';
+            
+            // Create details section
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'recurring-details';
+            
+            // Create title
+            const titleH4 = document.createElement('h4');
+            titleH4.textContent = `${icon} ${recurring.category}`;
+            
+            // Create description
+            const descP = document.createElement('p');
+            descP.textContent = `${recurring.description} • ${recurring.frequency} • 👤 ${recurring.person}`;
+            
+            detailsDiv.appendChild(titleH4);
+            detailsDiv.appendChild(descP);
+            
+            // Create amount section
+            const amountDiv = document.createElement('div');
+            amountDiv.className = 'recurring-amount';
+            amountDiv.textContent = `€${recurring.amount.toFixed(2)}`;
+            
+            // Create status section
+            const statusDiv = document.createElement('div');
+            statusDiv.style.cssText = 'display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;';
+            
+            const statusSpan = document.createElement('span');
+            statusSpan.className = statusClass;
+            statusSpan.textContent = statusText;
+            
+            // Create stop button
+            const stopBtn = document.createElement('button');
+            stopBtn.className = 'btn btn-danger';
+            stopBtn.style.cssText = 'min-width: auto; padding: 0.25rem 0.5rem; font-size: 0.8rem;';
+            stopBtn.textContent = 'Stop';
+            stopBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to stop this recurring expense?')) {
+                    deactivateRecurring(recurring.id);
                 }
-                
-                const icon = categoryIcons[recurring.category] || '📝';
-                
-                return `
-                    <div class="recurring-item">
-                        <div class="recurring-item-header">
-                            <div>
-                                <strong>${icon} ${recurring.category}</strong>
-                                <span style="margin-left: 0.5rem; color: var(--text-secondary);">€${recurring.amount.toFixed(2)}</span>
-                            </div>
-                            <div style="display: flex; gap: 0.5rem; align-items: center;">
-                                <span class="${statusClass}">${statusText}</span>
-                                <button class="btn btn-danger" onclick="deactivateRecurring(${recurring.id})" style="min-width: auto; padding: 0.25rem 0.5rem; font-size: 0.8rem;">Stop</button>
-                            </div>
-                        </div>
-                        <div style="font-size: 0.9rem; color: var(--text-secondary);">
-                            ${recurring.description} • ${recurring.frequency} • 👤 ${recurring.person}
-                        </div>
-                    </div>
-                `;
-            }).join('');
+            });
+            
+            statusDiv.appendChild(statusSpan);
+            statusDiv.appendChild(stopBtn);
+            
+            // Assemble final element
+            itemDiv.appendChild(detailsDiv);
+            itemDiv.appendChild(amountDiv);
+            itemDiv.appendChild(statusDiv);
+            
+            return itemDiv;
         }
 
         function deactivateRecurring(recurringId) {
@@ -4546,6 +4678,29 @@
             const setBudgetBtn = document.getElementById('setBudgetBtn');
             if (setBudgetBtn) {
                 setBudgetBtn.addEventListener('click', setBudget);
+            }
+
+            // Recurring modal buttons
+            const processRecurringBtn = document.getElementById('processRecurringBtn');
+            const checkRecurringBtn = document.getElementById('checkRecurringBtn');
+            const closeRecurringBtn = document.getElementById('closeRecurringBtn');
+            
+            if (processRecurringBtn) {
+                processRecurringBtn.addEventListener('click', processRecurringExpenses);
+            }
+            
+            if (checkRecurringBtn) {
+                checkRecurringBtn.addEventListener('click', checkRecurringExpenses);
+            }
+            
+            if (closeRecurringBtn) {
+                closeRecurringBtn.addEventListener('click', closeRecurringModal);
+            }
+
+            // Insights modal close button
+            const closeInsightsBtn = document.getElementById('closeInsightsBtn');
+            if (closeInsightsBtn) {
+                closeInsightsBtn.addEventListener('click', closeInsights);
             }
         }
 
