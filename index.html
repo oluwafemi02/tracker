@@ -1544,6 +1544,183 @@
             }
         }
 
+        /* Interactive Guide Styles */
+        .guide-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+            animation: guideOverlayFadeIn 0.3s ease-out;
+        }
+
+        .guide-content {
+            background: var(--card-bg);
+            border-radius: var(--border-radius-xl);
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            box-shadow: var(--shadow-xl);
+            position: relative;
+            animation: guideContentSlideUp 0.4s ease-out;
+        }
+
+        .guide-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .guide-header h2 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+        }
+
+        .guide-close {
+            background: none;
+            border: none;
+            font-size: 1.2rem;
+            cursor: pointer;
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.2s ease;
+            color: var(--text-secondary);
+        }
+
+        .guide-close:hover {
+            background: var(--hover-bg);
+            color: var(--text-primary);
+        }
+
+        .guide-body {
+            margin-bottom: 2rem;
+        }
+
+        #guideText {
+            min-height: 120px;
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            color: var(--text-primary);
+        }
+
+        #guideText h3 {
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        #guideText ul {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+        }
+
+        #guideText li {
+            margin-bottom: 0.5rem;
+        }
+
+        .guide-progress {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: var(--bg-secondary);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: var(--primary-gradient);
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .progress-text {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .guide-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .guide-spotlight {
+            position: absolute;
+            border: 3px solid var(--primary-color);
+            border-radius: var(--border-radius);
+            background: rgba(102, 126, 234, 0.1);
+            pointer-events: none;
+            z-index: 10000;
+            opacity: 0;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+        }
+
+        .guide-spotlight.active {
+            opacity: 1;
+            animation: guideSpotlightPulse 2s infinite;
+        }
+
+        @keyframes guideOverlayFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes guideContentSlideUp {
+            from { opacity: 0; transform: translateY(50px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes guideSpotlightPulse {
+            0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(102, 126, 234, 0.5); }
+            50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(102, 126, 234, 0.8); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(100%); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Mobile responsive for guide */
+        @media (max-width: 768px) {
+            .guide-content {
+                padding: 1.5rem;
+                max-width: 95%;
+            }
+
+            .guide-header h2 {
+                font-size: 1.3rem;
+            }
+
+            .guide-footer {
+                gap: 0.5rem;
+            }
+
+            .guide-footer .btn {
+                font-size: 0.9rem;
+                padding: 0.5rem 1rem;
+            }
+        }
+
 
 
         .recurring-item-header {
@@ -1669,6 +1846,35 @@
 
         .nav-tab.active:hover {
             transform: translateY(-2px) scale(1.02);
+        }
+
+        .help-btn {
+            background: var(--warning-gradient);
+            color: white;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            min-width: 50px;
+            position: relative;
+            animation: helpPulse 3s infinite;
+        }
+
+        .help-btn:hover {
+            transform: translateY(-2px) scale(1.05);
+            box-shadow: var(--shadow-lg);
+        }
+
+        @keyframes helpPulse {
+            0%, 90%, 100% { 
+                box-shadow: 0 0 0 0 rgba(255, 193, 7, 0.7);
+            }
+            10% { 
+                box-shadow: 0 0 0 10px rgba(255, 193, 7, 0);
+            }
         }
 
         /* Tab Content */
@@ -2020,6 +2226,7 @@
                 <button class="nav-tab active" data-tab="main">📋 Expenses</button>
                 <button class="nav-tab" data-tab="dashboard">📊 Dashboard</button>
                 <button class="nav-tab" data-tab="settings">⚙️ Settings</button>
+                <button class="help-btn" id="helpBtn" title="Need help? Start the interactive guide!">❓</button>
             </div>
             
             <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 1rem;">
@@ -2456,6 +2663,18 @@
                 </div>
 
                 <div style="margin-top: 2rem;">
+                    <h3>📚 User Guide</h3>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                        <button class="btn btn-info" id="startGuideBtn">
+                            🎯 Start Interactive Guide
+                        </button>
+                        <button class="btn btn-secondary" id="quickTourBtn">
+                            ⚡ Quick Feature Tour
+                        </button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
                     <h3>🗑️ Data Management</h3>
                     <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
                         <button class="btn btn-warning" onclick="exportToCSV()">📥 Export All Data</button>
@@ -2515,6 +2734,34 @@
                 <button class="btn" id="closeRecurringBtn">Close</button>
             </div>
         </div>
+    </div>
+
+    <!-- Interactive Guide Overlay -->
+    <div id="guideOverlay" class="guide-overlay" style="display: none;">
+        <div class="guide-content">
+            <div class="guide-header">
+                <h2 id="guideTitle">Welcome to Expense Tracker Pro! 🎉</h2>
+                <button class="guide-close" id="closeGuideBtn">✖️</button>
+            </div>
+            <div class="guide-body">
+                <div id="guideText">
+                    <p>Let's take a quick tour to help you get started with managing your expenses like a pro!</p>
+                </div>
+                <div class="guide-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="guideProgress"></div>
+                    </div>
+                    <span class="progress-text" id="guideProgressText">Step 1 of 10</span>
+                </div>
+            </div>
+            <div class="guide-footer">
+                <button class="btn btn-secondary" id="guidePrevBtn" style="display: none;">← Previous</button>
+                <button class="btn btn-secondary" id="guideSkipBtn">Skip Tour</button>
+                <button class="btn btn-primary" id="guideNextBtn">Next →</button>
+                <button class="btn btn-success" id="guideFinishBtn" style="display: none;">🎉 Start Using!</button>
+            </div>
+        </div>
+        <div class="guide-spotlight" id="guideSpotlight"></div>
     </div>
 
     <script>
@@ -4815,6 +5062,389 @@
                          }
          }
 
+         // Interactive Guide System
+         const guideSteps = [
+             {
+                 title: "Welcome to Expense Tracker Pro! 🎉",
+                 content: `
+                     <p>This powerful app helps you track expenses, set budgets, manage recurring payments, and get smart financial insights.</p>
+                     <p><strong>What you'll learn:</strong></p>
+                     <ul>
+                         <li>How to add and track expenses</li>
+                         <li>Setting up recurring payments</li>
+                         <li>Using the dashboard for insights</li>
+                         <li>Setting budgets and getting alerts</li>
+                         <li>Enabling automatic reminders</li>
+                     </ul>
+                 `,
+                 target: null,
+                 action: null
+             },
+             {
+                 title: "📱 PWA App Features",
+                 content: `
+                     <h3>You're using a Progressive Web App!</h3>
+                     <p>This means you get app-like features:</p>
+                     <ul>
+                         <li>📱 Works offline once loaded</li>
+                         <li>🔔 Push notifications for reminders</li>
+                         <li>🏠 Add to home screen like a native app</li>
+                         <li>⚡ Fast loading and smooth performance</li>
+                         <li>🔒 Secure - all data stays on your device</li>
+                     </ul>
+                     <p><strong>Pro tip:</strong> Add this to your home screen for the best experience!</p>
+                 `,
+                 target: null,
+                 action: null
+             },
+             {
+                 title: "💰 Adding Your First Expense",
+                 content: `
+                     <h3>Let's add an expense!</h3>
+                     <p>This form is where you'll track all your spending. Here's what each field does:</p>
+                     <ul>
+                         <li><strong>Amount:</strong> How much you spent</li>
+                         <li><strong>Category:</strong> What type of expense (groceries, bills, etc.)</li>
+                         <li><strong>Description:</strong> Optional details about the expense</li>
+                         <li><strong>Person:</strong> Who made the purchase</li>
+                         <li><strong>Date:</strong> When the expense occurred</li>
+                     </ul>
+                     <p>Try adding a test expense now!</p>
+                 `,
+                 target: "#expenseForm",
+                 action: "scrollTo"
+             },
+             {
+                 title: "🎯 Quick Actions",
+                 content: `
+                     <h3>Speed up expense entry!</h3>
+                     <p>These quick action buttons let you add common expenses with one click:</p>
+                     <ul>
+                         <li>🛒 <strong>Quick Groceries</strong> - Pre-fills grocery category</li>
+                         <li>⚡ <strong>Quick Utilities</strong> - For bills and utilities</li>
+                         <li>🚗 <strong>Quick Transport</strong> - Gas, bus, taxi expenses</li>
+                         <li>🏡 <strong>Quick Mortgage</strong> - Housing payments</li>
+                         <li>🚙 <strong>Quick Car Loan</strong> - Vehicle payments</li>
+                     </ul>
+                     <p>Click any button to see how it pre-fills the form!</p>
+                 `,
+                 target: ".quick-actions",
+                 action: "highlight"
+             },
+             {
+                 title: "🔍 Smart Search & Filtering",
+                 content: `
+                     <h3>Find expenses instantly!</h3>
+                     <p>Use the search bar to find any expense by:</p>
+                     <ul>
+                         <li>💰 Amount (e.g., "50" or "€25")</li>
+                         <li>📝 Category name</li>
+                         <li>📄 Description text</li>
+                         <li>👤 Person's name</li>
+                         <li>📅 Date</li>
+                     </ul>
+                     <p><strong>View Modes:</strong></p>
+                     <ul>
+                         <li><strong>Recent:</strong> Last 30 days (default)</li>
+                         <li><strong>All:</strong> Complete expense history</li>
+                     </ul>
+                 `,
+                 target: ".search-container",
+                 action: "highlight"
+             },
+             {
+                 title: "📊 Dashboard - Your Financial Overview",
+                 content: `
+                     <h3>Get insights into your spending!</h3>
+                     <p>The Dashboard tab shows:</p>
+                     <ul>
+                         <li>📈 <strong>Spending charts</strong> - Visual breakdown by category</li>
+                         <li>📊 <strong>Monthly trends</strong> - How your spending changes</li>
+                         <li>🎯 <strong>Budget progress</strong> - How much you've spent vs. budget</li>
+                         <li>📉 <strong>Category analysis</strong> - Which categories cost the most</li>
+                         <li>💡 <strong>Smart suggestions</strong> - AI-like financial advice</li>
+                     </ul>
+                     <p>Click the Dashboard tab to explore your financial data!</p>
+                 `,
+                 target: '[data-tab="dashboard"]',
+                 action: "highlight"
+             },
+             {
+                 title: "🔄 Recurring Expenses - Never Forget a Bill!",
+                 content: `
+                     <h3>Automate your regular expenses!</h3>
+                     <p>Set up recurring expenses for:</p>
+                     <ul>
+                         <li>🏠 <strong>Rent/Mortgage</strong> - Monthly housing payments</li>
+                         <li>⚡ <strong>Utilities</strong> - Electricity, water, internet</li>
+                         <li>📱 <strong>Subscriptions</strong> - Netflix, Spotify, etc.</li>
+                         <li>🚗 <strong>Car payments</strong> - Loans, insurance</li>
+                         <li>🛒 <strong>Regular shopping</strong> - Weekly groceries</li>
+                     </ul>
+                     <p><strong>Frequencies available:</strong> Weekly, Bi-weekly, Monthly, Quarterly, Yearly</p>
+                     <p>The app will automatically remind you when they're due!</p>
+                 `,
+                 target: '[data-action="show-recurring"]',
+                 action: "highlight"
+             },
+             {
+                 title: "🔔 Smart Notifications",
+                 content: `
+                     <h3>Never miss a payment again!</h3>
+                     <p>The app sends automatic reminders:</p>
+                     <ul>
+                         <li>📅 <strong>3 days before</strong> recurring expenses are due</li>
+                         <li>⚠️ <strong>1 day before</strong> with urgent priority</li>
+                         <li>🚨 <strong>Overdue alerts</strong> if you miss a payment</li>
+                         <li>💰 <strong>Budget warnings</strong> when you're spending too much</li>
+                     </ul>
+                     <p><strong>Works even when the app is closed!</strong> Click notifications to quickly add expenses.</p>
+                     <p>Go to Settings → Notification Settings to enable and test this feature.</p>
+                 `,
+                 target: "#notificationStatus",
+                 action: "scrollTo"
+             },
+             {
+                 title: "⚙️ Settings & Customization",
+                 content: `
+                     <h3>Personalize your experience!</h3>
+                     <p>In the Settings tab you can:</p>
+                     <ul>
+                         <li>💰 <strong>Set monthly budget</strong> - Get alerts when you overspend</li>
+                         <li>🎨 <strong>Add custom categories</strong> - Create categories with emojis</li>
+                         <li>🔔 <strong>Test notifications</strong> - Make sure reminders work</li>
+                         <li>⌨️ <strong>Learn keyboard shortcuts</strong> - Work faster</li>
+                         <li>📥 <strong>Export your data</strong> - Download CSV for analysis</li>
+                         <li>📚 <strong>Access this guide</strong> - Anytime you need help</li>
+                     </ul>
+                 `,
+                 target: '[data-tab="settings"]',
+                 action: "highlight"
+             },
+             {
+                 title: "🎉 You're All Set!",
+                 content: `
+                     <h3>Ready to master your finances!</h3>
+                     <p><strong>Your next steps:</strong></p>
+                     <ul>
+                         <li>📱 Add this app to your home screen</li>
+                         <li>🔔 Enable notifications for reminders</li>
+                         <li>💰 Set your monthly budget</li>
+                         <li>📝 Add some expenses to get started</li>
+                         <li>🔄 Set up recurring expenses for bills</li>
+                         <li>📊 Check the dashboard for insights</li>
+                     </ul>
+                     <p><strong>Pro tips:</strong></p>
+                     <ul>
+                         <li>Use quick actions for common expenses</li>
+                         <li>Check the guide anytime from Settings</li>
+                         <li>Keyboard shortcuts make things faster</li>
+                         <li>Export data regularly as backup</li>
+                     </ul>
+                     <p><strong>Happy expense tracking! 🚀</strong></p>
+                 `,
+                 target: null,
+                 action: null
+             }
+         ];
+
+         let currentGuideStep = 0;
+         let isGuideActive = false;
+
+         function startGuide(isQuickTour = false) {
+             if (isQuickTour) {
+                 // Quick tour shows only essential steps (2, 3, 6, 8)
+                 currentGuideStep = 0;
+                 const quickSteps = [guideSteps[1], guideSteps[2], guideSteps[5], guideSteps[7]];
+                 showGuideStep(quickSteps, 0, true);
+             } else {
+                 // Full guide shows all steps
+                 currentGuideStep = 0;
+                 showGuideStep(guideSteps, 0, false);
+             }
+             
+             isGuideActive = true;
+             document.getElementById('guideOverlay').style.display = 'flex';
+             
+             // Mark that user has seen the guide
+             localStorage.setItem('hasSeenGuide', 'true');
+         }
+
+         function showGuideStep(steps, stepIndex, isQuickTour) {
+             const step = steps[stepIndex];
+             if (!step) return;
+
+             // Update content
+             document.getElementById('guideTitle').innerHTML = step.title;
+             document.getElementById('guideText').innerHTML = step.content;
+             
+             // Update progress
+             const progress = ((stepIndex + 1) / steps.length) * 100;
+             document.getElementById('guideProgress').style.width = progress + '%';
+             document.getElementById('guideProgressText').textContent = 
+                 `Step ${stepIndex + 1} of ${steps.length}`;
+
+             // Update buttons
+             const prevBtn = document.getElementById('guidePrevBtn');
+             const nextBtn = document.getElementById('guideNextBtn');
+             const finishBtn = document.getElementById('guideFinishBtn');
+
+             prevBtn.style.display = stepIndex > 0 ? 'block' : 'none';
+             nextBtn.style.display = stepIndex < steps.length - 1 ? 'block' : 'none';
+             finishBtn.style.display = stepIndex === steps.length - 1 ? 'block' : 'none';
+
+             // Handle spotlight
+             handleGuideAction(step);
+
+             // Store current state
+             window.currentGuideSteps = steps;
+             window.currentStepIndex = stepIndex;
+             window.isQuickTour = isQuickTour;
+         }
+
+         function handleGuideAction(step) {
+             const spotlight = document.getElementById('guideSpotlight');
+             spotlight.classList.remove('active');
+
+             if (step.target && step.action) {
+                 const targetElement = document.querySelector(step.target);
+                 if (targetElement) {
+                     setTimeout(() => {
+                         if (step.action === 'highlight') {
+                             highlightElement(targetElement);
+                         } else if (step.action === 'scrollTo') {
+                             scrollToElement(targetElement);
+                         }
+                     }, 300);
+                 }
+             }
+         }
+
+         function highlightElement(element) {
+             const rect = element.getBoundingClientRect();
+             const spotlight = document.getElementById('guideSpotlight');
+             
+             spotlight.style.left = (rect.left - 10) + 'px';
+             spotlight.style.top = (rect.top - 10) + 'px';
+             spotlight.style.width = (rect.width + 20) + 'px';
+             spotlight.style.height = (rect.height + 20) + 'px';
+             spotlight.classList.add('active');
+         }
+
+         function scrollToElement(element) {
+             element.scrollIntoView({ 
+                 behavior: 'smooth', 
+                 block: 'center' 
+             });
+             setTimeout(() => highlightElement(element), 500);
+         }
+
+         function nextGuideStep() {
+             const steps = window.currentGuideSteps;
+             const currentIndex = window.currentStepIndex;
+             
+             if (currentIndex < steps.length - 1) {
+                 showGuideStep(steps, currentIndex + 1, window.isQuickTour);
+             }
+         }
+
+         function prevGuideStep() {
+             const steps = window.currentGuideSteps;
+             const currentIndex = window.currentStepIndex;
+             
+             if (currentIndex > 0) {
+                 showGuideStep(steps, currentIndex - 1, window.isQuickTour);
+             }
+         }
+
+         function closeGuide() {
+             document.getElementById('guideOverlay').style.display = 'none';
+             document.getElementById('guideSpotlight').classList.remove('active');
+             isGuideActive = false;
+         }
+
+         function skipGuide() {
+             if (confirm('Are you sure you want to skip the guide? You can access it anytime from Settings.')) {
+                 closeGuide();
+             }
+         }
+
+         function showWelcomeBackMessage() {
+             const message = `
+                 <div style="
+                     position: fixed; 
+                     top: 20px; 
+                     right: 20px; 
+                     background: var(--card-bg); 
+                     border: 2px solid var(--primary-color);
+                     border-radius: var(--border-radius-xl);
+                     padding: 1.5rem; 
+                     box-shadow: var(--shadow-xl);
+                     z-index: 1000;
+                     max-width: 350px;
+                     animation: slideInRight 0.5s ease-out;
+                 ">
+                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                         <h3 style="margin: 0; color: var(--primary-color);">🎉 Welcome Back!</h3>
+                         <button onclick="this.parentElement.parentElement.remove()" style="
+                             background: none; 
+                             border: none; 
+                             font-size: 1.2rem; 
+                             cursor: pointer;
+                             color: var(--text-secondary);
+                         ">✖️</button>
+                     </div>
+                     <p style="margin: 0 0 1rem 0; color: var(--text-primary);">
+                         We've added new features! Want a quick tour to see what's new?
+                     </p>
+                     <div style="display: flex; gap: 0.5rem;">
+                         <button onclick="startGuide(true); this.parentElement.parentElement.parentElement.remove();" class="btn btn-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+                             ⚡ Quick Tour
+                         </button>
+                         <button onclick="this.parentElement.parentElement.parentElement.remove();" class="btn btn-secondary" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
+                             Maybe Later
+                         </button>
+                     </div>
+                 </div>
+             `;
+             
+             document.body.insertAdjacentHTML('beforeend', message);
+             
+             // Auto-remove after 10 seconds
+             setTimeout(() => {
+                 const welcomeMsg = document.querySelector('[style*="slideInRight"]');
+                 if (welcomeMsg) {
+                     welcomeMsg.remove();
+                 }
+             }, 10000);
+         }
+
+         // Add keyboard support for guide navigation
+         document.addEventListener('keydown', (e) => {
+             if (!isGuideActive) return;
+             
+             if (e.key === 'ArrowRight' || e.key === 'Enter') {
+                 e.preventDefault();
+                 const nextBtn = document.getElementById('guideNextBtn');
+                 const finishBtn = document.getElementById('guideFinishBtn');
+                 
+                 if (nextBtn.style.display !== 'none') {
+                     nextGuideStep();
+                 } else if (finishBtn.style.display !== 'none') {
+                     closeGuide();
+                 }
+             } else if (e.key === 'ArrowLeft') {
+                 e.preventDefault();
+                 const prevBtn = document.getElementById('guidePrevBtn');
+                 if (prevBtn.style.display !== 'none') {
+                     prevGuideStep();
+                 }
+             } else if (e.key === 'Escape') {
+                 e.preventDefault();
+                 skipGuide();
+             }
+         });
+
          // Create a test recurring expense that will trigger a reminder soon
          function createTestReminder() {
              // Create a test recurring expense due in 3 days
@@ -5081,6 +5711,55 @@
             if (createTestReminderBtn) {
                 createTestReminderBtn.addEventListener('click', createTestReminder);
             }
+
+            // Guide buttons
+            const startGuideBtn = document.getElementById('startGuideBtn');
+            const quickTourBtn = document.getElementById('quickTourBtn');
+            const closeGuideBtn = document.getElementById('closeGuideBtn');
+            const helpBtn = document.getElementById('helpBtn');
+            const guideNextBtn = document.getElementById('guideNextBtn');
+            const guidePrevBtn = document.getElementById('guidePrevBtn');
+            const guideSkipBtn = document.getElementById('guideSkipBtn');
+            const guideFinishBtn = document.getElementById('guideFinishBtn');
+
+            if (startGuideBtn) {
+                startGuideBtn.addEventListener('click', () => startGuide(false));
+            }
+
+            if (quickTourBtn) {
+                quickTourBtn.addEventListener('click', () => startGuide(true));
+            }
+
+            if (helpBtn) {
+                helpBtn.addEventListener('click', () => startGuide(true));
+            }
+
+            if (closeGuideBtn) {
+                closeGuideBtn.addEventListener('click', closeGuide);
+            }
+
+            if (guideNextBtn) {
+                guideNextBtn.addEventListener('click', nextGuideStep);
+            }
+
+            if (guidePrevBtn) {
+                guidePrevBtn.addEventListener('click', prevGuideStep);
+            }
+
+            if (guideSkipBtn) {
+                guideSkipBtn.addEventListener('click', skipGuide);
+            }
+
+            if (guideFinishBtn) {
+                guideFinishBtn.addEventListener('click', closeGuide);
+            }
+
+            // Close guide on overlay click
+            document.getElementById('guideOverlay').addEventListener('click', (e) => {
+                if (e.target.id === 'guideOverlay') {
+                    skipGuide();
+                }
+            });
         }
 
         // Enhanced DOMContentLoaded to include PWA features
@@ -5093,6 +5772,24 @@
             
             // Initialize notification status display
             setTimeout(updateNotificationStatus, 1000);
+            
+            // Check if first-time user and show guide
+            setTimeout(() => {
+                const hasSeenGuide = localStorage.getItem('hasSeenGuide');
+                const hasExpenses = expenses.length > 0;
+                const hasRecurring = recurringExpenses.length > 0;
+                const hasBudget = monthlyBudget > 0;
+                
+                // Show guide if it's a truly new user (no data at all)
+                if (!hasSeenGuide && !hasExpenses && !hasRecurring && !hasBudget) {
+                    console.log('👋 Welcome new user! Starting interactive guide...');
+                    setTimeout(() => startGuide(false), 2000); // Delay to let page settle
+                } else if (!hasSeenGuide) {
+                    // User has some data but hasn't seen guide - offer quick tour
+                    console.log('💡 Existing data detected. Offering quick tour...');
+                    showWelcomeBackMessage();
+                }
+            }, 1500);
             
             // Setup notification permission request
             if ('Notification' in window && Notification.permission === 'default') {
