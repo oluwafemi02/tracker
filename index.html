@@ -2505,9 +2505,9 @@
                                 <span id="paginationInfo">Showing 0 expenses</span>
                             </div>
                             <div class="pagination-controls">
-                                <button id="prevPageBtn" onclick="changePage(-1)" disabled>← Previous</button>
+                                <button id="prevPageBtn" disabled>← Previous</button>
                                 <span id="pageInfo">Page 1 of 1</span>
-                                <button id="nextPageBtn" onclick="changePage(1)" disabled>Next →</button>
+                                <button id="nextPageBtn" disabled>Next →</button>
                             </div>
                         </div>
                         
@@ -2518,9 +2518,9 @@
                         <!-- Bottom Pagination -->
                         <div id="paginationBottom" class="pagination-container" style="display: none;">
                             <div class="pagination-controls">
-                                <button onclick="changePage(-1)">← Previous</button>
+                                <button id="prevPageBtnBottom">← Previous</button>
                                 <span id="pageInfoBottom">Page 1 of 1</span>
-                                <button onclick="changePage(1)">Next →</button>
+                                <button id="nextPageBtnBottom">Next →</button>
                             </div>
                         </div>
                     </div>
@@ -2677,8 +2677,8 @@
                 <div style="margin-top: 2rem;">
                     <h3>🗑️ Data Management</h3>
                     <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
-                        <button class="btn btn-warning" onclick="exportToCSV()">📥 Export All Data</button>
-                        <button class="btn btn-danger" onclick="clearAllData()">🗑️ Clear All Data</button>
+                        <button class="btn btn-warning" id="exportAllDataBtn">📥 Export All Data</button>
+                        <button class="btn btn-danger" id="clearAllDataBtn">🗑️ Clear All Data</button>
                     </div>
                 </div>
             </div>
@@ -2689,7 +2689,7 @@
     <div id="notification" class="notification"></div>
     
     <!-- Floating Action Button -->
-    <button class="fab" onclick="scrollToForm()" title="Add New Expense">
+    <button class="fab" id="fabScrollBtn" title="Add New Expense">
         ➕
     </button>
     
@@ -5370,51 +5370,89 @@
          }
 
          function showWelcomeBackMessage() {
-             const message = `
-                 <div style="
-                     position: fixed; 
-                     top: 20px; 
-                     right: 20px; 
-                     background: var(--card-bg); 
-                     border: 2px solid var(--primary-color);
-                     border-radius: var(--border-radius-xl);
-                     padding: 1.5rem; 
-                     box-shadow: var(--shadow-xl);
-                     z-index: 1000;
-                     max-width: 350px;
-                     animation: slideInRight 0.5s ease-out;
-                 ">
-                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-                         <h3 style="margin: 0; color: var(--primary-color);">🎉 Welcome Back!</h3>
-                         <button onclick="this.parentElement.parentElement.remove()" style="
-                             background: none; 
-                             border: none; 
-                             font-size: 1.2rem; 
-                             cursor: pointer;
-                             color: var(--text-secondary);
-                         ">✖️</button>
-                     </div>
-                     <p style="margin: 0 0 1rem 0; color: var(--text-primary);">
-                         We've added new features! Want a quick tour to see what's new?
-                     </p>
-                     <div style="display: flex; gap: 0.5rem;">
-                         <button onclick="startGuide(true); this.parentElement.parentElement.parentElement.remove();" class="btn btn-primary" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
-                             ⚡ Quick Tour
-                         </button>
-                         <button onclick="this.parentElement.parentElement.parentElement.remove();" class="btn btn-secondary" style="font-size: 0.9rem; padding: 0.5rem 1rem;">
-                             Maybe Later
-                         </button>
-                     </div>
-                 </div>
+             // Create main container
+             const messageDiv = document.createElement('div');
+             messageDiv.style.cssText = `
+                 position: fixed; 
+                 top: 20px; 
+                 right: 20px; 
+                 background: var(--card-bg); 
+                 border: 2px solid var(--primary-color);
+                 border-radius: var(--border-radius-xl);
+                 padding: 1.5rem; 
+                 box-shadow: var(--shadow-xl);
+                 z-index: 1000;
+                 max-width: 350px;
+                 animation: slideInRight 0.5s ease-out;
              `;
              
-             document.body.insertAdjacentHTML('beforeend', message);
+             // Create header
+             const headerDiv = document.createElement('div');
+             headerDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;';
+             
+             const title = document.createElement('h3');
+             title.style.cssText = 'margin: 0; color: var(--primary-color);';
+             title.textContent = '🎉 Welcome Back!';
+             
+             const closeBtn = document.createElement('button');
+             closeBtn.style.cssText = `
+                 background: none; 
+                 border: none; 
+                 font-size: 1.2rem; 
+                 cursor: pointer;
+                 color: var(--text-secondary);
+             `;
+             closeBtn.textContent = '✖️';
+             closeBtn.addEventListener('click', () => {
+                 messageDiv.remove();
+             });
+             
+             headerDiv.appendChild(title);
+             headerDiv.appendChild(closeBtn);
+             
+             // Create message text
+             const messageText = document.createElement('p');
+             messageText.style.cssText = 'margin: 0 0 1rem 0; color: var(--text-primary);';
+             messageText.textContent = "We've added new features! Want a quick tour to see what's new?";
+             
+             // Create button container
+             const buttonContainer = document.createElement('div');
+             buttonContainer.style.cssText = 'display: flex; gap: 0.5rem;';
+             
+             // Create Quick Tour button
+             const quickTourBtn = document.createElement('button');
+             quickTourBtn.className = 'btn btn-primary';
+             quickTourBtn.style.cssText = 'font-size: 0.9rem; padding: 0.5rem 1rem;';
+             quickTourBtn.textContent = '⚡ Quick Tour';
+             quickTourBtn.addEventListener('click', () => {
+                 startGuide(true);
+                 messageDiv.remove();
+             });
+             
+             // Create Maybe Later button
+             const laterBtn = document.createElement('button');
+             laterBtn.className = 'btn btn-secondary';
+             laterBtn.style.cssText = 'font-size: 0.9rem; padding: 0.5rem 1rem;';
+             laterBtn.textContent = 'Maybe Later';
+             laterBtn.addEventListener('click', () => {
+                 messageDiv.remove();
+             });
+             
+             // Assemble the message
+             buttonContainer.appendChild(quickTourBtn);
+             buttonContainer.appendChild(laterBtn);
+             
+             messageDiv.appendChild(headerDiv);
+             messageDiv.appendChild(messageText);
+             messageDiv.appendChild(buttonContainer);
+             
+             // Add to DOM
+             document.body.appendChild(messageDiv);
              
              // Auto-remove after 10 seconds
              setTimeout(() => {
-                 const welcomeMsg = document.querySelector('[style*="slideInRight"]');
-                 if (welcomeMsg) {
-                     welcomeMsg.remove();
+                 if (messageDiv && messageDiv.parentNode) {
+                     messageDiv.remove();
                  }
              }, 10000);
          }
@@ -5627,6 +5665,8 @@
             // Pagination buttons
             const prevPageBtn = document.getElementById('prevPageBtn');
             const nextPageBtn = document.getElementById('nextPageBtn');
+            const prevPageBtnBottom = document.getElementById('prevPageBtnBottom');
+            const nextPageBtnBottom = document.getElementById('nextPageBtnBottom');
             
             if (prevPageBtn) {
                 prevPageBtn.addEventListener('click', () => changePage(-1));
@@ -5636,10 +5676,30 @@
                 nextPageBtn.addEventListener('click', () => changePage(1));
             }
 
+            if (prevPageBtnBottom) {
+                prevPageBtnBottom.addEventListener('click', () => changePage(-1));
+            }
+            
+            if (nextPageBtnBottom) {
+                nextPageBtnBottom.addEventListener('click', () => changePage(1));
+            }
+
             // FAB button
-            const fabBtn = document.querySelector('.fab');
+            const fabBtn = document.getElementById('fabScrollBtn');
             if (fabBtn) {
                 fabBtn.addEventListener('click', scrollToForm);
+            }
+
+            // Data management buttons
+            const exportAllDataBtn = document.getElementById('exportAllDataBtn');
+            const clearAllDataBtn = document.getElementById('clearAllDataBtn');
+            
+            if (exportAllDataBtn) {
+                exportAllDataBtn.addEventListener('click', exportToCSV);
+            }
+            
+            if (clearAllDataBtn) {
+                clearAllDataBtn.addEventListener('click', clearAllData);
             }
 
             // Custom category buttons
