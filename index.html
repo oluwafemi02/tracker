@@ -1721,6 +1721,320 @@
             }
         }
 
+        /* Travel Tracker Styles */
+        .travel-tracker {
+            padding: 1rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .trip-header {
+            background: var(--primary-gradient);
+            color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius-xl);
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .trip-info h2 {
+            margin: 0 0 1rem 0;
+            font-size: 1.8rem;
+        }
+
+        .trip-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .current-trip {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        #tripName {
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .trip-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        .trip-stat-card {
+            background: rgba(255, 255, 255, 0.15);
+            padding: 1rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .trip-stat-icon {
+            font-size: 1.5rem;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .trip-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .trip-stat-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .travel-quick-actions {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .travel-action {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .travel-action:hover {
+            background: var(--primary-gradient);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .travel-action span:first-child {
+            font-size: 1.5rem;
+        }
+
+        .travel-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        .travel-form-panel, .travel-list-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .travel-expense-form {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-xl);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .travel-breakdown {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-xl);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+        }
+
+        .category-breakdown {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .category-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .category-item-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .category-amount {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .travel-expense-list {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius-xl);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            height: fit-content;
+        }
+
+        .travel-list-header h3 {
+            margin: 0 0 1rem 0;
+        }
+
+        .travel-filters {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-end;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .travel-expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--bg-secondary);
+            margin-bottom: 0.75rem;
+            transition: all 0.2s ease;
+        }
+
+        .travel-expense-item:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .travel-expense-details {
+            flex: 1;
+        }
+
+        .travel-expense-details h4 {
+            margin: 0 0 0.25rem 0;
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .travel-expense-details p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .travel-expense-amount {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+            margin-right: 1rem;
+        }
+
+        .travel-expense-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        /* Trip Management Modal Styles */
+        .trip-form-section, .existing-trips-section {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            margin-bottom: 1.5rem;
+        }
+
+        .trip-form-section h3, .existing-trips-section h3 {
+            margin: 0 0 1rem 0;
+            color: var(--primary-color);
+        }
+
+        .trip-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.75rem;
+        }
+
+        .trip-item-info h4 {
+            margin: 0 0 0.25rem 0;
+        }
+
+        .trip-item-info p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .trip-item-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .trip-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .trip-status.active {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .trip-status.completed {
+            background: var(--neutral-gradient);
+            color: white;
+        }
+
+        /* Mobile responsive for travel tracker */
+        @media (max-width: 768px) {
+            .travel-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .trip-stats {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .travel-quick-actions {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .travel-filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .travel-expense-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .travel-expense-amount {
+                margin-right: 0;
+                align-self: flex-end;
+            }
+        }
+
 
 
         .recurring-item-header {
@@ -2224,6 +2538,7 @@
             <!-- Navigation Tabs -->
             <div class="nav-tabs">
                 <button class="nav-tab active" data-tab="main">📋 Expenses</button>
+                <button class="nav-tab" data-tab="travel">✈️ Travel</button>
                 <button class="nav-tab" data-tab="dashboard">📊 Dashboard</button>
                 <button class="nav-tab" data-tab="settings">⚙️ Settings</button>
                 <button class="help-btn" id="helpBtn" title="Need help? Start the interactive guide!">❓</button>
@@ -2581,6 +2896,254 @@
             </div>
         </div>
 
+        <!-- Travel Tab Content -->
+        <div id="travelTab" class="tab-content">
+            <div class="travel-tracker">
+                <!-- Trip Management Header -->
+                <div class="trip-header">
+                    <div class="trip-info">
+                        <h2><span class="card-icon">✈️</span> Travel Expense Tracker</h2>
+                        <div class="trip-controls">
+                            <div class="current-trip" id="currentTripDisplay">
+                                <span id="tripName">No active trip</span>
+                                <button class="btn btn-secondary" id="manageTripBtn">📝 Manage Trips</button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Trip Stats -->
+                    <div class="trip-stats" id="tripStatsContainer">
+                        <div class="trip-stat-card">
+                            <span class="trip-stat-icon">💰</span>
+                            <div class="trip-stat-value" id="tripTotal">€0</div>
+                            <div class="trip-stat-label">Total Spent</div>
+                        </div>
+                        <div class="trip-stat-card">
+                            <span class="trip-stat-icon">📅</span>
+                            <div class="trip-stat-value" id="tripDays">0</div>
+                            <div class="trip-stat-label">Days</div>
+                        </div>
+                        <div class="trip-stat-card">
+                            <span class="trip-stat-icon">📝</span>
+                            <div class="trip-stat-value" id="tripExpenseCount">0</div>
+                            <div class="trip-stat-label">Expenses</div>
+                        </div>
+                        <div class="trip-stat-card">
+                            <span class="trip-stat-icon">📊</span>
+                            <div class="trip-stat-value" id="tripAvgDaily">€0</div>
+                            <div class="trip-stat-label">Daily Avg</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Travel Quick Actions -->
+                <div class="travel-quick-actions">
+                    <div class="travel-action" data-travel-category="⛽ Fuel">
+                        <span>⛽</span>
+                        <span>Fuel</span>
+                    </div>
+                    <div class="travel-action" data-travel-category="🍽️ Food">
+                        <span>🍽️</span>
+                        <span>Food</span>
+                    </div>
+                    <div class="travel-action" data-travel-category="🏨 Accommodation">
+                        <span>🏨</span>
+                        <span>Hotel</span>
+                    </div>
+                    <div class="travel-action" data-travel-category="🎫 Attractions">
+                        <span>🎫</span>
+                        <span>Parks/Tickets</span>
+                    </div>
+                    <div class="travel-action" data-travel-category="🛒 Shopping">
+                        <span>🛒</span>
+                        <span>Shopping</span>
+                    </div>
+                    <div class="travel-action" data-travel-category="🚗 Transport">
+                        <span>🚗</span>
+                        <span>Transport</span>
+                    </div>
+                </div>
+
+                <div class="travel-grid">
+                    <div class="travel-form-panel">
+                        <!-- Travel Expense Form -->
+                        <div class="travel-expense-form card-enhanced">
+                            <h3><span class="card-icon">➕</span> Add Travel Expense</h3>
+                            <form id="travelExpenseForm">
+                                <div class="form-grid">
+                                    <div class="input-group">
+                                        <span class="input-icon">💰</span>
+                                        <label for="travelAmount">Amount (€)</label>
+                                        <input type="number" id="travelAmount" step="0.01" required placeholder="0.00">
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <span class="input-icon">📋</span>
+                                        <label for="travelCategory">Category</label>
+                                        <select id="travelCategory" required>
+                                            <option value="">Select category</option>
+                                            <option value="⛽ Fuel">⛽ Fuel</option>
+                                            <option value="🍽️ Food">🍽️ Food & Dining</option>
+                                            <option value="🏨 Accommodation">🏨 Accommodation</option>
+                                            <option value="🎫 Attractions">🎫 Attractions & Entertainment</option>
+                                            <option value="🛒 Shopping">🛒 Shopping & Souvenirs</option>
+                                            <option value="🚗 Transport">🚗 Transportation</option>
+                                            <option value="✈️ Flight">✈️ Flights</option>
+                                            <option value="🚕 Taxi/Uber">🚕 Taxi/Uber</option>
+                                            <option value="🎿 Activities">🎿 Activities</option>
+                                            <option value="💊 Medical">💊 Medical</option>
+                                            <option value="📱 Communication">📱 Communication</option>
+                                            <option value="💱 Exchange">💱 Currency Exchange</option>
+                                            <option value="📝 Other">📝 Other</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <span class="input-icon">📅</span>
+                                        <label for="travelDate">Date</label>
+                                        <input type="date" id="travelDate" required>
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <span class="input-icon">📍</span>
+                                        <label for="travelLocation">Location</label>
+                                        <input type="text" id="travelLocation" placeholder="e.g., Paris, Restaurant Name">
+                                    </div>
+                                    
+                                    <div class="input-group" style="grid-column: 1 / -1;">
+                                        <span class="input-icon">📝</span>
+                                        <label for="travelDescription">Description (optional)</label>
+                                        <input type="text" id="travelDescription" placeholder="e.g., Lunch at local cafe">
+                                    </div>
+                                </div>
+                                
+                                <div class="btn-actions">
+                                    <button type="button" id="cancelTravelEdit" style="display: none;" class="btn btn-secondary">✖️ Cancel</button>
+                                    <button type="submit" class="btn bounce-in">💾 Add to Trip</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        <!-- Category Breakdown -->
+                        <div class="travel-breakdown card-enhanced">
+                            <h3><span class="card-icon">📊</span> Category Breakdown</h3>
+                            <div id="travelCategoryBreakdown" class="category-breakdown">
+                                <div class="no-breakdown">Add expenses to see category breakdown</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="travel-list-panel">
+                        <!-- Travel Expense List -->
+                        <div class="travel-expense-list">
+                            <div class="travel-list-header">
+                                <h3><span class="card-icon">📋</span> Trip Expenses</h3>
+                                
+                                <!-- Travel Search -->
+                                <div class="search-container">
+                                    <div class="search-input-wrapper">
+                                        <span class="search-icon">🔍</span>
+                                        <input type="text" id="travelSearchInput" placeholder="Search travel expenses..." autocomplete="off">
+                                        <button id="clearTravelSearch" style="display: none;">✖️</button>
+                                    </div>
+                                </div>
+
+                                <!-- Travel Filters -->
+                                <div class="travel-filters">
+                                    <div class="filter-group">
+                                        <label>Filter by Category</label>
+                                        <select id="travelCategoryFilter">
+                                            <option value="">All Categories</option>
+                                            <option value="⛽ Fuel">⛽ Fuel</option>
+                                            <option value="🍽️ Food">🍽️ Food & Dining</option>
+                                            <option value="🏨 Accommodation">🏨 Accommodation</option>
+                                            <option value="🎫 Attractions">🎫 Attractions</option>
+                                            <option value="🛒 Shopping">🛒 Shopping</option>
+                                            <option value="🚗 Transport">🚗 Transport</option>
+                                            <option value="✈️ Flight">✈️ Flights</option>
+                                            <option value="🚕 Taxi/Uber">🚕 Taxi/Uber</option>
+                                            <option value="🎿 Activities">🎿 Activities</option>
+                                            <option value="💊 Medical">💊 Medical</option>
+                                            <option value="📱 Communication">📱 Communication</option>
+                                            <option value="💱 Exchange">💱 Currency Exchange</option>
+                                            <option value="📝 Other">📝 Other</option>
+                                        </select>
+                                    </div>
+                                    <button class="btn btn-success" id="exportTravelCSVBtn">📥 Export Trip</button>
+                                </div>
+                            </div>
+                            
+                            <div id="travelExpensesList">
+                                <div class="no-expenses">Start a trip and add expenses to track your travel spending!</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trip Management Modal -->
+        <div id="tripModal" class="modal">
+            <div class="modal-content">
+                <h2>🧳 Trip Management</h2>
+                <div id="tripModalContent">
+                    <!-- Create New Trip -->
+                    <div class="trip-form-section">
+                        <h3>✈️ Start New Trip</h3>
+                        <form id="newTripForm">
+                            <div class="form-grid">
+                                <div class="input-group">
+                                    <span class="input-icon">🏷️</span>
+                                    <label for="newTripName">Trip Name</label>
+                                    <input type="text" id="newTripName" required placeholder="e.g., Paris Vacation 2024">
+                                </div>
+                                
+                                <div class="input-group">
+                                    <span class="input-icon">📍</span>
+                                    <label for="newTripDestination">Destination</label>
+                                    <input type="text" id="newTripDestination" placeholder="e.g., Paris, France">
+                                </div>
+                                
+                                <div class="input-group">
+                                    <span class="input-icon">📅</span>
+                                    <label for="newTripStartDate">Start Date</label>
+                                    <input type="date" id="newTripStartDate" required>
+                                </div>
+                                
+                                <div class="input-group">
+                                    <span class="input-icon">📅</span>
+                                    <label for="newTripEndDate">End Date</label>
+                                    <input type="date" id="newTripEndDate">
+                                </div>
+                                
+                                <div class="input-group">
+                                    <span class="input-icon">💰</span>
+                                    <label for="newTripBudget">Budget (optional)</label>
+                                    <input type="number" id="newTripBudget" step="0.01" placeholder="0.00">
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 1rem;">
+                                <button type="submit" class="btn btn-primary">🚀 Start Trip</button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Existing Trips -->
+                    <div class="existing-trips-section">
+                        <h3>📋 Your Trips</h3>
+                        <div id="tripsList">
+                            <div class="no-trips">No trips created yet. Start your first trip above!</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button class="btn" id="closeTripModalBtn">Close</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Settings Tab Content -->
         <div id="settingsTab" class="tab-content">
             <div class="settings-panel">
@@ -2800,6 +3363,12 @@
         let currentViewMode = 'recent'; // 'recent' or 'all'
         let searchTerm = '';
         let totalFilteredExpenses = 0;
+
+        // Travel tracker variables
+        let travelExpenses = JSON.parse(localStorage.getItem('travelExpenses')) || [];
+        let trips = JSON.parse(localStorage.getItem('trips')) || [];
+        let currentTrip = JSON.parse(localStorage.getItem('currentTrip')) || null;
+        let travelEditingId = null;
 
         // Initialize app
         document.addEventListener('DOMContentLoaded', function() {
@@ -4016,6 +4585,11 @@
             // Update dashboard if switching to dashboard tab
             if (tabName === 'dashboard') {
                 updateDashboard();
+            }
+            
+            // Initialize travel tab if switching to travel tab
+            if (tabName === 'travel') {
+                initializeTravelTab();
             }
         }
 
@@ -5820,6 +6394,190 @@
                     skipGuide();
                 }
             });
+
+            // Travel tracker event listeners
+            setupTravelEventListeners();
+        }
+
+        function setupTravelEventListeners() {
+            // Travel quick actions
+            document.querySelectorAll('.travel-action').forEach(action => {
+                action.addEventListener('click', function() {
+                    const category = this.getAttribute('data-travel-category');
+                    if (category) {
+                        document.getElementById('travelCategory').value = category;
+                        document.getElementById('travelAmount').focus();
+                    }
+                });
+            });
+
+            // Travel expense form
+            const travelExpenseForm = document.getElementById('travelExpenseForm');
+            if (travelExpenseForm) {
+                travelExpenseForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = {
+                        amount: document.getElementById('travelAmount').value,
+                        category: document.getElementById('travelCategory').value,
+                        date: document.getElementById('travelDate').value,
+                        location: document.getElementById('travelLocation').value,
+                        description: document.getElementById('travelDescription').value
+                    };
+
+                    if (travelEditingId) {
+                        // Update existing expense
+                        const expense = travelExpenses.find(e => e.id === travelEditingId);
+                        if (expense) {
+                            expense.amount = parseFloat(formData.amount);
+                            expense.category = formData.category;
+                            expense.date = formData.date;
+                            expense.location = formData.location;
+                            expense.description = formData.description;
+                            
+                            localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses));
+                            
+                            cancelTravelEdit();
+                            renderTravelExpensesList();
+                            updateTravelCategoryBreakdown();
+                            updateTripStats();
+                            
+                            showNotification('✈️ Travel expense updated!', 'success');
+                        }
+                    } else {
+                        // Add new expense
+                        addTravelExpense(formData);
+                        this.reset();
+                        document.getElementById('travelDate').valueAsDate = new Date();
+                    }
+                });
+            }
+
+            // Cancel travel edit button
+            const cancelTravelEditBtn = document.getElementById('cancelTravelEdit');
+            if (cancelTravelEditBtn) {
+                cancelTravelEditBtn.addEventListener('click', cancelTravelEdit);
+            }
+
+            // Trip management button
+            const manageTripBtn = document.getElementById('manageTripBtn');
+            if (manageTripBtn) {
+                manageTripBtn.addEventListener('click', function() {
+                    document.getElementById('tripModal').style.display = 'block';
+                    renderTripsList();
+                });
+            }
+
+            // New trip form
+            const newTripForm = document.getElementById('newTripForm');
+            if (newTripForm) {
+                newTripForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const tripData = {
+                        name: document.getElementById('newTripName').value,
+                        destination: document.getElementById('newTripDestination').value,
+                        startDate: document.getElementById('newTripStartDate').value,
+                        endDate: document.getElementById('newTripEndDate').value,
+                        budget: document.getElementById('newTripBudget').value
+                    };
+
+                    createNewTrip(tripData);
+                    this.reset();
+                    document.getElementById('tripModal').style.display = 'none';
+                });
+            }
+
+            // Close trip modal button
+            const closeTripModalBtn = document.getElementById('closeTripModalBtn');
+            if (closeTripModalBtn) {
+                closeTripModalBtn.addEventListener('click', function() {
+                    document.getElementById('tripModal').style.display = 'none';
+                });
+            }
+
+            // Export travel CSV button
+            const exportTravelCSVBtn = document.getElementById('exportTravelCSVBtn');
+            if (exportTravelCSVBtn) {
+                exportTravelCSVBtn.addEventListener('click', exportTravelExpensesToCSV);
+            }
+
+            // Travel search and filters
+            const travelSearchInput = document.getElementById('travelSearchInput');
+            const clearTravelSearch = document.getElementById('clearTravelSearch');
+            const travelCategoryFilter = document.getElementById('travelCategoryFilter');
+
+            if (travelSearchInput) {
+                travelSearchInput.addEventListener('input', handleTravelSearch);
+                travelSearchInput.addEventListener('keyup', handleTravelSearch);
+            }
+
+            if (clearTravelSearch) {
+                clearTravelSearch.addEventListener('click', function() {
+                    travelSearchInput.value = '';
+                    clearTravelSearch.style.display = 'none';
+                    renderTravelExpensesList();
+                });
+            }
+
+            if (travelCategoryFilter) {
+                travelCategoryFilter.addEventListener('change', filterTravelExpenses);
+            }
+        }
+
+        function handleTravelSearch() {
+            const searchTerm = document.getElementById('travelSearchInput').value.toLowerCase();
+            const clearBtn = document.getElementById('clearTravelSearch');
+            
+            if (searchTerm.length > 0) {
+                clearBtn.style.display = 'block';
+                filterTravelExpenses();
+            } else {
+                clearBtn.style.display = 'none';
+                renderTravelExpensesList();
+            }
+        }
+
+        function filterTravelExpenses() {
+            if (!currentTrip) return;
+
+            const searchTerm = document.getElementById('travelSearchInput').value.toLowerCase();
+            const categoryFilter = document.getElementById('travelCategoryFilter').value;
+            
+            let tripExpenses = travelExpenses.filter(e => e.tripId === currentTrip.id);
+            
+            // Apply search filter
+            if (searchTerm) {
+                tripExpenses = tripExpenses.filter(expense => 
+                    expense.category.toLowerCase().includes(searchTerm) ||
+                    expense.description.toLowerCase().includes(searchTerm) ||
+                    expense.location.toLowerCase().includes(searchTerm) ||
+                    expense.amount.toString().includes(searchTerm)
+                );
+            }
+            
+            // Apply category filter
+            if (categoryFilter) {
+                tripExpenses = tripExpenses.filter(expense => expense.category === categoryFilter);
+            }
+            
+            // Render filtered expenses
+            const travelExpensesList = document.getElementById('travelExpensesList');
+            
+            if (tripExpenses.length === 0) {
+                travelExpensesList.innerHTML = '<div class="no-expenses">No expenses match your search criteria.</div>';
+                return;
+            }
+
+            // Sort by date (newest first)
+            const sortedExpenses = [...tripExpenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            travelExpensesList.innerHTML = '';
+            
+            sortedExpenses.forEach(expense => {
+                const expenseElement = createTravelExpenseElement(expense);
+                travelExpensesList.appendChild(expenseElement);
+            });
         }
 
         // Enhanced DOMContentLoaded to include PWA features
@@ -5876,7 +6634,459 @@
             window.addEventListener('offline', () => {
                 showNotification('You\'re offline. Changes will sync when you\'re back online.', 'info');
             });
+            
+            // Initialize travel tab when it becomes active
+            if (document.getElementById('travelTab')) {
+                initializeTravelTab();
+            }
         });
+
+        // ==================== TRAVEL TRACKER FUNCTIONALITY ====================
+
+        // Travel tab initialization
+        function initializeTravelTab() {
+            updateTripDisplay();
+            renderTravelExpensesList();
+            updateTravelCategoryBreakdown();
+            updateTripStats();
+            
+            // Set today's date for travel form
+            if (document.getElementById('travelDate')) {
+                document.getElementById('travelDate').valueAsDate = new Date();
+            }
+        }
+
+        // Trip Management Functions
+        function createNewTrip(tripData) {
+            const trip = {
+                id: Date.now(),
+                name: tripData.name,
+                destination: tripData.destination,
+                startDate: tripData.startDate,
+                endDate: tripData.endDate,
+                budget: tripData.budget || 0,
+                status: 'active',
+                createdAt: new Date().toISOString()
+            };
+            
+            trips.push(trip);
+            currentTrip = trip;
+            
+            // Save to localStorage
+            localStorage.setItem('trips', JSON.stringify(trips));
+            localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+            
+            updateTripDisplay();
+            updateTripStats();
+            renderTripsList();
+            
+            showNotification(`🚀 Trip "${trip.name}" started!`, 'success');
+        }
+
+        function switchToTrip(tripId) {
+            const trip = trips.find(t => t.id === tripId);
+            if (trip) {
+                currentTrip = trip;
+                localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+                updateTripDisplay();
+                updateTripStats();
+                renderTravelExpensesList();
+                updateTravelCategoryBreakdown();
+                showNotification(`📍 Switched to "${trip.name}"`, 'success');
+            }
+        }
+
+        function completeTrip(tripId) {
+            const trip = trips.find(t => t.id === tripId);
+            if (trip) {
+                trip.status = 'completed';
+                trip.completedAt = new Date().toISOString();
+                
+                if (currentTrip && currentTrip.id === tripId) {
+                    currentTrip = null;
+                    localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+                }
+                
+                localStorage.setItem('trips', JSON.stringify(trips));
+                updateTripDisplay();
+                renderTripsList();
+                showNotification(`✅ Trip "${trip.name}" completed!`, 'success');
+            }
+        }
+
+        function deleteTrip(tripId) {
+            if (confirm('Are you sure you want to delete this trip? This will also delete all associated expenses.')) {
+                // Remove trip expenses
+                travelExpenses = travelExpenses.filter(expense => expense.tripId !== tripId);
+                
+                // Remove trip
+                trips = trips.filter(t => t.id !== tripId);
+                
+                // Clear current trip if it was deleted
+                if (currentTrip && currentTrip.id === tripId) {
+                    currentTrip = null;
+                    localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+                }
+                
+                localStorage.setItem('trips', JSON.stringify(trips));
+                localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses));
+                
+                updateTripDisplay();
+                renderTripsList();
+                renderTravelExpensesList();
+                updateTravelCategoryBreakdown();
+                updateTripStats();
+                
+                showNotification('🗑️ Trip deleted successfully', 'success');
+            }
+        }
+
+        // Travel Expense Functions
+        function addTravelExpense(expenseData) {
+            if (!currentTrip) {
+                showNotification('Please start a trip first!', 'error');
+                return;
+            }
+
+            const expense = {
+                id: Date.now(),
+                tripId: currentTrip.id,
+                amount: parseFloat(expenseData.amount),
+                category: expenseData.category,
+                date: expenseData.date,
+                location: expenseData.location || '',
+                description: expenseData.description || '',
+                createdAt: new Date().toISOString()
+            };
+
+            travelExpenses.push(expense);
+            localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses));
+            
+            renderTravelExpensesList();
+            updateTravelCategoryBreakdown();
+            updateTripStats();
+            
+            showNotification('✈️ Travel expense added!', 'success');
+        }
+
+        function editTravelExpense(expenseId) {
+            const expense = travelExpenses.find(e => e.id === expenseId);
+            if (expense) {
+                travelEditingId = expenseId;
+                
+                document.getElementById('travelAmount').value = expense.amount;
+                document.getElementById('travelCategory').value = expense.category;
+                document.getElementById('travelDate').value = expense.date;
+                document.getElementById('travelLocation').value = expense.location;
+                document.getElementById('travelDescription').value = expense.description;
+                
+                document.getElementById('cancelTravelEdit').style.display = 'block';
+                document.querySelector('#travelExpenseForm button[type="submit"]').textContent = '💾 Update Expense';
+                
+                // Scroll to form
+                document.getElementById('travelExpenseForm').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function deleteTravelExpense(expenseId) {
+            if (confirm('Are you sure you want to delete this travel expense?')) {
+                travelExpenses = travelExpenses.filter(expense => expense.id !== expenseId);
+                localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses));
+                
+                renderTravelExpensesList();
+                updateTravelCategoryBreakdown();
+                updateTripStats();
+                
+                showNotification('🗑️ Travel expense deleted', 'success');
+            }
+        }
+
+        function cancelTravelEdit() {
+            travelEditingId = null;
+            document.getElementById('travelExpenseForm').reset();
+            document.getElementById('travelDate').valueAsDate = new Date();
+            document.getElementById('cancelTravelEdit').style.display = 'none';
+            document.querySelector('#travelExpenseForm button[type="submit"]').textContent = '💾 Add to Trip';
+        }
+
+        // Display Functions
+        function updateTripDisplay() {
+            const tripNameElement = document.getElementById('tripName');
+            const manageTripBtn = document.getElementById('manageTripBtn');
+            
+            if (currentTrip) {
+                tripNameElement.textContent = `${currentTrip.name} (${currentTrip.destination})`;
+                manageTripBtn.textContent = '📝 Manage Trips';
+            } else {
+                tripNameElement.textContent = 'No active trip';
+                manageTripBtn.textContent = '🚀 Start Trip';
+            }
+        }
+
+        function updateTripStats() {
+            if (!currentTrip) {
+                document.getElementById('tripTotal').textContent = '€0';
+                document.getElementById('tripDays').textContent = '0';
+                document.getElementById('tripExpenseCount').textContent = '0';
+                document.getElementById('tripAvgDaily').textContent = '€0';
+                return;
+            }
+
+            const tripExpenses = travelExpenses.filter(e => e.tripId === currentTrip.id);
+            const total = tripExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+            
+            // Calculate days
+            const startDate = new Date(currentTrip.startDate);
+            const endDate = currentTrip.endDate ? new Date(currentTrip.endDate) : new Date();
+            const days = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1);
+            
+            const avgDaily = days > 0 ? total / days : 0;
+
+            document.getElementById('tripTotal').textContent = `€${total.toFixed(2)}`;
+            document.getElementById('tripDays').textContent = days;
+            document.getElementById('tripExpenseCount').textContent = tripExpenses.length;
+            document.getElementById('tripAvgDaily').textContent = `€${avgDaily.toFixed(2)}`;
+        }
+
+        function renderTravelExpensesList() {
+            const travelExpensesList = document.getElementById('travelExpensesList');
+            
+            if (!currentTrip) {
+                travelExpensesList.innerHTML = '<div class="no-expenses">Start a trip and add expenses to track your travel spending!</div>';
+                return;
+            }
+
+            const tripExpenses = travelExpenses.filter(e => e.tripId === currentTrip.id);
+            
+            if (tripExpenses.length === 0) {
+                travelExpensesList.innerHTML = '<div class="no-expenses">No expenses added for this trip yet. Start tracking your travel spending!</div>';
+                return;
+            }
+
+            // Sort by date (newest first)
+            const sortedExpenses = [...tripExpenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            travelExpensesList.innerHTML = '';
+            
+            sortedExpenses.forEach(expense => {
+                const expenseElement = createTravelExpenseElement(expense);
+                travelExpensesList.appendChild(expenseElement);
+            });
+        }
+
+        function createTravelExpenseElement(expense) {
+            const expenseDiv = document.createElement('div');
+            expenseDiv.className = 'travel-expense-item';
+            
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'travel-expense-details';
+            
+            const title = document.createElement('h4');
+            title.textContent = `${expense.category} - €${expense.amount.toFixed(2)}`;
+            
+            const details = document.createElement('p');
+            const formattedDate = new Date(expense.date).toLocaleDateString();
+            let detailsText = `📅 ${formattedDate}`;
+            
+            if (expense.location) {
+                detailsText += ` • 📍 ${expense.location}`;
+            }
+            
+            if (expense.description) {
+                detailsText += ` • ${expense.description}`;
+            }
+            
+            details.textContent = detailsText;
+            
+            detailsDiv.appendChild(title);
+            detailsDiv.appendChild(details);
+            
+            const amountDiv = document.createElement('div');
+            amountDiv.className = 'travel-expense-amount';
+            amountDiv.textContent = `€${expense.amount.toFixed(2)}`;
+            
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'travel-expense-actions';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-warning';
+            editBtn.textContent = '✏️';
+            editBtn.title = 'Edit expense';
+            editBtn.addEventListener('click', () => editTravelExpense(expense.id));
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-danger';
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.title = 'Delete expense';
+            deleteBtn.addEventListener('click', () => deleteTravelExpense(expense.id));
+            
+            actionsDiv.appendChild(editBtn);
+            actionsDiv.appendChild(deleteBtn);
+            
+            expenseDiv.appendChild(detailsDiv);
+            expenseDiv.appendChild(amountDiv);
+            expenseDiv.appendChild(actionsDiv);
+            
+            return expenseDiv;
+        }
+
+        function updateTravelCategoryBreakdown() {
+            const breakdownContainer = document.getElementById('travelCategoryBreakdown');
+            
+            if (!currentTrip) {
+                breakdownContainer.innerHTML = '<div class="no-breakdown">Start a trip to see category breakdown</div>';
+                return;
+            }
+
+            const tripExpenses = travelExpenses.filter(e => e.tripId === currentTrip.id);
+            
+            if (tripExpenses.length === 0) {
+                breakdownContainer.innerHTML = '<div class="no-breakdown">Add expenses to see category breakdown</div>';
+                return;
+            }
+
+            // Calculate category totals
+            const categoryTotals = {};
+            tripExpenses.forEach(expense => {
+                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+            });
+
+            // Sort categories by amount (highest first)
+            const sortedCategories = Object.entries(categoryTotals)
+                .sort(([,a], [,b]) => b - a);
+
+            breakdownContainer.innerHTML = '';
+            
+            sortedCategories.forEach(([category, amount]) => {
+                const categoryItem = document.createElement('div');
+                categoryItem.className = 'category-item';
+                
+                const categoryInfo = document.createElement('div');
+                categoryInfo.className = 'category-item-info';
+                categoryInfo.textContent = category;
+                
+                const categoryAmount = document.createElement('div');
+                categoryAmount.className = 'category-amount';
+                categoryAmount.textContent = `€${amount.toFixed(2)}`;
+                
+                categoryItem.appendChild(categoryInfo);
+                categoryItem.appendChild(categoryAmount);
+                breakdownContainer.appendChild(categoryItem);
+            });
+        }
+
+        function renderTripsList() {
+            const tripsList = document.getElementById('tripsList');
+            
+            if (trips.length === 0) {
+                tripsList.innerHTML = '<div class="no-trips">No trips created yet. Start your first trip above!</div>';
+                return;
+            }
+
+            tripsList.innerHTML = '';
+            
+            // Sort trips (active first, then by creation date)
+            const sortedTrips = [...trips].sort((a, b) => {
+                if (a.status === 'active' && b.status !== 'active') return -1;
+                if (a.status !== 'active' && b.status === 'active') return 1;
+                return new Date(b.createdAt) - new Date(a.createdAt);
+            });
+
+            sortedTrips.forEach(trip => {
+                const tripElement = createTripElement(trip);
+                tripsList.appendChild(tripElement);
+            });
+        }
+
+        function createTripElement(trip) {
+            const tripDiv = document.createElement('div');
+            tripDiv.className = 'trip-item';
+            
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'trip-item-info';
+            
+            const title = document.createElement('h4');
+            title.textContent = trip.name;
+            
+            const details = document.createElement('p');
+            const startDate = new Date(trip.startDate).toLocaleDateString();
+            const endDate = trip.endDate ? new Date(trip.endDate).toLocaleDateString() : 'Ongoing';
+            details.textContent = `📍 ${trip.destination} • 📅 ${startDate} - ${endDate}`;
+            
+            const status = document.createElement('span');
+            status.className = `trip-status ${trip.status}`;
+            status.textContent = trip.status === 'active' ? '🟢 Active' : '✅ Completed';
+            
+            infoDiv.appendChild(title);
+            infoDiv.appendChild(details);
+            infoDiv.appendChild(status);
+            
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'trip-item-actions';
+            
+            if (trip.status === 'active') {
+                const switchBtn = document.createElement('button');
+                switchBtn.className = 'btn btn-primary';
+                switchBtn.textContent = '📍 Switch';
+                switchBtn.addEventListener('click', () => {
+                    switchToTrip(trip.id);
+                    document.getElementById('tripModal').style.display = 'none';
+                });
+                actionsDiv.appendChild(switchBtn);
+                
+                const completeBtn = document.createElement('button');
+                completeBtn.className = 'btn btn-success';
+                completeBtn.textContent = '✅ Complete';
+                completeBtn.addEventListener('click', () => completeTrip(trip.id));
+                actionsDiv.appendChild(completeBtn);
+            }
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-danger';
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.addEventListener('click', () => deleteTrip(trip.id));
+            actionsDiv.appendChild(deleteBtn);
+            
+            tripDiv.appendChild(infoDiv);
+            tripDiv.appendChild(actionsDiv);
+            
+            return tripDiv;
+        }
+
+        function exportTravelExpensesToCSV() {
+            if (!currentTrip) {
+                showNotification('No active trip to export!', 'error');
+                return;
+            }
+
+            const tripExpenses = travelExpenses.filter(e => e.tripId === currentTrip.id);
+            
+            if (tripExpenses.length === 0) {
+                showNotification('No expenses to export for this trip!', 'error');
+                return;
+            }
+
+            const csvContent = [
+                ['Date', 'Category', 'Amount (€)', 'Location', 'Description'],
+                ...tripExpenses.map(expense => [
+                    expense.date,
+                    expense.category,
+                    expense.amount.toFixed(2),
+                    expense.location || '',
+                    expense.description || ''
+                ])
+            ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentTrip.name.replace(/[^a-z0-9]/gi, '_')}_expenses.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showNotification('📥 Trip expenses exported!', 'success');
+        }
     </script>
 </body>
 </html>
