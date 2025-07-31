@@ -2324,6 +2324,55 @@
             position: relative;
             overflow: hidden;
             box-shadow: var(--shadow-xl);
+            transition: var(--transition);
+        }
+
+        /* Dynamic Budget Color States */
+        .budget-summary.budget-safe {
+            background: var(--success-gradient);
+        }
+
+        .budget-summary.budget-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+        }
+
+        .budget-summary.budget-danger {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+        }
+
+        .budget-summary.budget-critical {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+        }
+
+        .budget-summary.budget-exceeded {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            color: #fef2f2;
+        }
+
+        /* Dynamic Budget Card States for Dashboard */
+        .budget-card.budget-safe {
+            background: var(--success-gradient);
+            color: white;
+        }
+
+        .budget-card.budget-warning {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .budget-card.budget-danger {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white;
+        }
+
+        .budget-card.budget-critical {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .budget-card.budget-exceeded {
+            background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+            color: #fef2f2;
         }
 
         .budget-summary::before {
@@ -3681,22 +3730,43 @@
             const progressText = document.getElementById('progressText');
             
             if (monthlyBudget > 0) {
-                const percentage = Math.min((monthlyTotal / monthlyBudget) * 100, 100);
-                budgetFill.style.width = `${percentage}%`;
+                const percentage = (monthlyTotal / monthlyBudget) * 100;
+                const displayPercentage = Math.min(percentage, 100);
+                budgetFill.style.width = `${displayPercentage}%`;
                 progressText.textContent = `${Math.round(percentage)}%`;
                 
                 const remaining = monthlyBudget - monthlyTotal;
-                if (remaining >= 0) {
-                    budgetStatus.textContent = `€${remaining.toFixed(2)} remaining`;
-                    budgetCard.classList.remove('budget-warning');
-                } else {
+                
+                // Remove all budget state classes
+                budgetCard.classList.remove('budget-safe', 'budget-warning', 'budget-danger', 'budget-critical', 'budget-exceeded');
+                
+                // Apply dynamic color based on spending percentage
+                if (percentage >= 100) {
+                    // Exceeded budget - deep red
+                    budgetCard.classList.add('budget-exceeded');
                     budgetStatus.textContent = `€${Math.abs(remaining).toFixed(2)} over budget`;
+                } else if (percentage >= 90) {
+                    // Critical - red
+                    budgetCard.classList.add('budget-critical');
+                    budgetStatus.textContent = `€${remaining.toFixed(2)} remaining`;
+                } else if (percentage >= 75) {
+                    // Danger - orange-red
+                    budgetCard.classList.add('budget-danger');
+                    budgetStatus.textContent = `€${remaining.toFixed(2)} remaining`;
+                } else if (percentage >= 50) {
+                    // Warning - orange/amber
                     budgetCard.classList.add('budget-warning');
+                    budgetStatus.textContent = `€${remaining.toFixed(2)} remaining`;
+                } else {
+                    // Safe - green (under 50%)
+                    budgetCard.classList.add('budget-safe');
+                    budgetStatus.textContent = `€${remaining.toFixed(2)} remaining`;
                 }
             } else {
                 budgetFill.style.width = '0%';
                 progressText.textContent = '0%';
                 budgetStatus.textContent = 'Set your monthly budget';
+                budgetCard.classList.remove('budget-safe', 'budget-warning', 'budget-danger', 'budget-critical', 'budget-exceeded');
             }
             
             // Update statistics
@@ -4738,22 +4808,41 @@
             const budgetStatusMain = document.getElementById('budgetStatusMain');
             
             if (monthlyBudget > 0) {
-                const percentage = Math.min((monthlyTotal / monthlyBudget) * 100, 100);
-                budgetFillMain.style.width = `${percentage}%`;
+                const percentage = (monthlyTotal / monthlyBudget) * 100;
+                const displayPercentage = Math.min(percentage, 100);
+                budgetFillMain.style.width = `${displayPercentage}%`;
                 budgetTextMain.textContent = `${Math.round(percentage)}%`;
                 
-                if (remaining >= 0) {
-                    budgetStatusMain.textContent = `€${remaining.toFixed(2)} remaining this month`;
-                    budgetSummary.classList.remove('warning-budget');
-                } else {
+                // Remove all budget state classes
+                budgetSummary.classList.remove('budget-safe', 'budget-warning', 'budget-danger', 'budget-critical', 'budget-exceeded', 'warning-budget');
+                
+                // Apply dynamic color based on spending percentage
+                if (percentage >= 100) {
+                    // Exceeded budget - deep red
+                    budgetSummary.classList.add('budget-exceeded');
                     budgetStatusMain.textContent = `€${Math.abs(remaining).toFixed(2)} over budget this month`;
-                    budgetSummary.classList.add('warning-budget');
+                } else if (percentage >= 90) {
+                    // Critical - red
+                    budgetSummary.classList.add('budget-critical');
+                    budgetStatusMain.textContent = `€${remaining.toFixed(2)} remaining this month`;
+                } else if (percentage >= 75) {
+                    // Danger - orange-red
+                    budgetSummary.classList.add('budget-danger');
+                    budgetStatusMain.textContent = `€${remaining.toFixed(2)} remaining this month`;
+                } else if (percentage >= 50) {
+                    // Warning - orange/amber
+                    budgetSummary.classList.add('budget-warning');
+                    budgetStatusMain.textContent = `€${remaining.toFixed(2)} remaining this month`;
+                } else {
+                    // Safe - green (under 50%)
+                    budgetSummary.classList.add('budget-safe');
+                    budgetStatusMain.textContent = `€${remaining.toFixed(2)} remaining this month`;
                 }
             } else {
                 budgetFillMain.style.width = '0%';
                 budgetTextMain.textContent = '0%';
                 budgetStatusMain.textContent = 'Set your monthly budget in Settings to track progress';
-                budgetSummary.classList.remove('warning-budget');
+                budgetSummary.classList.remove('budget-safe', 'budget-warning', 'budget-danger', 'budget-critical', 'budget-exceeded', 'warning-budget');
             }
             
             // Update quick stats
