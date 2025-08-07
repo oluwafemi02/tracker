@@ -3877,7 +3877,26 @@
             if (expense.isRecurring) {
                 const recurringSpan = document.createElement('span');
                 recurringSpan.className = 'recurring-indicator';
-                recurringSpan.textContent = '🔄 Recurring';
+
+                let frequency = expense.recurringFrequency;
+                let lastDate = expense.lastProcessedDate || expense.date;
+
+                // If this expense was generated from a recurring template, fall back to that template for date info
+                if ((!frequency || !lastDate) && expense.parentRecurringId) {
+                    const parent = recurringExpenses.find(r => r.id === expense.parentRecurringId);
+                    if (parent) {
+                        frequency = parent.frequency;
+                        lastDate = parent.lastProcessedDate;
+                    }
+                }
+
+                if (frequency && lastDate) {
+                    const nextDue = calculateNextDueDate(lastDate, frequency);
+                    recurringSpan.textContent = `🔄 Recurring • Next: ${nextDue.toLocaleDateString()}`;
+                } else {
+                    recurringSpan.textContent = '🔄 Recurring';
+                }
+
                 contentDiv.appendChild(recurringSpan);
             }
             
