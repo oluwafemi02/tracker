@@ -198,6 +198,8 @@
 
         .card {
             background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             border-radius: var(--border-radius-lg);
             padding: 2rem;
             box-shadow: var(--shadow-sm);
@@ -327,10 +329,25 @@
 
         .expense-form {
             background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             padding: 2rem;
             border-radius: var(--border-radius);
             box-shadow: var(--shadow-md);
             border: 1px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .expense-form::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.05) 0%, rgba(139, 92, 246, 0.05) 100%);
+            z-index: -1;
         }
 
         .form-grid {
@@ -366,12 +383,26 @@
             transition: var(--transition);
             background: white;
             font-family: inherit;
+            position: relative;
         }
 
         input:focus, select:focus, textarea:focus {
             outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            border-color: var(--text-accent);
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+            transform: translateY(-1px);
+        }
+
+        /* Enhanced input animations */
+        .form-group {
+            position: relative;
+        }
+
+        .form-group input:focus + label,
+        .form-group select:focus + label,
+        .form-group textarea:focus + label {
+            color: var(--text-accent);
+            transform: translateY(-2px);
         }
 
         .btn {
@@ -1086,12 +1117,16 @@
             top: 20px;
             right: 20px;
             padding: 1rem 1.5rem;
-            border-radius: 8px;
+            border-radius: 12px;
             color: white;
             font-weight: 500;
             z-index: 1000;
             transform: translateX(100%);
             transition: var(--transition);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            box-shadow: var(--shadow-lg);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .notification.show {
@@ -1115,19 +1150,42 @@
 
         .quick-action {
             background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             padding: 1rem;
-            border-radius: 8px;
+            border-radius: 12px;
             border: 1px solid var(--border-color);
             cursor: pointer;
             transition: var(--transition);
             display: flex;
             align-items: center;
             gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .quick-action::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--primary-gradient);
+            opacity: 0;
+            transition: var(--transition);
+            z-index: -1;
+        }
+
+        .quick-action:hover::before {
+            opacity: 0.05;
         }
 
         .quick-action:hover {
-            background: #f8fafc;
-            transform: translateY(-2px);
+            background: var(--card-bg-hover);
+            transform: translateY(-3px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--text-accent);
         }
 
         @media (max-width: 1024px) {
@@ -1375,6 +1433,8 @@
             align-items: center;
             padding: 1.5rem;
             background: var(--card-bg);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border: 1px solid var(--border-color);
             border-radius: var(--border-radius);
             margin-bottom: 1rem;
@@ -1431,9 +1491,70 @@
             box-shadow: var(--shadow-xl);
         }
 
+        /* Modern Loading Animation */
+        .loading {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: loading-shimmer 1.5s infinite;
+        }
+
+        @keyframes loading-shimmer {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
+        /* Enhanced Button Styles */
+        .btn {
+            position: relative;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        /* Glass Morphism Effect */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
         /* Enhanced Statistics Cards */
         .stat-card-enhanced {
             background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             padding: 2rem;
             border-radius: var(--border-radius-lg);
             text-align: center;
@@ -3874,11 +3995,51 @@
                 contentDiv.appendChild(descSpan);
             }
             
+            // Enhanced recurring indicator with next date
             if (expense.isRecurring) {
-                const recurringSpan = document.createElement('span');
-                recurringSpan.className = 'recurring-indicator';
-                recurringSpan.textContent = '🔄 Recurring';
-                contentDiv.appendChild(recurringSpan);
+                const recurringContainer = document.createElement('div');
+                recurringContainer.className = 'recurring-info';
+                recurringContainer.style.cssText = 'margin-top: 0.5rem; display: flex; align-items: center; gap: 0.5rem;';
+                
+                const recurringIcon = document.createElement('span');
+                recurringIcon.className = 'recurring-indicator';
+                recurringIcon.textContent = '🔄';
+                recurringIcon.style.cssText = 'font-size: 0.9rem;';
+                
+                const recurringText = document.createElement('span');
+                recurringText.style.cssText = 'font-size: 0.85rem; color: var(--text-accent); font-weight: 500;';
+                recurringText.textContent = 'Recurring';
+                
+                // Calculate and show next date
+                if (expense.recurringFrequency && expense.lastProcessedDate) {
+                    const nextDue = calculateNextDueDate(expense.lastProcessedDate, expense.recurringFrequency);
+                    const today = new Date();
+                    const daysUntilDue = Math.ceil((nextDue - today) / (1000 * 60 * 60 * 24));
+                    
+                    const nextDateSpan = document.createElement('span');
+                    nextDateSpan.style.cssText = 'font-size: 0.8rem; color: var(--text-secondary); margin-left: 0.5rem;';
+                    
+                    if (daysUntilDue < 0) {
+                        nextDateSpan.style.color = '#ef4444';
+                        nextDateSpan.style.fontWeight = '600';
+                        nextDateSpan.textContent = `🚨 Overdue by ${Math.abs(daysUntilDue)} day(s)`;
+                    } else if (daysUntilDue <= 3) {
+                        nextDateSpan.style.color = '#f59e0b';
+                        nextDateSpan.style.fontWeight = '600';
+                        nextDateSpan.textContent = `⚠️ Due in ${daysUntilDue} day(s)`;
+                    } else {
+                        nextDateSpan.textContent = `📅 Next: ${nextDue.toLocaleDateString()}`;
+                    }
+                    
+                    recurringContainer.appendChild(recurringIcon);
+                    recurringContainer.appendChild(recurringText);
+                    recurringContainer.appendChild(nextDateSpan);
+                } else {
+                    recurringContainer.appendChild(recurringIcon);
+                    recurringContainer.appendChild(recurringText);
+                }
+                
+                contentDiv.appendChild(recurringContainer);
             }
             
             mainDiv.appendChild(iconDiv);
@@ -4593,67 +4754,135 @@
             
             let statusClass = 'recurring-frequency';
             let statusText = `Next: ${nextDue.toLocaleDateString()}`;
+            let statusColor = 'var(--text-secondary)';
             
             if (daysUntilDue < 0) {
                 statusClass = 'recurring-frequency overdue';
                 statusText = `Overdue by ${Math.abs(daysUntilDue)} day(s)`;
+                statusColor = '#ef4444';
             } else if (daysUntilDue <= 3) {
                 statusClass = 'recurring-frequency due-soon';
                 statusText = `Due in ${daysUntilDue} day(s)`;
+                statusColor = '#f59e0b';
             }
             
             const icon = categoryIcons[recurring.category] || '📝';
             
-            // Create main container
+            // Create main container with enhanced styling
             const itemDiv = document.createElement('div');
             itemDiv.className = 'recurring-item';
+            itemDiv.style.cssText = `
+                background: var(--card-bg);
+                border: 1px solid var(--border-color);
+                border-radius: var(--border-radius);
+                padding: 1.5rem;
+                margin-bottom: 1rem;
+                transition: var(--transition);
+                box-shadow: var(--shadow-sm);
+                position: relative;
+                overflow: hidden;
+            `;
+            
+            // Add subtle gradient background for overdue items
+            if (daysUntilDue < 0) {
+                itemDiv.style.background = 'linear-gradient(135deg, #fef2f2 0%, #ffffff 100%)';
+                itemDiv.style.borderColor = '#fecaca';
+            } else if (daysUntilDue <= 3) {
+                itemDiv.style.background = 'linear-gradient(135deg, #fffbeb 0%, #ffffff 100%)';
+                itemDiv.style.borderColor = '#fed7aa';
+            }
+            
+            // Create header section with prominent next date
+            const headerDiv = document.createElement('div');
+            headerDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;';
+            
+            // Left side - Category and icon
+            const leftDiv = document.createElement('div');
+            leftDiv.style.cssText = 'display: flex; align-items: center; gap: 0.75rem;';
+            
+            const iconDiv = document.createElement('div');
+            iconDiv.style.cssText = 'font-size: 1.5rem; background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;';
+            iconDiv.textContent = icon;
+            
+            const categoryDiv = document.createElement('div');
+            const categoryTitle = document.createElement('h4');
+            categoryTitle.style.cssText = 'margin: 0; font-size: 1.1rem; font-weight: 600; color: var(--text-primary);';
+            categoryTitle.textContent = recurring.category;
+            
+            const frequencySpan = document.createElement('span');
+            frequencySpan.style.cssText = 'font-size: 0.8rem; color: var(--text-accent); font-weight: 500; text-transform: capitalize;';
+            frequencySpan.textContent = `🔄 ${recurring.frequency}`;
+            
+            categoryDiv.appendChild(categoryTitle);
+            categoryDiv.appendChild(frequencySpan);
+            
+            leftDiv.appendChild(iconDiv);
+            leftDiv.appendChild(categoryDiv);
+            
+            // Right side - Prominent next date
+            const rightDiv = document.createElement('div');
+            rightDiv.style.cssText = 'text-align: right;';
+            
+            const nextDateDiv = document.createElement('div');
+            nextDateDiv.style.cssText = `
+                background: ${statusColor === '#ef4444' ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 
+                           statusColor === '#f59e0b' ? 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' : 
+                           'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)'};
+                color: white;
+                padding: 0.5rem 1rem;
+                border-radius: var(--border-radius);
+                font-weight: 600;
+                font-size: 0.9rem;
+                box-shadow: var(--shadow-sm);
+                margin-bottom: 0.5rem;
+            `;
+            nextDateDiv.textContent = statusText;
+            
+            const amountDiv = document.createElement('div');
+            amountDiv.style.cssText = 'font-size: 1.2rem; font-weight: 700; color: var(--text-primary);';
+            amountDiv.textContent = `€${recurring.amount.toFixed(2)}`;
+            
+            rightDiv.appendChild(nextDateDiv);
+            rightDiv.appendChild(amountDiv);
+            
+            headerDiv.appendChild(leftDiv);
+            headerDiv.appendChild(rightDiv);
             
             // Create details section
             const detailsDiv = document.createElement('div');
-            detailsDiv.className = 'recurring-details';
+            detailsDiv.style.cssText = 'margin-bottom: 1rem;';
             
-            // Create title
-            const titleH4 = document.createElement('h4');
-            titleH4.textContent = `${icon} ${recurring.category}`;
-            
-            // Create description
             const descP = document.createElement('p');
-            descP.textContent = `${recurring.description} • ${recurring.frequency} • 👤 ${recurring.person}`;
+            descP.style.cssText = 'margin: 0; color: var(--text-secondary); font-size: 0.9rem; line-height: 1.4;';
+            descP.textContent = `${recurring.description} • 👤 ${recurring.person}`;
             
-            detailsDiv.appendChild(titleH4);
             detailsDiv.appendChild(descP);
             
-            // Create amount section
-            const amountDiv = document.createElement('div');
-            amountDiv.className = 'recurring-amount';
-            amountDiv.textContent = `€${recurring.amount.toFixed(2)}`;
+            // Create footer with actions
+            const footerDiv = document.createElement('div');
+            footerDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color-light);';
             
-            // Create status section
-            const statusDiv = document.createElement('div');
-            statusDiv.style.cssText = 'display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;';
+            const lastProcessedDiv = document.createElement('div');
+            lastProcessedDiv.style.cssText = 'font-size: 0.8rem; color: var(--text-light);';
+            lastProcessedDiv.textContent = `Last: ${new Date(recurring.lastProcessedDate).toLocaleDateString()}`;
             
-            const statusSpan = document.createElement('span');
-            statusSpan.className = statusClass;
-            statusSpan.textContent = statusText;
-            
-            // Create stop button
             const stopBtn = document.createElement('button');
             stopBtn.className = 'btn btn-danger';
-            stopBtn.style.cssText = 'min-width: auto; padding: 0.25rem 0.5rem; font-size: 0.8rem;';
-            stopBtn.textContent = 'Stop';
+            stopBtn.style.cssText = 'min-width: auto; padding: 0.5rem 1rem; font-size: 0.8rem; border-radius: var(--border-radius);';
+            stopBtn.textContent = 'Stop Recurring';
             stopBtn.addEventListener('click', () => {
                 if (confirm('Are you sure you want to stop this recurring expense?')) {
                     deactivateRecurring(recurring.id);
                 }
             });
             
-            statusDiv.appendChild(statusSpan);
-            statusDiv.appendChild(stopBtn);
+            footerDiv.appendChild(lastProcessedDiv);
+            footerDiv.appendChild(stopBtn);
             
             // Assemble final element
+            itemDiv.appendChild(headerDiv);
             itemDiv.appendChild(detailsDiv);
-            itemDiv.appendChild(amountDiv);
-            itemDiv.appendChild(statusDiv);
+            itemDiv.appendChild(footerDiv);
             
             return itemDiv;
         }
