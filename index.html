@@ -96,7 +96,8 @@
 
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--background);
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #f1f5f9 100%);
+            background-attachment: fixed;
             color: var(--text-primary);
             line-height: 1.6;
             min-height: 100vh;
@@ -194,6 +195,24 @@
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
             gap: 1.5rem;
             margin-bottom: 2rem;
+        }
+
+        .dashboard .card {
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .dashboard .card:nth-child(1) { animation-delay: 0.1s; }
+        .dashboard .card:nth-child(2) { animation-delay: 0.2s; }
+        .dashboard .card:nth-child(3) { animation-delay: 0.3s; }
+        .dashboard .card:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes fadeInUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         .card {
@@ -1523,14 +1542,43 @@
         .recurring-indicator {
             display: inline-flex;
             align-items: center;
-            gap: 0.25rem;
+            gap: 0.3rem;
             background: var(--success-gradient);
             color: white;
-            padding: 0.2rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
+            padding: 0.4rem 0.8rem;
+            border-radius: 16px;
+            font-size: 0.8rem;
             font-weight: 600;
-            margin-left: 0.5rem;
+            margin-left: 0.75rem;
+            box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .recurring-indicator::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 1.5s ease-in-out;
+        }
+
+        .recurring-indicator:hover::before {
+            left: 100%;
+        }
+
+        .recurring-indicator.due-soon {
+            background: var(--warning-gradient);
+            box-shadow: 0 2px 8px rgba(245, 158, 11, 0.4);
+            animation: pulse-warning 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-warning {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
         }
 
         /* Recurring Modal Specific Styles */
@@ -1554,17 +1602,35 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem;
+            padding: 1.25rem;
             border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
+            border-radius: var(--border-radius-lg);
             background: var(--card-bg);
-            margin-bottom: 0.75rem;
-            transition: all 0.2s ease;
+            margin-bottom: 1rem;
+            transition: var(--transition-spring);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .recurring-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(99, 102, 241, 0.1), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .recurring-item:hover::before {
+            left: 100%;
         }
 
         .recurring-item:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary-color);
         }
 
         .recurring-item:last-child {
@@ -2126,21 +2192,145 @@
         .recurring-frequency {
             background: var(--primary-gradient);
             color: white;
-            padding: 0.2rem 0.6rem;
-            border-radius: 8px;
-            font-size: 0.8rem;
-            font-weight: 500;
+            padding: 0.4rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.2rem;
+            min-width: 120px;
+            text-align: center;
+        }
+
+        .recurring-frequency .date-primary {
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .recurring-frequency .date-relative {
+            font-size: 0.75rem;
+            opacity: 0.9;
         }
 
         .due-soon {
             background: var(--warning-gradient);
-            color: var(--text-primary);
+            color: white;
+            animation: glow-warning 3s ease-in-out infinite alternate;
         }
 
         .overdue {
             background: var(--danger-gradient);
             color: white;
-            animation: pulse 2s infinite;
+            animation: pulse-urgent 1.5s infinite;
+        }
+
+        @keyframes glow-warning {
+            from { box-shadow: 0 0 5px rgba(245, 158, 11, 0.3); }
+            to { box-shadow: 0 0 15px rgba(245, 158, 11, 0.6); }
+        }
+
+        @keyframes pulse-urgent {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        /* Recurring Dashboard Styles */
+        .recurring-dashboard-card .upcoming-list {
+            max-height: 300px;
+            overflow-y: auto;
+            margin-bottom: 1rem;
+        }
+
+        .upcoming-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: var(--background-alt);
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+            transition: var(--transition);
+        }
+
+        .upcoming-item:hover {
+            transform: translateX(4px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .upcoming-item.due-today {
+            border-left-color: #f59e0b;
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        }
+
+        .upcoming-item.due-soon {
+            border-left-color: #ef4444;
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        }
+
+        .upcoming-item-info {
+            flex: 1;
+        }
+
+        .upcoming-item-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .upcoming-item-details {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .upcoming-item-date {
+            text-align: center;
+            min-width: 80px;
+        }
+
+        .upcoming-item-date .date-main {
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: var(--text-primary);
+        }
+
+        .upcoming-item-date .date-sub {
+            font-size: 0.7rem;
+            color: var(--text-light);
+        }
+
+        .upcoming-item-amount {
+            font-weight: 700;
+            color: var(--primary-color);
+            font-size: 1rem;
+            text-align: right;
+            min-width: 70px;
+        }
+
+        .quick-actions-recurring {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .btn-sm {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.8rem;
+            border-radius: 8px;
+        }
+
+        .no-upcoming {
+            text-align: center;
+            color: var(--text-secondary);
+            font-style: italic;
+            padding: 2rem;
         }
 
         .category-management {
@@ -2981,6 +3171,23 @@
                         <canvas id="expenseChart"></canvas>
                     </div>
                 </div>
+
+                <div class="card recurring-dashboard-card">
+                    <h2><span class="card-icon">🔄</span> Upcoming Recurring</h2>
+                    <div id="upcomingRecurringContainer">
+                        <div class="upcoming-list" id="upcomingRecurringList">
+                            <!-- Dynamic content will be inserted here -->
+                        </div>
+                        <div class="quick-actions-recurring">
+                            <button class="btn btn-primary btn-sm" onclick="showRecurringModal()">
+                                📋 View All
+                            </button>
+                            <button class="btn btn-success btn-sm" id="quickProcessBtn" onclick="processRecurringExpenses()">
+                                ⚡ Process Due
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <!-- Enhanced Statistics -->
@@ -3729,6 +3936,9 @@
             
             // Update chart
             updateExpenseChart(monthlyExpenses);
+            
+            // Update upcoming recurring expenses
+            updateUpcomingRecurring();
         }
 
         // Update expense chart
@@ -3780,6 +3990,87 @@
                         }
                     }
                 }
+            });
+        }
+
+        // Update upcoming recurring expenses dashboard widget
+        function updateUpcomingRecurring() {
+            const upcomingList = document.getElementById('upcomingRecurringList');
+            const today = new Date();
+            
+            // Get active recurring expenses and calculate their next due dates
+            const upcomingExpenses = recurringExpenses
+                .filter(recurring => recurring.isActive)
+                .map(recurring => {
+                    const nextDue = calculateNextDueDate(recurring.lastProcessedDate, recurring.frequency);
+                    const daysUntilDue = Math.ceil((nextDue - today) / (1000 * 60 * 60 * 24));
+                    return {
+                        ...recurring,
+                        nextDue,
+                        daysUntilDue
+                    };
+                })
+                .filter(item => {
+                    // Show items due within the next 30 days or overdue
+                    return item.daysUntilDue <= 30;
+                })
+                .sort((a, b) => a.nextDue - b.nextDue) // Sort by due date
+                .slice(0, 5); // Show only next 5 items
+
+            upcomingList.innerHTML = '';
+
+            if (upcomingExpenses.length === 0) {
+                upcomingList.innerHTML = '<div class="no-upcoming">No upcoming recurring expenses in the next 30 days</div>';
+                return;
+            }
+
+            upcomingExpenses.forEach(expense => {
+                const item = document.createElement('div');
+                item.className = 'upcoming-item';
+                
+                // Add classes based on urgency
+                if (expense.daysUntilDue <= 0) {
+                    item.classList.add('due-soon');
+                } else if (expense.daysUntilDue <= 3) {
+                    item.classList.add('due-today');
+                }
+
+                const icon = categoryIcons[expense.category] || '📝';
+                
+                // Format date display
+                let dateMain = '';
+                let dateSub = '';
+                
+                if (expense.daysUntilDue < 0) {
+                    dateMain = 'OVERDUE';
+                    dateSub = `${Math.abs(expense.daysUntilDue)}d ago`;
+                } else if (expense.daysUntilDue === 0) {
+                    dateMain = 'TODAY';
+                    dateSub = expense.nextDue.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                } else if (expense.daysUntilDue === 1) {
+                    dateMain = 'TOMORROW';
+                    dateSub = expense.nextDue.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                } else if (expense.daysUntilDue <= 7) {
+                    dateMain = `${expense.daysUntilDue} DAYS`;
+                    dateSub = expense.nextDue.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                } else {
+                    dateMain = expense.nextDue.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    dateSub = `in ${expense.daysUntilDue} days`;
+                }
+
+                item.innerHTML = `
+                    <div class="upcoming-item-info">
+                        <div class="upcoming-item-title">${icon} ${escapeHtml(expense.category)}</div>
+                        <div class="upcoming-item-details">${escapeHtml(expense.description)} • ${expense.frequency}</div>
+                    </div>
+                    <div class="upcoming-item-date">
+                        <div class="date-main">${dateMain}</div>
+                        <div class="date-sub">${dateSub}</div>
+                    </div>
+                    <div class="upcoming-item-amount">€${expense.amount.toFixed(2)}</div>
+                `;
+
+                upcomingList.appendChild(item);
             });
         }
 
@@ -3877,7 +4168,38 @@
             if (expense.isRecurring) {
                 const recurringSpan = document.createElement('span');
                 recurringSpan.className = 'recurring-indicator';
-                recurringSpan.textContent = '🔄 Recurring';
+                
+                // Find the corresponding recurring template to get next due date
+                const recurringTemplate = recurringExpenses.find(r => 
+                    r.originalExpenseId === expense.id || r.id === expense.parentRecurringId
+                );
+                
+                if (recurringTemplate && recurringTemplate.isActive) {
+                    const nextDue = calculateNextDueDate(recurringTemplate.lastProcessedDate, recurringTemplate.frequency);
+                    const today = new Date();
+                    const daysUntilDue = Math.ceil((nextDue - today) / (1000 * 60 * 60 * 24));
+                    
+                    let displayText = '🔄 Recurring';
+                    let additionalClass = '';
+                    
+                    if (daysUntilDue <= 0) {
+                        displayText = '🔄 Due Now';
+                        additionalClass = 'due-soon';
+                    } else if (daysUntilDue <= 3) {
+                        displayText = `🔄 Due in ${daysUntilDue}d`;
+                        additionalClass = 'due-soon';
+                    } else if (daysUntilDue <= 7) {
+                        displayText = `🔄 Due in ${daysUntilDue}d`;
+                    }
+                    
+                    recurringSpan.textContent = displayText;
+                    if (additionalClass) {
+                        recurringSpan.classList.add(additionalClass);
+                    }
+                } else {
+                    recurringSpan.textContent = '🔄 Recurring';
+                }
+                
                 contentDiv.appendChild(recurringSpan);
             }
             
@@ -4592,14 +4914,30 @@
             const daysUntilDue = Math.ceil((nextDue - today) / (1000 * 60 * 60 * 24));
             
             let statusClass = 'recurring-frequency';
-            let statusText = `Next: ${nextDue.toLocaleDateString()}`;
+            let primaryDateText = nextDue.toLocaleDateString('en-US', { 
+                month: 'short', 
+                day: 'numeric',
+                year: nextDue.getFullYear() !== today.getFullYear() ? 'numeric' : undefined
+            });
+            let relativeDateText = '';
             
             if (daysUntilDue < 0) {
                 statusClass = 'recurring-frequency overdue';
-                statusText = `Overdue by ${Math.abs(daysUntilDue)} day(s)`;
-            } else if (daysUntilDue <= 3) {
+                primaryDateText = 'OVERDUE';
+                relativeDateText = `${Math.abs(daysUntilDue)} day${Math.abs(daysUntilDue) !== 1 ? 's' : ''} ago`;
+            } else if (daysUntilDue === 0) {
                 statusClass = 'recurring-frequency due-soon';
-                statusText = `Due in ${daysUntilDue} day(s)`;
+                primaryDateText = 'TODAY';
+                relativeDateText = nextDue.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            } else if (daysUntilDue === 1) {
+                statusClass = 'recurring-frequency due-soon';
+                primaryDateText = 'TOMORROW';
+                relativeDateText = nextDue.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            } else if (daysUntilDue <= 7) {
+                statusClass = 'recurring-frequency due-soon';
+                relativeDateText = `in ${daysUntilDue} days`;
+            } else {
+                relativeDateText = `in ${daysUntilDue} days`;
             }
             
             const icon = categoryIcons[recurring.category] || '📝';
@@ -4634,7 +4972,19 @@
             
             const statusSpan = document.createElement('span');
             statusSpan.className = statusClass;
-            statusSpan.textContent = statusText;
+            
+            const primarySpan = document.createElement('span');
+            primarySpan.className = 'date-primary';
+            primarySpan.textContent = primaryDateText;
+            
+            const relativeSpan = document.createElement('span');
+            relativeSpan.className = 'date-relative';
+            relativeSpan.textContent = relativeDateText;
+            
+            statusSpan.appendChild(primarySpan);
+            if (relativeDateText) {
+                statusSpan.appendChild(relativeSpan);
+            }
             
             // Create stop button
             const stopBtn = document.createElement('button');
