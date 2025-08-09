@@ -1,7 +1,7 @@
 {
-  "name": "Expense Tracker Pro",
-  "short_name": "ExpenseTracker",
-  "description": "Track, manage, and optimize your spending with smart insights and analytics",
+  "name": "Travel Tracker",
+  "short_name": "TravelTracker",
+  "description": "Track travel and everyday expenses with smart insights and analytics",
   "version": "2.0.0",
   "start_url": "/index.html",
   "display": "standalone",
@@ -9,7 +9,7 @@
   "theme_color": "#667eea",
   "orientation": "portrait-primary",
   "scope": "/",
-  "id": "com.expensetracker.pwa",
+  "id": "com.traveltracker.pwa",
   "categories": ["finance", "productivity", "utilities"],
   "lang": "en",
   "dir": "ltr",
@@ -106,9 +106,9 @@
       ]
     },
     {
-      "name": "Recurring Expenses",
+      "name": "Recurring",
       "short_name": "Recurring",
-      "description": "Manage recurring payments",
+      "description": "Manage recurring payments and reminders",
       "url": "/index.html?action=recurring",
       "icons": [
         {
