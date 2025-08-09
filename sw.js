@@ -1,4 +1,4 @@
-const CACHE_NAME = 'expense-tracker-v2.0.0';
+const CACHE_NAME = 'travel-tracker-v2.0.0';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -88,7 +88,7 @@ self.addEventListener('push', event => {
   console.log('📱 Push notification received:', event);
   
   let options = {
-    body: 'You have a new notification from Expense Tracker',
+    body: 'You have a new notification from Travel Tracker',
     icon: '/icons/icon-192x192.png',
     badge: '/icons/badge-72x72.png',
     tag: 'expense-notification',
@@ -114,7 +114,7 @@ self.addEventListener('push', event => {
   if (event.data) {
     try {
       const data = event.data.json();
-      options.title = data.title || 'Expense Tracker';
+      options.title = data.title || 'Travel Tracker';
       options.body = data.body || options.body;
       options.icon = data.icon || options.icon;
       options.badge = data.badge || options.badge;
@@ -160,7 +160,7 @@ self.addEventListener('push', event => {
   }
 
   event.waitUntil(
-    self.registration.showNotification(options.title || 'Expense Tracker', options)
+    self.registration.showNotification(options.title || 'Travel Tracker', options)
   );
 });
 

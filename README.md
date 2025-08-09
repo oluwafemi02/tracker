@@ -1,4 +1,4 @@
-# 📱 Expense Tracker Pro - Progressive Web App
+# ✈️ Travel Tracker - Progressive Web App
 
 A comprehensive expense tracking application that works seamlessly across all devices, including iOS, with native app-like features.
 
@@ -42,10 +42,10 @@ A comprehensive expense tracking application that works seamlessly across all de
 - **App Shortcuts** - Quick actions from home screen
 - **Native Performance** - Smooth, app-like experience
 
-### 🎨 Advanced Project & Travel Tracking
-- **Project Management**: Create and manage multiple spending projects
+### 🎨 Advanced Travel Tracking
+- **Trip Management**: Create and manage multiple trips
 - **Travel Tracker**: Specialized travel expense tracking with location support
-- **Trip Planning**: Organize expenses by trips, events, or specific projects
+- **Trip Planning**: Organize expenses by trips and events
 - **Category Breakdown**: Visual breakdown of spending by category within each project
 - **Export Capabilities**: Export project data to CSV for reporting and analysis
 
@@ -76,7 +76,7 @@ A comprehensive expense tracking application that works seamlessly across all de
 3. **Enable Notifications** (Optional but recommended):
    - Open the installed app from your home screen
    - When prompted, tap "Allow" for notifications
-   - Or go to Settings > Notifications > ExpenseTracker to configure
+   - Or go to Settings > Notifications > TravelTracker to configure
 
 ### Option 2: Using the Install Button
 
@@ -105,12 +105,12 @@ A comprehensive expense tracking application that works seamlessly across all de
 3. **Alert Configuration**: Customize when to receive budget warnings
 4. **Budget Analysis**: Review budget performance and adjust accordingly
 
-### 📊 Project & Travel Tracking
-1. **Create Projects**: Set up tracking for specific projects, trips, or events
-2. **Project Categories**: Organize expenses within projects by categories
+### 📊 Travel Tracking
+1. **Create Trips**: Set up tracking for specific trips or events
+2. **Trip Categories**: Organize expenses within trips by categories
 3. **Location Tracking**: Add location data to travel expenses
-4. **Project Analytics**: View detailed breakdowns and trends per project
-5. **Export Projects**: Generate reports and export project data
+4. **Trip Analytics**: View detailed breakdowns and trends per trip
+5. **Export Trips**: Generate reports and export trip data
 
 ### 🔔 Notification Management
 1. **Enable Notifications**: Allow notifications for full functionality
@@ -140,13 +140,13 @@ Create personalized expense categories:
 ### Data Export & Import
 - **Full Data Export**: Export all your data to CSV format
 - **Selective Export**: Export specific date ranges or categories
-- **Project Export**: Export individual project data
+- **Trip Export**: Export individual trip data
 - **Data Import**: Import expenses from CSV files
 
 ### Family & Group Management
 - **Family Mode**: Track expenses for multiple family members
 - **Shared Categories**: Use common categories across family members
-- **Group Projects**: Collaborate on group expenses and trips
+- **Group Trips**: Collaborate on group expenses and trips
 - **Expense Splitting**: Split expenses among multiple people
 
 ## 🎨 Customization Options
@@ -215,8 +215,8 @@ Create personalized expense categories:
 2. **Get reminders** 1 day before and on the due date
 3. **Quick add** expenses directly from notifications
 
-### For Project Tracking
-1. **Switch to Projects tab** (formerly Travel tab)
+### For Travel Tracking
+1. **Switch to Travel tab**
 2. **Create a new project** or trip
 3. **Add expenses** with categories and locations
 4. **Track progress** with visual breakdowns and analytics
@@ -311,7 +311,7 @@ Use a service like Let's Encrypt for free SSL certificates.
 
 ### Notification Issues
 - **No notification prompt**: Must be on HTTPS and user must interact with the page first
-- **Notifications not working**: Check iOS Settings > Notifications > ExpenseTracker
+- **Notifications not working**: Check iOS Settings > Notifications > TravelTracker
 - **No badges**: Ensure Badging API permission is granted
 
 ### Performance Issues
