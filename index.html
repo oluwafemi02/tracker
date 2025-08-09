@@ -41,7 +41,9 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -4641,100 +4643,88 @@
                 return JSON.stringify(compressed);
             }
 
-            // Generate QR code using a lightweight implementation
-            generateQRCodeCanvas(data, container) {
-                // Create QR code using a simple implementation
-                const qrCanvas = document.createElement('canvas');
-                qrCanvas.width = 200;
-                qrCanvas.height = 200;
-                qrCanvas.style.border = '1px solid var(--border-color)';
-                qrCanvas.style.borderRadius = '8px';
-                
-                const ctx = qrCanvas.getContext('2d');
-                
-                // For demo purposes, create a data URL QR code
-                // In a production app, you'd use a proper QR code library
-                this.generateSimpleQRPattern(ctx, data);
-                
-                container.appendChild(qrCanvas);
-                
-                // Add data URL for manual sharing
-                const dataUrl = document.createElement('div');
-                dataUrl.style.marginTop = '1rem';
-                dataUrl.style.padding = '1rem';
-                dataUrl.style.background = 'var(--bg-secondary)';
-                dataUrl.style.borderRadius = '8px';
-                dataUrl.style.fontSize = '0.8rem';
-                dataUrl.style.wordBreak = 'break-all';
-                
-                // Create a shareable link
-                const shareableData = btoa(data); // Base64 encode
-                const shareUrl = `${window.location.origin}${window.location.pathname}?import=${encodeURIComponent(shareableData)}`;
-                
-                dataUrl.innerHTML = `
-                    <strong>📋 Alternative: Share this link</strong><br>
-                    <textarea readonly style="width: 100%; height: 60px; margin-top: 0.5rem; resize: none; font-size: 0.7rem;">${shareUrl}</textarea>
-                    <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="navigator.clipboard.writeText('${shareUrl}').then(() => showNotification('📋 Link copied to clipboard!', 'success'))">📋 Copy Link</button>
-                `;
-                
-                container.appendChild(dataUrl);
-            }
-
-            // Simple QR pattern generator (placeholder - would use proper QR library in production)
-            generateSimpleQRPattern(ctx, data) {
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, 200, 200);
-                
-                ctx.fillStyle = '#000000';
-                
-                // Create a simple pattern that represents data
-                const hash = this.simpleHash(data);
-                const size = 8;
-                const gridSize = 200 / size;
-                
-                for (let i = 0; i < size; i++) {
-                    for (let j = 0; j < size; j++) {
-                        const value = (hash + i * size + j) % 3;
-                        if (value < 1) {
-                            ctx.fillRect(i * gridSize, j * gridSize, gridSize - 1, gridSize - 1);
-                        }
-                    }
+            // Generate real QR code using QRCode.js library
+            async generateQRCodeCanvas(data, container) {
+                try {
+                    // Create a shareable link first
+                    const shareableData = btoa(data); // Base64 encode
+                    const shareUrl = `${window.location.origin}${window.location.pathname}?import=${encodeURIComponent(shareableData)}`;
+                    
+                    // Create canvas for QR code
+                    const qrCanvas = document.createElement('canvas');
+                    qrCanvas.style.border = '1px solid var(--border-color)';
+                    qrCanvas.style.borderRadius = '8px';
+                    qrCanvas.style.display = 'block';
+                    qrCanvas.style.margin = '0 auto';
+                    
+                    // Generate actual scannable QR code
+                    await QRCode.toCanvas(qrCanvas, shareUrl, {
+                        width: 256,
+                        height: 256,
+                        margin: 2,
+                        color: {
+                            dark: '#000000',
+                            light: '#FFFFFF'
+                        },
+                        errorCorrectionLevel: 'M'
+                    });
+                    
+                    container.appendChild(qrCanvas);
+                    
+                    // Add success message
+                    const successMsg = document.createElement('div');
+                    successMsg.style.marginTop = '1rem';
+                    successMsg.style.padding = '0.5rem';
+                    successMsg.style.background = 'var(--success-bg, #e8f5e8)';
+                    successMsg.style.color = 'var(--success-text, #2d5f2d)';
+                    successMsg.style.borderRadius = '8px';
+                    successMsg.style.fontSize = '0.85rem';
+                    successMsg.style.textAlign = 'center';
+                    successMsg.innerHTML = '✅ Scannable QR Code Generated!';
+                    container.appendChild(successMsg);
+                    
+                    // Add data URL for manual sharing
+                    const dataUrl = document.createElement('div');
+                    dataUrl.style.marginTop = '1rem';
+                    dataUrl.style.padding = '1rem';
+                    dataUrl.style.background = 'var(--bg-secondary)';
+                    dataUrl.style.borderRadius = '8px';
+                    dataUrl.style.fontSize = '0.8rem';
+                    dataUrl.style.wordBreak = 'break-all';
+                    
+                    dataUrl.innerHTML = `
+                        <strong>📋 Alternative: Share this link</strong><br>
+                        <textarea readonly style="width: 100%; height: 60px; margin-top: 0.5rem; resize: none; font-size: 0.7rem; color: var(--text-primary);">${shareUrl}</textarea>
+                        <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="navigator.clipboard.writeText('${shareUrl}').then(() => showNotification('📋 Link copied to clipboard!', 'success'))">📋 Copy Link</button>
+                    `;
+                    
+                    container.appendChild(dataUrl);
+                    
+                } catch (error) {
+                    console.error('QR Code generation error:', error);
+                    
+                    // Fallback to link sharing if QR generation fails
+                    const fallbackDiv = document.createElement('div');
+                    fallbackDiv.style.padding = '2rem';
+                    fallbackDiv.style.textAlign = 'center';
+                    fallbackDiv.style.background = 'var(--bg-secondary)';
+                    fallbackDiv.style.borderRadius = '8px';
+                    
+                    const shareableData = btoa(data);
+                    const shareUrl = `${window.location.origin}${window.location.pathname}?import=${encodeURIComponent(shareableData)}`;
+                    
+                    fallbackDiv.innerHTML = `
+                        <p>❌ QR Code generation failed</p>
+                        <p style="margin: 1rem 0;">📋 Use this link instead:</p>
+                        <textarea readonly style="width: 100%; height: 60px; margin: 0.5rem 0; font-size: 0.7rem; color: var(--text-primary);">${shareUrl}</textarea>
+                        <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${shareUrl}').then(() => showNotification('📋 Link copied!', 'success'))">📋 Copy Link</button>
+                    `;
+                    
+                    container.appendChild(fallbackDiv);
                 }
-                
-                // Add corner markers like a real QR code
-                this.drawCornerMarker(ctx, 0, 0);
-                this.drawCornerMarker(ctx, 160, 0);
-                this.drawCornerMarker(ctx, 0, 160);
-                
-                // Add text overlay
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-                ctx.fillRect(50, 85, 100, 30);
-                ctx.fillStyle = '#000000';
-                ctx.font = '12px Arial';
-                ctx.textAlign = 'center';
-                ctx.fillText('Expense Data', 100, 105);
             }
 
-            // Draw QR code corner markers
-            drawCornerMarker(ctx, x, y) {
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(x, y, 40, 40);
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(x + 5, y + 5, 30, 30);
-                ctx.fillStyle = '#000000';
-                ctx.fillRect(x + 10, y + 10, 20, 20);
-            }
 
-            // Simple hash function for pattern generation
-            simpleHash(str) {
-                let hash = 0;
-                for (let i = 0; i < str.length; i++) {
-                    const char = str.charCodeAt(i);
-                    hash = ((hash << 5) - hash) + char;
-                    hash = hash & hash; // Convert to 32-bit integer
-                }
-                return Math.abs(hash);
-            }
 
             // Update sync status display
             updateSyncStatus() {
@@ -4856,38 +4846,91 @@
         }
 
         // QR Scanner functionality
-        let qrStream = null;
+        let qrScanner = null;
 
         function startQRScanner() {
             document.getElementById('qrScannerModal').style.display = 'block';
-            initCamera();
+            initQRScanner();
         }
 
         function closeQRScanner() {
-            if (qrStream) {
-                qrStream.getTracks().forEach(track => track.stop());
-                qrStream = null;
+            if (qrScanner) {
+                qrScanner.stop();
+                qrScanner.destroy();
+                qrScanner = null;
             }
             document.getElementById('qrScannerModal').style.display = 'none';
         }
 
-        async function initCamera() {
+        async function initQRScanner() {
             try {
                 const video = document.getElementById('qrVideo');
-                qrStream = await navigator.mediaDevices.getUserMedia({ 
-                    video: { facingMode: 'environment' } // Use back camera if available
+                
+                // Initialize QR Scanner
+                qrScanner = new QrScanner(video, result => {
+                    console.log('QR Code detected:', result.data);
+                    
+                    // Process the scanned QR code
+                    processQRResult(result.data);
+                    
+                }, {
+                    returnDetailedScanResult: true,
+                    highlightScanRegion: true,
+                    highlightCodeOutline: true,
+                    preferredCamera: 'environment' // Use back camera if available
                 });
-                video.srcObject = qrStream;
-                video.play();
 
-                // Simple QR detection placeholder
-                video.addEventListener('loadedmetadata', () => {
-                    showNotification('📷 Camera ready! QR scanning is basic - try the manual link option below', 'info');
-                });
+                await qrScanner.start();
+                showNotification('📷 QR Scanner ready! Point camera at QR code', 'success');
 
             } catch (error) {
-                console.error('Camera error:', error);
-                showNotification('❌ Camera access denied. Please use the manual link option.', 'error');
+                console.error('QR Scanner error:', error);
+                showNotification('❌ Camera access denied or not supported. Use manual link option.', 'error');
+            }
+        }
+
+        function processQRResult(data) {
+            try {
+                // Check if it's a URL with import parameter
+                if (data.includes('?import=') || data.includes('&import=')) {
+                    const url = new URL(data);
+                    const importData = url.searchParams.get('import');
+                    
+                    if (importData) {
+                        closeQRScanner();
+                        
+                        // Decode and import
+                        const decodedData = atob(decodeURIComponent(importData));
+                        const parsedData = JSON.parse(decodedData);
+                        
+                        if (confirm('📱 QR Code scanned successfully! Import this data?\n\nThis will replace your current data.')) {
+                            if (syncManager && syncManager.importAllData(parsedData)) {
+                                showNotification('✅ Data imported from QR Code!', 'success');
+                            }
+                        }
+                        return;
+                    }
+                }
+                
+                // Try to parse as direct JSON data
+                const parsedData = JSON.parse(data);
+                if (parsedData && typeof parsedData === 'object') {
+                    closeQRScanner();
+                    
+                    if (confirm('📱 QR Code scanned successfully! Import this data?\n\nThis will replace your current data.')) {
+                        if (syncManager && syncManager.importAllData(parsedData)) {
+                            showNotification('✅ Data imported from QR Code!', 'success');
+                        }
+                    }
+                    return;
+                }
+                
+                // If not recognized format
+                showNotification('❌ QR Code not recognized as expense data', 'error');
+                
+            } catch (error) {
+                console.error('QR processing error:', error);
+                showNotification('❌ Invalid QR Code format', 'error');
             }
         }
 
