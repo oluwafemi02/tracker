@@ -1830,17 +1830,44 @@
         }
 
         .trip-header {
-            background: var(--primary-gradient);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 2rem;
-            border-radius: var(--border-radius-xl);
+            padding: 2.5rem;
+            border-radius: 20px;
             margin-bottom: 2rem;
-            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.2);
+        }
+
+        .trip-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.2) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+            animation: float 6s ease-in-out infinite;
+            pointer-events: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .trip-info {
+            position: relative;
+            z-index: 1;
         }
 
         .trip-info h2 {
             margin: 0 0 1rem 0;
             font-size: 1.8rem;
+            font-weight: 600;
         }
 
         .trip-controls {
@@ -2075,26 +2102,82 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 1rem;
-            background: var(--card-bg);
+            padding: 1.5rem;
+            background: linear-gradient(145deg, var(--card-bg) 0%, rgba(255, 255, 255, 0.9) 100%);
             border: 1px solid var(--border-color);
-            border-radius: var(--border-radius);
-            margin-bottom: 0.75rem;
+            border-radius: 16px;
+            margin-bottom: 1rem;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .trip-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s ease;
+        }
+
+        .trip-item:hover {
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transform: translateY(-4px) scale(1.02);
+            border-color: var(--primary);
+        }
+
+        .trip-item:hover::before {
+            left: 100%;
         }
 
         .trip-item-info h4 {
-            margin: 0 0 0.25rem 0;
+            margin: 0 0 0.5rem 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-primary);
         }
 
         .trip-item-info p {
-            margin: 0;
+            margin: 0 0 0.5rem 0;
             color: var(--text-secondary);
             font-size: 0.9rem;
+            line-height: 1.4;
         }
 
         .trip-item-actions {
             display: flex;
-            gap: 0.5rem;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .trip-item-actions .btn {
+            min-width: auto;
+            padding: 0.5rem 1rem;
+            font-size: 0.85rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .trip-item-actions .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .no-trips {
+            text-align: center;
+            color: var(--text-secondary);
+            font-style: italic;
+            padding: 3rem 2rem;
+            background: linear-gradient(145deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            border: 2px dashed var(--border-color);
+            border-radius: 16px;
+            font-size: 1.1rem;
+            margin: 1rem 0;
         }
 
         .trip-status {
@@ -2112,6 +2195,17 @@
         .trip-status.completed {
             background: var(--neutral-gradient);
             color: white;
+        }
+
+        .trip-status.upcoming {
+            background: var(--warning-gradient);
+            color: var(--text-primary);
+        }
+
+        .trip-status.ongoing {
+            background: var(--success-gradient);
+            color: white;
+            animation: pulse 2s infinite;
         }
 
         /* Mobile responsive for travel tracker */
@@ -3505,14 +3599,11 @@
                                     <div class="input-group">
                                         <span class="input-icon">👤</span>
                                         <label for="travelPayer">Payer</label>
-                                        <select id="travelPayer" required>
-                                            <option value="">Who paid?</option>
-                                            <option value="Me">Me</option>
-                                            <option value="Friend 1">Friend 1</option>
-                                            <option value="Friend 2">Friend 2</option>
-                                            <option value="Friend 3">Friend 3</option>
-                                            <option value="Other">Other</option>
-                                        </select>
+                                        <input type="text" id="travelPayer" placeholder="Enter payer name (e.g., Me, John, Sarah)" required list="payerSuggestions">
+                                        <datalist id="payerSuggestions">
+                                            <option value="Me">
+                                            <option value="You">
+                                        </datalist>
                                     </div>
                                     
                                     <div class="input-group" style="grid-column: 1 / -1;">
@@ -3649,6 +3740,24 @@
                 <div style="text-align: center; margin-top: 2rem;">
                     <button class="btn" id="closeTripModalBtn">Close</button>
                 </div>
+            </div>
+        </div>
+
+        <!-- Complete Trip Modal -->
+        <div id="completeTripModal" class="modal">
+            <div class="modal-content">
+                <h2>🎉 Complete Trip</h2>
+                <p>When did your trip end?</p>
+                <form id="completeTripForm">
+                    <div class="input-group">
+                        <label for="completionDate">Trip End Date</label>
+                        <input type="date" id="completionDate" required>
+                    </div>
+                    <div class="modal-actions" style="display: flex; gap: 1rem; justify-content: center; margin-top: 2rem;">
+                        <button type="button" class="btn btn-secondary" onclick="closeCompleteTripModal()">Cancel</button>
+                        <button type="submit" class="btn btn-success">✅ Complete Trip</button>
+                    </div>
+                </form>
             </div>
         </div>
 
@@ -7842,9 +7951,20 @@
             const completeTripBtn = document.getElementById('completeTripBtn');
             if (completeTripBtn) {
                 completeTripBtn.addEventListener('click', function() {
-                    if (currentTrip && confirm(`Are you sure you want to complete the trip "${currentTrip.name}"? You can reopen it later if needed.`)) {
+                    if (currentTrip) {
                         completeTrip(currentTrip.id);
                     }
+                });
+            }
+
+            // Complete trip form
+            const completeTripForm = document.getElementById('completeTripForm');
+            if (completeTripForm) {
+                completeTripForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const tripId = parseInt(document.getElementById('completeTripModal').dataset.tripId);
+                    const completionDate = document.getElementById('completionDate').value;
+                    finalizeCompleteTrip(tripId, completionDate);
                 });
             }
 
@@ -8025,10 +8145,13 @@
 
         // Travel tab initialization
         function initializeTravelTab() {
+            // Update all trip statuses first
+            updateTripsStatusBasedOnDates();
             updateTripDisplay();
             renderTravelExpensesList();
             updateTravelCategoryBreakdown();
             updateTripStats();
+            updatePayerSuggestions();
             
             // Set today's date for travel form
             if (document.getElementById('travelDate')) {
@@ -8123,10 +8246,22 @@
 
         // Trip Management Functions
         function completeTrip(tripId) {
+            // Set the trip ID and show the completion modal
+            document.getElementById('completeTripModal').dataset.tripId = tripId;
+            document.getElementById('completionDate').value = new Date().toISOString().split('T')[0]; // Set to today by default
+            document.getElementById('completeTripModal').style.display = 'block';
+        }
+
+        function closeCompleteTripModal() {
+            document.getElementById('completeTripModal').style.display = 'none';
+        }
+
+        function finalizeCompleteTrip(tripId, completionDate) {
             const trip = trips.find(t => t.id === tripId);
             if (trip) {
                 trip.status = 'completed';
-                trip.completedDate = new Date().toISOString();
+                trip.completedDate = completionDate;
+                trip.endDate = completionDate; // Update the actual end date
                 localStorage.setItem('trips', JSON.stringify(trips));
                 
                 // Clear current trip if it was the completed one
@@ -8136,6 +8271,8 @@
                 }
                 
                 updateTripDisplay();
+                renderTripsList();
+                closeCompleteTripModal();
                 showNotification(`🎉 Trip "${trip.name}" completed successfully!`, 'success');
             }
         }
@@ -8319,10 +8456,31 @@
             const manageTripBtn = document.getElementById('manageTripBtn');
             const completeTripBtn = document.getElementById('completeTripBtn');
             
-            if (currentTrip && currentTrip.status !== 'completed') {
-                tripNameElement.textContent = `${currentTrip.name} (${currentTrip.destination})`;
+            // Auto-update trip statuses first
+            updateTripsStatusBasedOnDates();
+            
+            // Find the most relevant active trip (ongoing first, then upcoming)
+            const ongoingTrips = trips.filter(t => t.status === 'ongoing');
+            const upcomingTrips = trips.filter(t => t.status === 'upcoming');
+            
+            let activeTrip = null;
+            if (ongoingTrips.length > 0) {
+                activeTrip = ongoingTrips[0]; // Take the first ongoing trip
+            } else if (upcomingTrips.length > 0) {
+                activeTrip = upcomingTrips[0]; // Take the first upcoming trip
+            }
+            
+            // Update currentTrip if we found a better match or if current is outdated
+            if (activeTrip && (!currentTrip || currentTrip.status === 'completed')) {
+                currentTrip = activeTrip;
+                localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+            }
+            
+            if (currentTrip && (currentTrip.status === 'ongoing' || currentTrip.status === 'upcoming')) {
+                const statusEmoji = currentTrip.status === 'ongoing' ? '🟢' : '🟡';
+                tripNameElement.textContent = `${statusEmoji} ${currentTrip.name} (${currentTrip.destination})`;
                 manageTripBtn.textContent = '📝 Manage Trips';
-                completeTripBtn.style.display = 'block';
+                completeTripBtn.style.display = currentTrip.status === 'ongoing' ? 'block' : 'none';
             } else {
                 tripNameElement.textContent = 'No active trip';
                 manageTripBtn.textContent = '🚀 Start Trip';
@@ -8490,23 +8648,79 @@
             const tripsList = document.getElementById('tripsList');
             
             if (trips.length === 0) {
-                tripsList.innerHTML = '<div class="no-trips">No trips created yet. Start your first trip above!</div>';
+                tripsList.innerHTML = '<div class="no-trips">✈️ No trips created yet. Start your first adventure!</div>';
                 return;
             }
 
             tripsList.innerHTML = '';
             
-            // Sort trips (active first, then by creation date)
+            // Auto-update trip statuses based on dates
+            updateTripsStatusBasedOnDates();
+            
+            // Sort trips: ongoing first, then upcoming, then completed (by start date)
             const sortedTrips = [...trips].sort((a, b) => {
-                if (a.status === 'active' && b.status !== 'active') return -1;
-                if (a.status !== 'active' && b.status === 'active') return 1;
-                return new Date(b.createdAt) - new Date(a.createdAt);
+                const statusOrder = { 'ongoing': 1, 'upcoming': 2, 'active': 3, 'completed': 4 };
+                const aOrder = statusOrder[a.status] || 5;
+                const bOrder = statusOrder[b.status] || 5;
+                
+                if (aOrder !== bOrder) return aOrder - bOrder;
+                return new Date(b.startDate) - new Date(a.startDate);
             });
 
             sortedTrips.forEach(trip => {
                 const tripElement = createTripElement(trip);
                 tripsList.appendChild(tripElement);
             });
+            
+            // Update payer suggestions
+            updatePayerSuggestions();
+        }
+
+        function updateTripsStatusBasedOnDates() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            trips.forEach(trip => {
+                if (trip.status === 'completed') return; // Don't auto-change completed trips
+                
+                const startDate = new Date(trip.startDate);
+                const endDate = trip.endDate ? new Date(trip.endDate) : null;
+                
+                startDate.setHours(0, 0, 0, 0);
+                if (endDate) endDate.setHours(0, 0, 0, 0);
+                
+                if (startDate > today) {
+                    trip.status = 'upcoming';
+                } else if (endDate && endDate < today) {
+                    trip.status = 'completed';
+                    trip.completedDate = trip.endDate;
+                } else {
+                    trip.status = 'ongoing';
+                }
+            });
+            
+            localStorage.setItem('trips', JSON.stringify(trips));
+        }
+
+        function updatePayerSuggestions() {
+            // Get unique payer names from existing expenses
+            const payerNames = [...new Set(travelExpenses.map(e => e.payer).filter(p => p))];
+            const datalist = document.getElementById('payerSuggestions');
+            
+            // Clear existing options except default ones
+            datalist.innerHTML = '<option value="Me"><option value="You">';
+            
+            // Add unique payer names
+            payerNames.forEach(payer => {
+                if (payer !== 'Me' && payer !== 'You') {
+                    datalist.innerHTML += `<option value="${payer}">`;
+                }
+            });
+        }
+
+        function editTrip(tripId) {
+            // TODO: Implement trip editing functionality
+            showNotification('Trip editing coming soon! 🚧', 'info');
         }
 
         function createTripElement(trip) {
@@ -8526,7 +8740,23 @@
             
             const status = document.createElement('span');
             status.className = `trip-status ${trip.status}`;
-            status.textContent = trip.status === 'active' ? '🟢 Active' : '✅ Completed';
+            
+            switch(trip.status) {
+                case 'upcoming':
+                    status.textContent = '🟡 Upcoming';
+                    break;
+                case 'ongoing':
+                    status.textContent = '🟢 Ongoing';
+                    break;
+                case 'active':
+                    status.textContent = '🟢 Active';
+                    break;
+                case 'completed':
+                    status.textContent = '✅ Completed';
+                    break;
+                default:
+                    status.textContent = '🟢 Active';
+            }
             
             infoDiv.appendChild(title);
             infoDiv.appendChild(details);
@@ -8535,10 +8765,25 @@
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'trip-item-actions';
             
-            if (trip.status === 'active') {
+            if (trip.status === 'upcoming') {
                 const switchBtn = document.createElement('button');
                 switchBtn.className = 'btn btn-primary';
-                switchBtn.textContent = '📍 Switch';
+                switchBtn.textContent = '🚀 Start Trip';
+                switchBtn.addEventListener('click', () => {
+                    switchToTrip(trip.id);
+                    document.getElementById('tripModal').style.display = 'none';
+                });
+                actionsDiv.appendChild(switchBtn);
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'btn btn-secondary';
+                editBtn.textContent = '✏️ Edit';
+                editBtn.addEventListener('click', () => editTrip(trip.id));
+                actionsDiv.appendChild(editBtn);
+            } else if (trip.status === 'ongoing' || trip.status === 'active') {
+                const switchBtn = document.createElement('button');
+                switchBtn.className = 'btn btn-primary';
+                switchBtn.textContent = '📍 Switch To';
                 switchBtn.addEventListener('click', () => {
                     switchToTrip(trip.id);
                     document.getElementById('tripModal').style.display = 'none';
