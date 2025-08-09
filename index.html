@@ -7671,199 +7671,292 @@
          }
 
          // Interactive Guide System
-         const guideSteps = [
-             {
-                 title: "Welcome to Expense Tracker! 🎉",
-                 content: `
-                     <p>This powerful app helps you track expenses, set budgets, manage recurring payments, and get smart financial insights.</p>
-                     <p><strong>What you'll learn:</strong></p>
-                     <ul>
-                         <li>How to add and track expenses</li>
-                         <li>Setting up recurring payments</li>
-                         <li>Using the dashboard for insights</li>
-                         <li>Setting budgets and getting alerts</li>
-                         <li>Enabling automatic reminders</li>
-                     </ul>
-                 `,
-                 target: null,
-                 action: null
-             },
-             {
-                 title: "📱 PWA App Features",
-                 content: `
-                     <h3>You're using a Progressive Web App!</h3>
-                     <p>This means you get app-like features:</p>
-                     <ul>
-                         <li>📱 Works offline once loaded</li>
-                         <li>🔔 Push notifications for reminders</li>
-                         <li>🏠 Add to home screen like a native app</li>
-                         <li>⚡ Fast loading and smooth performance</li>
-                         <li>🔒 Secure - all data stays on your device</li>
-                     </ul>
-                     <p><strong>Pro tip:</strong> Add this to your home screen for the best experience!</p>
-                 `,
-                 target: null,
-                 action: null
-             },
-             {
-                 title: "💰 Adding Your First Expense",
-                 content: `
-                     <h3>Let's add an expense!</h3>
-                     <p>This form is where you'll track all your spending. Here's what each field does:</p>
-                     <ul>
-                         <li><strong>Amount:</strong> How much you spent</li>
-                         <li><strong>Category:</strong> What type of expense (groceries, bills, etc.)</li>
-                         <li><strong>Description:</strong> Optional details about the expense</li>
-                         <li><strong>Person:</strong> Who made the purchase</li>
-                         <li><strong>Date:</strong> When the expense occurred</li>
-                     </ul>
-                     <p>Try adding a test expense now!</p>
-                 `,
-                 target: "#expenseForm",
-                 action: "scrollTo"
-             },
-             {
-                 title: "🎯 Quick Actions",
-                 content: `
-                     <h3>Speed up expense entry!</h3>
-                     <p>These quick action buttons let you add common expenses with one click:</p>
-                     <ul>
-                         <li>🛒 <strong>Quick Groceries</strong> - Pre-fills grocery category</li>
-                         <li>⚡ <strong>Quick Utilities</strong> - For bills and utilities</li>
-                         <li>🚗 <strong>Quick Transport</strong> - Gas, bus, taxi expenses</li>
-                         <li>🏡 <strong>Quick Mortgage</strong> - Housing payments</li>
-                         <li>🚙 <strong>Quick Car Loan</strong> - Vehicle payments</li>
-                     </ul>
-                     <p>Click any button to see how it pre-fills the form!</p>
-                 `,
-                 target: ".quick-actions",
-                 action: "highlight"
-             },
-             {
-                 title: "🔍 Smart Search & Filtering",
-                 content: `
-                     <h3>Find expenses instantly!</h3>
-                     <p>Use the search bar to find any expense by:</p>
-                     <ul>
-                         <li>💰 Amount (e.g., "50" or "€25")</li>
-                         <li>📝 Category name</li>
-                         <li>📄 Description text</li>
-                         <li>👤 Person's name</li>
-                         <li>📅 Date</li>
-                     </ul>
-                     <p><strong>View Modes:</strong></p>
-                     <ul>
-                         <li><strong>Recent:</strong> Last 30 days (default)</li>
-                         <li><strong>All:</strong> Complete expense history</li>
-                     </ul>
-                 `,
-                 target: ".search-container",
-                 action: "highlight"
-             },
-             {
-                 title: "📊 Dashboard - Your Financial Overview",
-                 content: `
-                     <h3>Get insights into your spending!</h3>
-                     <p>The Dashboard tab shows:</p>
-                     <ul>
-                         <li>📈 <strong>Spending charts</strong> - Visual breakdown by category</li>
-                         <li>📊 <strong>Monthly trends</strong> - How your spending changes</li>
-                         <li>🎯 <strong>Budget progress</strong> - How much you've spent vs. budget</li>
-                         <li>📉 <strong>Category analysis</strong> - Which categories cost the most</li>
-                         <li>💡 <strong>Smart suggestions</strong> - AI-like financial advice</li>
-                     </ul>
-                     <p>Click the Dashboard tab to explore your financial data!</p>
-                 `,
-                 target: '[data-tab="dashboard"]',
-                 action: "highlight"
-             },
-             {
-                 title: "🔄 Recurring Expenses - Never Forget a Bill!",
-                 content: `
-                     <h3>Automate your regular expenses!</h3>
-                     <p>Set up recurring expenses for:</p>
-                     <ul>
-                         <li>🏠 <strong>Rent/Mortgage</strong> - Monthly housing payments</li>
-                         <li>⚡ <strong>Utilities</strong> - Electricity, water, internet</li>
-                         <li>📱 <strong>Subscriptions</strong> - Netflix, Spotify, etc.</li>
-                         <li>🚗 <strong>Car payments</strong> - Loans, insurance</li>
-                         <li>🛒 <strong>Regular shopping</strong> - Weekly groceries</li>
-                     </ul>
-                     <p><strong>Frequencies available:</strong> Weekly, Bi-weekly, Monthly, Quarterly, Yearly</p>
-                     <p>The app will automatically remind you when they're due!</p>
-                 `,
-                 target: '[data-action="show-recurring"]',
-                 action: "highlight"
-             },
-             {
-                 title: "🔔 Smart Notifications",
-                 content: `
-                     <h3>Never miss a payment again!</h3>
-                     <p>The app sends automatic reminders:</p>
-                     <ul>
-                         <li>📅 <strong>3 days before</strong> recurring expenses are due</li>
-                         <li>⚠️ <strong>1 day before</strong> with urgent priority</li>
-                         <li>🚨 <strong>Overdue alerts</strong> if you miss a payment</li>
-                         <li>💰 <strong>Budget warnings</strong> when you're spending too much</li>
-                     </ul>
-                     <p><strong>Works even when the app is closed!</strong> Click notifications to quickly add expenses.</p>
-                     <p>Go to Settings → Notification Settings to enable and test this feature.</p>
-                 `,
-                 target: "#notificationStatus",
-                 action: "scrollTo"
-             },
-             {
-                 title: "⚙️ Settings & Customization",
-                 content: `
-                     <h3>Personalize your experience!</h3>
-                     <p>In the Settings tab you can:</p>
-                     <ul>
-                         <li>💰 <strong>Set monthly budget</strong> - Get alerts when you overspend</li>
-                         <li>🎨 <strong>Add custom categories</strong> - Create categories with emojis</li>
-                         <li>🔔 <strong>Test notifications</strong> - Make sure reminders work</li>
-                         <li>⌨️ <strong>Learn keyboard shortcuts</strong> - Work faster</li>
-                         <li>📥 <strong>Export your data</strong> - Download CSV for analysis</li>
-                         <li>📚 <strong>Access this guide</strong> - Anytime you need help</li>
-                     </ul>
-                 `,
-                 target: '[data-tab="settings"]',
-                 action: "highlight"
-             },
-             {
-                 title: "🎉 You're All Set!",
-                 content: `
-                     <h3>Ready to master your finances!</h3>
-                     <p><strong>Your next steps:</strong></p>
-                     <ul>
-                         <li>📱 Add this app to your home screen</li>
-                         <li>🔔 Enable notifications for reminders</li>
-                         <li>💰 Set your monthly budget</li>
-                         <li>📝 Add some expenses to get started</li>
-                         <li>🔄 Set up recurring expenses for bills</li>
-                         <li>📊 Check the dashboard for insights</li>
-                     </ul>
-                     <p><strong>Pro tips:</strong></p>
-                     <ul>
-                         <li>Use quick actions for common expenses</li>
-                         <li>Check the guide anytime from Settings</li>
-                         <li>Keyboard shortcuts make things faster</li>
-                         <li>Export data regularly as backup</li>
-                     </ul>
-                     <p><strong>Happy expense tracking! 🚀</strong></p>
-                 `,
-                 target: null,
-                 action: null
-             }
-         ];
+                 const guideSteps = [
+            {
+                title: "Welcome to Expense Tracker! 🎉",
+                content: `
+                    <p>This powerful app helps you track expenses, manage trips, set budgets, and sync data across all your devices!</p>
+                    <p><strong>🌟 Major Features You'll Master:</strong></p>
+                    <ul>
+                        <li>💰 Smart expense tracking with recurring payments</li>
+                        <li>🧳 Trip expense management with payer tracking</li>
+                        <li>📊 Interactive dashboard with budget projections</li>
+                        <li>📱 Cross-device data synchronization</li>
+                        <li>🔔 Intelligent notifications and reminders</li>
+                        <li>📈 Advanced financial insights and analytics</li>
+                    </ul>
+                    <p><strong>Let's explore everything this app can do!</strong></p>
+                `,
+                target: null,
+                action: null
+            },
+            {
+                title: "📱 Progressive Web App Features",
+                content: `
+                    <h3>You're using a cutting-edge PWA!</h3>
+                    <p><strong>🚀 App-like Experience:</strong></p>
+                    <ul>
+                        <li>📱 Works offline once loaded</li>
+                        <li>🔔 Push notifications for reminders</li>
+                        <li>🏠 Add to home screen like a native app</li>
+                        <li>⚡ Lightning-fast performance</li>
+                        <li>🔒 Secure - all data stays on your device</li>
+                        <li>🔄 Automatic updates when online</li>
+                    </ul>
+                    <p><strong>💡 Pro tip:</strong> Add this to your home screen for the best mobile experience!</p>
+                `,
+                target: null,
+                action: null
+            },
+            {
+                title: "💰 Smart Expense Tracking",
+                content: `
+                    <h3>Master the expense form!</h3>
+                    <p><strong>🎯 Each field explained:</strong></p>
+                    <ul>
+                        <li><strong>💵 Amount:</strong> How much you spent (auto-calculates in budget)</li>
+                        <li><strong>📂 Category:</strong> Smart categorization with custom emojis</li>
+                        <li><strong>📝 Description:</strong> Optional details for better tracking</li>
+                        <li><strong>👤 Person:</strong> Who made the purchase (multi-person support)</li>
+                        <li><strong>📅 Date:</strong> When it occurred (defaults to today)</li>
+                        <li><strong>🔄 Recurring:</strong> Set up automatic recurring expenses</li>
+                    </ul>
+                    <p><strong>✨ Try adding a test expense to see the magic!</strong></p>
+                `,
+                target: "#expenseForm",
+                action: "scrollTo"
+            },
+            {
+                title: "🎯 Lightning-Fast Quick Actions",
+                content: `
+                    <h3>One-click expense entry!</h3>
+                    <p><strong>⚡ Quick action buttons for common expenses:</strong></p>
+                    <ul>
+                        <li>🛒 <strong>Quick Groceries</strong> - Pre-fills grocery category</li>
+                        <li>⚡ <strong>Quick Utilities</strong> - Bills and utilities</li>
+                        <li>🚗 <strong>Quick Transport</strong> - Gas, taxi, public transport</li>
+                        <li>🏡 <strong>Quick Mortgage</strong> - Housing payments</li>
+                        <li>🚙 <strong>Quick Car Loan</strong> - Vehicle payments</li>
+                        <li>🍽️ <strong>Dining Out</strong> - Restaurant expenses</li>
+                    </ul>
+                    <p><strong>💡 Click any button to see intelligent pre-filling in action!</strong></p>
+                `,
+                target: ".quick-actions",
+                action: "highlight"
+            },
+            {
+                title: "🔍 Advanced Search & Filtering",
+                content: `
+                    <h3>Find anything instantly!</h3>
+                    <p><strong>🎯 Search by multiple criteria:</strong></p>
+                    <ul>
+                        <li>💰 <strong>Amount:</strong> "50", "€25", ">100" (range searches)</li>
+                        <li>📝 <strong>Category:</strong> Any category name</li>
+                        <li>📄 <strong>Description:</strong> Any text in descriptions</li>
+                        <li>👤 <strong>Person:</strong> Who paid for it</li>
+                        <li>📅 <strong>Date:</strong> Specific dates or ranges</li>
+                    </ul>
+                    <p><strong>📊 Smart View Modes:</strong></p>
+                    <ul>
+                        <li><strong>Recent:</strong> Last 30 days (optimized for speed)</li>
+                        <li><strong>All:</strong> Complete expense history with pagination</li>
+                    </ul>
+                `,
+                target: ".search-container",
+                action: "highlight"
+            },
+            {
+                title: "📊 Interactive Dashboard & Analytics",
+                content: `
+                    <h3>Your financial command center!</h3>
+                    <p><strong>📈 Real-time insights:</strong></p>
+                    <ul>
+                        <li>💹 <strong>Dynamic charts:</strong> Visual spending breakdown</li>
+                        <li>📊 <strong>Monthly trends:</strong> Track spending patterns</li>
+                        <li>🎯 <strong>Budget progress:</strong> Visual budget vs. actual</li>
+                        <li>🔮 <strong>Smart projections:</strong> Predict monthly spending</li>
+                        <li>💡 <strong>AI insights:</strong> Personalized financial advice</li>
+                        <li>📅 <strong>Upcoming recurring:</strong> See what's due next</li>
+                    </ul>
+                    <p><strong>✨ Click Dashboard tab to see your financial story!</strong></p>
+                `,
+                target: '[data-tab="dashboard"]',
+                action: "highlight"
+            },
+            {
+                title: "🔄 Intelligent Recurring Expenses",
+                content: `
+                    <h3>Never forget a bill again!</h3>
+                    <p><strong>⚡ Auto-processing features:</strong></p>
+                    <ul>
+                        <li>🏠 <strong>Housing:</strong> Rent, mortgage, utilities</li>
+                        <li>📱 <strong>Subscriptions:</strong> Netflix, Spotify, gym memberships</li>
+                        <li>🚗 <strong>Vehicle:</strong> Car payments, insurance, fuel</li>
+                        <li>🛒 <strong>Regular shopping:</strong> Weekly groceries</li>
+                        <li>💳 <strong>Bills:</strong> Credit cards, loans</li>
+                    </ul>
+                    <p><strong>🤖 Smart Features:</strong></p>
+                    <ul>
+                        <li>Auto-deducts from budget when due</li>
+                        <li>Shows next 5 upcoming payments</li>
+                        <li>Quick-add buttons for overdue payments</li>
+                        <li>Visual urgency indicators (green/yellow/red)</li>
+                    </ul>
+                `,
+                target: '[data-action="show-recurring"]',
+                action: "highlight"
+            },
+            {
+                title: "🧳 Trip Expense Management",
+                content: `
+                    <h3>Track group trips like a pro!</h3>
+                    <p><strong>✈️ Smart trip features:</strong></p>
+                    <ul>
+                        <li>📅 <strong>Auto-status tracking:</strong> Upcoming → Ongoing → Completed</li>
+                        <li>👥 <strong>Custom payer names:</strong> Track who paid what (no more "Friend 1"!)</li>
+                        <li>📊 <strong>Expense breakdown:</strong> By category and by person</li>
+                        <li>📱 <strong>Instant trip switching:</strong> Manage multiple trips easily</li>
+                        <li>✅ <strong>Trip completion:</strong> Choose exact end date</li>
+                        <li>🔄 <strong>Reopen completed trips:</strong> If plans change</li>
+                    </ul>
+                    <p><strong>💡 Perfect for group vacations, business trips, and events!</strong></p>
+                `,
+                target: '[data-tab="travel"]',
+                action: "highlight"
+            },
+            {
+                title: "📱 Cross-Device Data Sync",
+                content: `
+                    <h3>Access your data everywhere!</h3>
+                    <p><strong>☁️ Multiple sync options:</strong></p>
+                    <ul>
+                        <li>📤 <strong>Export/Import:</strong> JSON backup files (works now!)</li>
+                        <li>📱 <strong>QR Code transfer:</strong> Device-to-device sharing</li>
+                        <li>🔥 <strong>Firebase sync:</strong> Real-time cloud sync (coming soon)</li>
+                        <li>💾 <strong>Local sync mode:</strong> Privacy-focused option</li>
+                    </ul>
+                    <p><strong>🛡️ Data safety features:</strong></p>
+                    <ul>
+                        <li>✅ Validation before import</li>
+                        <li>⚠️ Confirmation for data replacement</li>
+                        <li>📋 Complete backup of all data</li>
+                        <li>🔒 Your data, your control</li>
+                    </ul>
+                `,
+                target: ".sync-status-card",
+                action: "scrollTo"
+            },
+            {
+                title: "💡 Interactive Budget Features",
+                content: `
+                    <h3>Budget management made smart!</h3>
+                    <p><strong>🎯 Clickable budget elements:</strong></p>
+                    <ul>
+                        <li>💰 <strong>Click "Spent":</strong> See detailed breakdown by category</li>
+                        <li>📊 <strong>Click "Remaining":</strong> View upcoming recurring payments</li>
+                        <li>📋 <strong>Click expense count:</strong> See what expenses are for</li>
+                        <li>🔮 <strong>Click projection:</strong> Detailed spending forecast</li>
+                    </ul>
+                    <p><strong>📈 Smart projections:</strong></p>
+                    <ul>
+                        <li>Predicts end-of-month spending</li>
+                        <li>Factors in remaining recurring expenses</li>
+                        <li>Shows daily budget recommendations</li>
+                        <li>Warns about potential overspending</li>
+                    </ul>
+                `,
+                target: ".stats-grid",
+                action: "highlight"
+            },
+            {
+                title: "🔔 Advanced Notification System",
+                content: `
+                    <h3>Stay on top of your finances!</h3>
+                    <p><strong>🤖 Intelligent reminders:</strong></p>
+                    <ul>
+                        <li>📅 <strong>3 days before</strong> recurring expenses due</li>
+                        <li>⚠️ <strong>1 day before</strong> with urgent priority</li>
+                        <li>🚨 <strong>Overdue alerts</strong> for missed payments</li>
+                        <li>💰 <strong>Budget warnings</strong> when approaching limit</li>
+                        <li>📊 <strong>Monthly summaries</strong> and insights</li>
+                    </ul>
+                    <p><strong>⚡ Quick actions from notifications:</strong></p>
+                    <ul>
+                        <li>Click notification to open app</li>
+                        <li>Quick-add expenses directly</li>
+                        <li>Mark recurring expenses as paid</li>
+                    </ul>
+                `,
+                target: "#notificationStatus",
+                action: "scrollTo"
+            },
+            {
+                title: "⚙️ Powerful Settings & Customization",
+                content: `
+                    <h3>Make the app truly yours!</h3>
+                    <p><strong>🎨 Personalization options:</strong></p>
+                    <ul>
+                        <li>💰 <strong>Monthly budget:</strong> Set goals and get alerts</li>
+                        <li>🎯 <strong>Custom categories:</strong> Create categories with emojis</li>
+                        <li>📱 <strong>Data sync:</strong> Export, import, QR codes</li>
+                        <li>🔔 <strong>Notification preferences:</strong> Test and configure</li>
+                        <li>⌨️ <strong>Keyboard shortcuts:</strong> Power user features</li>
+                        <li>📊 <strong>Data management:</strong> Export, clear, backup</li>
+                    </ul>
+                    <p><strong>🔧 Advanced features:</strong></p>
+                    <ul>
+                        <li>Theme customization (coming soon)</li>
+                        <li>Currency settings</li>
+                        <li>Export formats (CSV, JSON)</li>
+                    </ul>
+                `,
+                target: '[data-tab="settings"]',
+                action: "highlight"
+            },
+            {
+                title: "🚀 You're Ready to Master Your Finances!",
+                content: `
+                    <h3>Your complete financial toolkit!</h3>
+                    <p><strong>🎯 Immediate next steps:</strong></p>
+                    <ul>
+                        <li>📱 Add app to home screen for quick access</li>
+                        <li>🔔 Enable notifications for smart reminders</li>
+                        <li>💰 Set your monthly budget goal</li>
+                        <li>📝 Add your first few expenses</li>
+                        <li>🔄 Set up recurring bills and subscriptions</li>
+                        <li>🧳 Create a trip for vacation planning</li>
+                        <li>📤 Export data as backup</li>
+                    </ul>
+                    <p><strong>💡 Pro power-user tips:</strong></p>
+                    <ul>
+                        <li>Use Ctrl+N to quickly add expenses</li>
+                        <li>Click budget elements for detailed breakdowns</li>
+                        <li>Set up recurring expenses to automate tracking</li>
+                        <li>Use trip mode for group expense management</li>
+                        <li>Export data regularly as backup</li>
+                        <li>Sync across devices for everywhere access</li>
+                    </ul>
+                    <p><strong>🎉 Welcome to effortless expense tracking!</strong></p>
+                `,
+                target: null,
+                action: null
+            }
+        ];
 
          let currentGuideStep = 0;
          let isGuideActive = false;
 
          function startGuide(isQuickTour = false) {
              if (isQuickTour) {
-                 // Quick tour shows only essential steps (2, 3, 6, 8)
+                 // Quick tour shows only essential steps: Expense tracking, Dashboard, Trip management, Data sync
                  currentGuideStep = 0;
-                 const quickSteps = [guideSteps[1], guideSteps[2], guideSteps[5], guideSteps[7]];
+                 const quickSteps = [
+                     guideSteps[2],  // Smart Expense Tracking
+                     guideSteps[5],  // Interactive Dashboard
+                     guideSteps[7],  // Trip Management
+                     guideSteps[8],  // Data Sync
+                     guideSteps[12]  // Final steps
+                 ];
                  showGuideStep(quickSteps, 0, true);
              } else {
                  // Full guide shows all steps
