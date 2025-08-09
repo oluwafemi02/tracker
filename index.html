@@ -365,6 +365,7 @@
             font-size: 1rem;
             transition: var(--transition);
             background: white;
+            color: var(--text-primary);
             font-family: inherit;
         }
 
@@ -520,6 +521,27 @@
             font-size: 1rem;
             background: transparent;
             padding: 0;
+            color: var(--text-primary);
+        }
+
+        #searchInput::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+
+        #travelSearchInput {
+            border: none;
+            outline: none;
+            flex: 1;
+            font-size: 1rem;
+            background: transparent;
+            padding: 0;
+            color: var(--text-primary);
+        }
+
+        #travelSearchInput::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
         }
 
         #clearSearch {
@@ -3526,7 +3548,7 @@
                                 <div class="search-container">
                                     <div class="search-input-wrapper">
                                         <span class="search-icon">🔍</span>
-                                        <input type="text" id="travelSearchInput" placeholder="Search project expenses..." autocomplete="off">
+                                        <input type="text" id="travelSearchInput" placeholder="Search trip expenses..." autocomplete="off">
                                         <button id="clearTravelSearch" style="display: none;">✖️</button>
                                     </div>
                                 </div>
@@ -4098,7 +4120,9 @@
 
         // Calculate how many times a recurring expense should occur in a given month
         function calculateRecurringOccurrencesForMonth(recurring, month, year) {
-            const startDate = new Date(recurring.lastProcessedDate || recurring.startDate);
+            // Use the most reliable date source available
+            const baseDate = recurring.lastProcessedDate || recurring.startDate || recurring.date || new Date().toISOString().split('T')[0];
+            const startDate = new Date(baseDate);
             const monthStart = new Date(year, month, 1);
             const monthEnd = new Date(year, month + 1, 0);
             const today = new Date();
@@ -4157,8 +4181,9 @@
             recurringExpenses.forEach(recurring => {
                 if (!recurring.isActive) return;
                 
-                let lastProcessed = new Date(recurring.lastProcessedDate || recurring.startDate);
-                let nextDue = calculateNextDueDate(recurring.lastProcessedDate || recurring.startDate, recurring.frequency);
+                const baseDate = recurring.lastProcessedDate || recurring.startDate || recurring.date || new Date().toISOString().split('T')[0];
+                let lastProcessed = new Date(baseDate);
+                let nextDue = calculateNextDueDate(baseDate, recurring.frequency);
                 
                 // Process all overdue occurrences up to today
                 while (nextDue <= today && nextDue.getMonth() === currentMonth && nextDue.getFullYear() === currentYear) {
@@ -4438,12 +4463,17 @@
         // Get upcoming recurring expenses sorted by due date
         function getUpcomingRecurringExpenses(limit = 5) {
             const today = new Date();
+            today.setHours(0, 0, 0, 0); // Reset time to start of day for accurate comparison
             const upcomingList = [];
             
             recurringExpenses.forEach(recurring => {
                 if (!recurring.isActive) return;
                 
-                const nextDue = calculateNextDueDate(recurring.lastProcessedDate || recurring.startDate, recurring.frequency);
+                // Use the startDate or lastProcessedDate, whichever is more recent
+                const baseDate = recurring.lastProcessedDate || recurring.startDate || recurring.date;
+                if (!baseDate) return;
+                
+                const nextDue = calculateNextDueDate(baseDate, recurring.frequency);
                 const daysUntilDue = Math.ceil((nextDue - today) / (1000 * 60 * 60 * 24));
                 
                 // Include if it's due within the next 30 days or overdue
