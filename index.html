@@ -3637,6 +3637,9 @@
             // Setup keyboard shortcuts
             setupKeyboardShortcuts();
             
+            // Setup all event listeners for interactive elements
+            setupEventListeners();
+            
             document.getElementById('expenseForm').addEventListener('submit', handleExpenseSubmit);
             
             // Add loading states
@@ -3658,6 +3661,12 @@
                     this.parentElement.classList.remove('bounce-in');
                 });
             });
+            
+            // Handle URL parameters for deep linking
+            handleURLParameters();
+            
+            // Update notification status on load
+            updateNotificationStatus();
         });
 
         // Show notification
@@ -6745,6 +6754,24 @@
 
             // Travel tracker event listeners
             setupTravelEventListeners();
+            
+            // Tracker type selector
+            const trackerTypeSelect = document.getElementById('trackerType');
+            if (trackerTypeSelect) {
+                trackerTypeSelect.addEventListener('change', changeTrackerType);
+            }
+            
+            // Category change handler
+            const categorySelect = document.getElementById('category');
+            if (categorySelect) {
+                categorySelect.addEventListener('change', handleCategoryChange);
+            }
+            
+            // Recurring options toggle
+            const isRecurringCheckbox = document.getElementById('isRecurring');
+            if (isRecurringCheckbox) {
+                isRecurringCheckbox.addEventListener('change', toggleRecurringOptions);
+            }
         }
 
         function setupTravelEventListeners() {
