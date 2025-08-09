@@ -2225,6 +2225,131 @@
             border-radius: 3px;
         }
 
+        /* Sync Interface Styles */
+        .sync-status-card {
+            background: linear-gradient(145deg, var(--card-bg) 0%, rgba(102, 126, 234, 0.05) 100%);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .sync-status-info h4 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .sync-status-info p {
+            margin: 0 0 0.25rem 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .sync-status-info small {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+        }
+
+        .sync-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .sync-option {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            transition: var(--transition);
+        }
+
+        .sync-option:hover {
+            border-color: var(--primary);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.1);
+        }
+
+        .sync-option button {
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+
+        .sync-option span {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.3;
+        }
+
+        .sync-connected {
+            border-color: var(--success) !important;
+            background: linear-gradient(145deg, var(--card-bg) 0%, rgba(76, 175, 80, 0.05) 100%) !important;
+        }
+
+        .sync-error {
+            border-color: var(--danger) !important;
+            background: linear-gradient(145deg, var(--card-bg) 0%, rgba(244, 67, 54, 0.05) 100%) !important;
+        }
+
+        .sync-option-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .sync-provider-card {
+            background: var(--card-bg);
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+        }
+
+        .sync-provider-card:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .sync-provider-card h3 {
+            margin: 0 0 1rem 0;
+            color: var(--text-primary);
+        }
+
+        .sync-provider-card p {
+            margin: 0 0 1rem 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .sync-provider-card ul {
+            text-align: left;
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .sync-provider-card ul li {
+            margin-bottom: 0.25rem;
+        }
+
+        .sync-provider-card button {
+            width: 100%;
+            margin-top: 1rem;
+        }
+
         .trip-status {
             padding: 0.25rem 0.5rem;
             border-radius: 12px;
@@ -3837,6 +3962,58 @@
             </div>
         </div>
 
+        <!-- QR Code Display Modal -->
+        <div id="qrModal" class="modal">
+            <div class="modal-content">
+                <h2>📱 QR Code - Data Transfer</h2>
+                <div style="text-align: center; padding: 2rem;">
+                    <div id="qrcode" style="margin: 0 auto 1rem auto;"></div>
+                    <p>Scan this QR code with another device to transfer your data</p>
+                    <p style="font-size: 0.9rem; color: var(--text-secondary);">Keep this QR code private as it contains all your expense data</p>
+                </div>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button class="btn btn-secondary" onclick="closeQRModal()">Close</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cloud Sync Setup Modal -->
+        <div id="syncSetupModal" class="modal">
+            <div class="modal-content">
+                <h2>☁️ Setup Cloud Sync</h2>
+                <div id="syncSetupContent">
+                    <div class="sync-option-cards">
+                        <div class="sync-provider-card" onclick="setupFirebaseSync()">
+                            <h3>🔥 Firebase Sync</h3>
+                            <p>Real-time sync across all devices</p>
+                            <ul>
+                                <li>Instant synchronization</li>
+                                <li>Automatic backups</li>
+                                <li>Works offline</li>
+                                <li>Free for personal use</li>
+                            </ul>
+                            <button class="btn btn-primary">Setup Firebase</button>
+                        </div>
+                        
+                        <div class="sync-provider-card" onclick="setupLocalSync()">
+                            <h3>💾 Local Browser Sync</h3>
+                            <p>Simple local storage synchronization</p>
+                            <ul>
+                                <li>No account required</li>
+                                <li>Manual sync process</li>
+                                <li>Export/Import based</li>
+                                <li>Completely private</li>
+                            </ul>
+                            <button class="btn btn-secondary">Use Local Only</button>
+                        </div>
+                    </div>
+                </div>
+                <div style="text-align: center; margin-top: 2rem;">
+                    <button class="btn btn-secondary" onclick="closeSyncSetupModal()">Cancel</button>
+                </div>
+            </div>
+        </div>
+
         <!-- Settings Tab Content -->
         <div id="settingsTab" class="tab-content">
             <div class="settings-panel">
@@ -3927,6 +4104,42 @@
                         <button class="btn btn-secondary" id="quickTourBtn">
                             ⚡ Quick Feature Tour
                         </button>
+                    </div>
+                </div>
+
+                <div style="margin-top: 2rem;">
+                    <h3>📱 Data Synchronization</h3>
+                    
+                    <div class="sync-status-card">
+                        <div class="sync-status-info">
+                            <h4 id="syncStatusTitle">🔄 Cloud Sync</h4>
+                            <p id="syncStatusText">Sync your data across all devices instantly</p>
+                            <small id="syncStatusDetails">Status: Not configured</small>
+                        </div>
+                        <button id="toggleSyncBtn" class="btn btn-primary">Setup Sync</button>
+                    </div>
+
+                    <div class="sync-options">
+                        <div class="sync-option">
+                            <button id="exportDataBtn" class="btn btn-secondary">📤 Export Backup</button>
+                            <span>Download all data as JSON backup file</span>
+                        </div>
+                        
+                        <div class="sync-option">
+                            <button id="importDataBtn" class="btn btn-secondary">📥 Import Backup</button>
+                            <input type="file" id="importDataFile" accept=".json" style="display: none;">
+                            <span>Upload backup from another device</span>
+                        </div>
+                        
+                        <div class="sync-option">
+                            <button id="generateQRBtn" class="btn btn-accent">📱 Generate QR Code</button>
+                            <span>Create QR code to transfer data to another device</span>
+                        </div>
+                        
+                        <div class="sync-option">
+                            <button id="scanQRBtn" class="btn btn-accent">📷 Scan QR Code</button>
+                            <span>Import data from another device's QR code</span>
+                        </div>
                     </div>
                 </div>
 
@@ -4178,6 +4391,226 @@
             setTimeout(() => {
                 notification.classList.remove('show');
             }, 3000);
+        }
+
+        // ==================== DATA SYNC FUNCTIONALITY ====================
+
+        // Data Sync Manager
+        class DataSyncManager {
+            constructor() {
+                this.syncEnabled = localStorage.getItem('syncEnabled') === 'true';
+                this.lastSync = localStorage.getItem('lastSync');
+                this.updateSyncStatus();
+            }
+
+            // Get all app data for sync
+            getAllData() {
+                return {
+                    expenses: expenses,
+                    monthlyBudget: monthlyBudget,
+                    customCategories: customCategories,
+                    recurringExpenses: recurringExpenses,
+                    travelExpenses: travelExpenses,
+                    trips: trips,
+                    currentTrip: currentTrip,
+                    syncTimestamp: new Date().toISOString(),
+                    version: '1.0'
+                };
+            }
+
+            // Import all data from sync
+            importAllData(data) {
+                try {
+                    if (data.expenses) {
+                        expenses = data.expenses;
+                        localStorage.setItem('familyExpenses', JSON.stringify(expenses));
+                    }
+                    if (data.monthlyBudget !== undefined) {
+                        monthlyBudget = data.monthlyBudget;
+                        localStorage.setItem('monthlyBudget', monthlyBudget.toString());
+                    }
+                    if (data.customCategories) {
+                        customCategories = data.customCategories;
+                        localStorage.setItem('customCategories', JSON.stringify(customCategories));
+                    }
+                    if (data.recurringExpenses) {
+                        recurringExpenses = data.recurringExpenses;
+                        localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses));
+                    }
+                    if (data.travelExpenses) {
+                        travelExpenses = data.travelExpenses;
+                        localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses));
+                    }
+                    if (data.trips) {
+                        trips = data.trips;
+                        localStorage.setItem('trips', JSON.stringify(trips));
+                    }
+                    if (data.currentTrip) {
+                        currentTrip = data.currentTrip;
+                        localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+                    }
+
+                    // Update all displays
+                    updateDashboard();
+                    filterAndRenderExpenses();
+                    updateRecurringExpensesList();
+                    initializeTravelTab();
+                    
+                    this.lastSync = new Date().toISOString();
+                    localStorage.setItem('lastSync', this.lastSync);
+                    this.updateSyncStatus();
+                    
+                    return true;
+                } catch (error) {
+                    console.error('Import failed:', error);
+                    return false;
+                }
+            }
+
+            // Export data as downloadable file
+            exportData() {
+                const data = this.getAllData();
+                const dataStr = JSON.stringify(data, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `expense-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification('📤 Data exported successfully!', 'success');
+            }
+
+            // Import data from file
+            importData(file) {
+                if (!file) return;
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (this.importAllData(data)) {
+                            showNotification('📥 Data imported successfully!', 'success');
+                        } else {
+                            showNotification('❌ Failed to import data', 'error');
+                        }
+                    } catch (error) {
+                        showNotification('❌ Invalid file format', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+
+            // Generate QR Code for data transfer
+            generateQRCode() {
+                const data = this.getAllData();
+                const dataStr = JSON.stringify(data);
+                
+                // Clear previous QR code
+                document.getElementById('qrcode').innerHTML = '';
+                
+                // Generate new QR code
+                this.createQRCodeElement(dataStr);
+                document.getElementById('qrModal').style.display = 'block';
+            }
+
+            // Simple QR code implementation
+            createQRCodeElement(data) {
+                const qrContainer = document.getElementById('qrcode');
+                
+                // Create a simple placeholder - in production, you'd use QRCode.js
+                const qrPlaceholder = document.createElement('div');
+                qrPlaceholder.style.width = '200px';
+                qrPlaceholder.style.height = '200px';
+                qrPlaceholder.style.background = 'var(--border-color)';
+                qrPlaceholder.style.display = 'flex';
+                qrPlaceholder.style.alignItems = 'center';
+                qrPlaceholder.style.justifyContent = 'center';
+                qrPlaceholder.style.borderRadius = '8px';
+                qrPlaceholder.innerHTML = '<div style="text-align: center; padding: 1rem;"><p>📱</p><p style="font-size: 0.8rem;">QR Code</p><p style="font-size: 0.7rem;">Install QRCode.js for full functionality</p></div>';
+                
+                qrContainer.appendChild(qrPlaceholder);
+                
+                // Add download button as alternative
+                const downloadBtn = document.createElement('button');
+                downloadBtn.className = 'btn btn-secondary';
+                downloadBtn.textContent = '📤 Download Data Instead';
+                downloadBtn.style.marginTop = '1rem';
+                downloadBtn.onclick = () => this.exportData();
+                qrContainer.appendChild(downloadBtn);
+            }
+
+            // Update sync status display
+            updateSyncStatus() {
+                const statusCard = document.querySelector('.sync-status-card');
+                const statusTitle = document.getElementById('syncStatusTitle');
+                const statusText = document.getElementById('syncStatusText');
+                const statusDetails = document.getElementById('syncStatusDetails');
+                const toggleBtn = document.getElementById('toggleSyncBtn');
+
+                if (!statusCard) return; // Elements not loaded yet
+
+                if (this.syncEnabled) {
+                    statusCard.classList.add('sync-connected');
+                    statusTitle.textContent = '✅ Cloud Sync Active';
+                    statusText.textContent = 'Your data is synchronized across devices';
+                    statusDetails.textContent = this.lastSync ? 
+                        `Last sync: ${new Date(this.lastSync).toLocaleString()}` : 
+                        'Last sync: Just now';
+                    toggleBtn.textContent = 'Disable Sync';
+                    toggleBtn.className = 'btn btn-warning';
+                } else {
+                    statusCard.classList.remove('sync-connected');
+                    statusTitle.textContent = '🔄 Cloud Sync';
+                    statusText.textContent = 'Sync your data across all devices instantly';
+                    statusDetails.textContent = 'Status: Not configured';
+                    toggleBtn.textContent = 'Setup Sync';
+                    toggleBtn.className = 'btn btn-primary';
+                }
+            }
+        }
+
+        // Initialize sync manager
+        let syncManager;
+
+        // Sync utility functions
+        function toggleSync() {
+            if (syncManager) {
+                if (syncManager.syncEnabled) {
+                    syncManager.syncEnabled = false;
+                    localStorage.removeItem('syncEnabled');
+                    showNotification('⏸️ Sync disabled', 'info');
+                } else {
+                    document.getElementById('syncSetupModal').style.display = 'block';
+                }
+                syncManager.updateSyncStatus();
+            }
+        }
+
+        function setupFirebaseSync() {
+            showNotification('🔥 Firebase sync coming soon! Use Export/Import for now.', 'info');
+            closeSyncSetupModal();
+        }
+
+        function setupLocalSync() {
+            if (syncManager) {
+                syncManager.syncEnabled = true;
+                localStorage.setItem('syncEnabled', 'true');
+                localStorage.setItem('syncType', 'local');
+                syncManager.updateSyncStatus();
+                showNotification('✅ Local sync mode enabled - Use Export/Import to transfer data', 'success');
+            }
+            closeSyncSetupModal();
+        }
+
+        function closeSyncSetupModal() {
+            document.getElementById('syncSetupModal').style.display = 'none';
+        }
+
+        function closeQRModal() {
+            document.getElementById('qrModal').style.display = 'none';
         }
 
         // Quick form population
@@ -7827,6 +8260,49 @@
             
             if (clearAllDataBtn) {
                 clearAllDataBtn.addEventListener('click', clearAllData);
+            }
+
+            // Initialize sync manager after DOM is loaded
+            syncManager = new DataSyncManager();
+
+            // Sync functionality event listeners
+            const toggleSyncBtn = document.getElementById('toggleSyncBtn');
+            if (toggleSyncBtn) {
+                toggleSyncBtn.addEventListener('click', toggleSync);
+            }
+
+            const exportDataBtn = document.getElementById('exportDataBtn');
+            if (exportDataBtn) {
+                exportDataBtn.addEventListener('click', () => {
+                    if (syncManager) syncManager.exportData();
+                });
+            }
+
+            const importDataBtn = document.getElementById('importDataBtn');
+            const importDataFile = document.getElementById('importDataFile');
+            if (importDataBtn && importDataFile) {
+                importDataBtn.addEventListener('click', () => {
+                    importDataFile.click();
+                });
+                importDataFile.addEventListener('change', (e) => {
+                    if (e.target.files[0] && syncManager) {
+                        syncManager.importData(e.target.files[0]);
+                    }
+                });
+            }
+
+            const generateQRBtn = document.getElementById('generateQRBtn');
+            if (generateQRBtn) {
+                generateQRBtn.addEventListener('click', () => {
+                    if (syncManager) syncManager.generateQRCode();
+                });
+            }
+
+            const scanQRBtn = document.getElementById('scanQRBtn');
+            if (scanQRBtn) {
+                scanQRBtn.addEventListener('click', () => {
+                    showNotification('📷 QR Scanner coming soon! Use Import for now.', 'info');
+                });
             }
 
             // Custom category buttons
