@@ -8,7 +8,7 @@
     <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:;">
     <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="X-Frame-Options" content="DENY">
+
     <meta http-equiv="X-XSS-Protection" content="1; mode=block">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     
@@ -18,7 +18,8 @@
     <meta name="color-scheme" content="light dark">
     
     <!-- Apple PWA Meta Tags -->
-    <meta name="apple-mobile-web-app-capable" content="yes">
+            <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="ExpenseTracker">
     <meta name="format-detection" content="telephone=no">
@@ -4450,11 +4451,29 @@
                         localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
                     }
 
-                    // Update all displays
-                    updateDashboard();
-                    filterAndRenderExpenses();
-                    updateRecurringExpensesList();
-                    initializeTravelTab();
+                    // Update all displays safely
+                    try {
+                        if (typeof updateDashboard === 'function') {
+                            updateDashboard();
+                        }
+                        if (typeof filterAndRenderExpenses === 'function') {
+                            filterAndRenderExpenses();
+                        }
+                        if (typeof renderRecurringList === 'function') {
+                            renderRecurringList();
+                        }
+                        if (typeof initializeTravelTab === 'function') {
+                            initializeTravelTab();
+                        }
+                        
+                        // Force update of all UI elements
+                        if (typeof updateCustomCategoryDropdown === 'function') {
+                            updateCustomCategoryDropdown();
+                        }
+                    } catch (uiError) {
+                        console.warn('Some UI updates failed:', uiError);
+                        // Continue with the import even if UI updates fail
+                    }
                     
                     this.lastSync = new Date().toISOString();
                     localStorage.setItem('lastSync', this.lastSync);
@@ -4463,6 +4482,7 @@
                     return true;
                 } catch (error) {
                     console.error('Import failed:', error);
+                    showNotification(`❌ Import failed: ${error.message}`, 'error');
                     return false;
                 }
             }
@@ -4485,20 +4505,48 @@
 
             // Import data from file
             importData(file) {
-                if (!file) return;
+                if (!file) {
+                    showNotification('❌ No file selected', 'error');
+                    return;
+                }
+                
+                if (!file.name.endsWith('.json')) {
+                    showNotification('❌ Please select a JSON file', 'error');
+                    return;
+                }
                 
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     try {
                         const data = JSON.parse(e.target.result);
-                        if (this.importAllData(data)) {
-                            showNotification('📥 Data imported successfully!', 'success');
-                        } else {
-                            showNotification('❌ Failed to import data', 'error');
+                        
+                        // Basic validation
+                        if (!data || typeof data !== 'object') {
+                            throw new Error('Invalid data format');
+                        }
+                        
+                        // Check if it looks like our backup format
+                        const expectedFields = ['expenses', 'monthlyBudget', 'version', 'syncTimestamp'];
+                        const hasExpectedFields = expectedFields.some(field => data.hasOwnProperty(field));
+                        
+                        if (!hasExpectedFields) {
+                            throw new Error('This doesn\'t appear to be a valid Expense Tracker backup file');
+                        }
+                        
+                        if (confirm('This will replace all your current data. Are you sure you want to continue?')) {
+                            if (this.importAllData(data)) {
+                                showNotification('📥 Data imported successfully!', 'success');
+                            } else {
+                                showNotification('❌ Failed to import data - check console for details', 'error');
+                            }
                         }
                     } catch (error) {
-                        showNotification('❌ Invalid file format', 'error');
+                        console.error('JSON parsing error:', error);
+                        showNotification(`❌ Invalid file: ${error.message}`, 'error');
                     }
+                };
+                reader.onerror = () => {
+                    showNotification('❌ Failed to read file', 'error');
                 };
                 reader.readAsText(file);
             }
@@ -7204,7 +7252,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async () => {
                 try {
-                    swRegistration = await navigator.serviceWorker.register('/sw.js');
+                    swRegistration = await navigator.serviceWorker.register('/tracker/sw.js');
                     console.log('✅ Service Worker registered:', swRegistration);
                     
                     // Check for updates
