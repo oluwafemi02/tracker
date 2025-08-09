@@ -106,7 +106,7 @@
                 radial-gradient(circle at 50% 50%, rgba(6, 182, 212, 0.04) 0%, transparent 70%);
         }
 
-        .project-subtitle {
+        .travel-subtitle {
             color: var(--text-secondary);
             font-size: 0.95rem;
             font-weight: 400;
@@ -1592,6 +1592,52 @@
             color: var(--primary-color);
             font-size: 1.1rem;
             margin-right: 1rem;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .recurring-item {
+            transition: var(--transition);
+            border-left: 4px solid transparent;
+        }
+
+        .recurring-item:hover {
+            transform: translateX(4px);
+            border-left-color: var(--primary-color);
+            background: var(--hover-bg);
+        }
+
+        .recurring-frequency {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        /* Overdue indicator */
+        .recurring-item.overdue {
+            border-left-color: var(--danger-color);
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        .recurring-item.overdue .recurring-amount {
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Due today indicator */
+        .recurring-item.due-today {
+            border-left-color: var(--warning-color);
+            background: rgba(245, 158, 11, 0.05);
+            animation: pulse-subtle 2s infinite;
+        }
+
+        @keyframes pulse-subtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
         }
 
         /* Mobile responsive for recurring modal */
@@ -2709,6 +2755,11 @@
                     <div class="quick-stat-value" id="topCategoryMain">-</div>
                     <div class="quick-stat-label">Top Category</div>
                 </div>
+                <div class="quick-stat-card" id="recurringStatsCard" style="display: none;">
+                    <span class="quick-stat-icon">🔄</span>
+                    <div class="quick-stat-value" id="recurringAmountMain">€0</div>
+                    <div class="quick-stat-label">Recurring</div>
+                </div>
             </div>
 
             <!-- Smart Suggestions -->
@@ -2981,10 +3032,16 @@
                         <canvas id="expenseChart"></canvas>
                     </div>
                 </div>
-+                <div class="card" id="upcomingRecurringCard">
-+                    <h2><span class="card-icon">🔜</span> Upcoming Recurring</h2>
-+                    <div id="upcomingRecurringList"><div class="no-expenses">No active recurring expenses</div></div>
-+                </div>
+                <div class="card" id="upcomingRecurringCard">
+                    <h2><span class="card-icon">🔜</span> Upcoming Recurring</h2>
+                    <div class="recurring-summary" id="recurringSummary" style="margin-bottom: 1rem; padding: 0.75rem; background: var(--background-alt); border-radius: var(--border-radius); display: none;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 0.9rem; color: var(--text-secondary);">Monthly recurring impact:</span>
+                            <span style="font-weight: 600; color: var(--primary-color);" id="monthlyRecurringTotal">€0</span>
+                        </div>
+                    </div>
+                    <div id="upcomingRecurringList"><div class="no-expenses">No active recurring expenses</div></div>
+                </div>
             </div>
 
             <!-- Enhanced Statistics -->
@@ -3019,7 +3076,7 @@
                 <div class="trip-header">
                     <div class="trip-info" aria-label="Travel manager">
                         <h2><span class="card-icon">✈️</span> Travel Expense Tracker</h2>
-                        <p class="project-subtitle">Track expenses for trips, events, business travel, or any specific spending goal</p>
+                        <p class="travel-subtitle">Track expenses for trips, events, business travel, or any specific spending goal</p>
                         <div class="trip-controls">
                             <div class="current-trip" id="currentTripDisplay">
                                 <span id="tripName">No active trip</span>
@@ -3139,7 +3196,7 @@
                                 
                                 <div class="btn-actions">
                                     <button type="button" id="cancelTravelEdit" style="display: none;" class="btn btn-secondary">✖️ Cancel</button>
-                                    <button type="submit" class="btn bounce-in">💾 Add to Project</button>
+                                    <button type="submit" class="btn bounce-in">💾 Add to Travel</button>
                                 </div>
                             </form>
                         </div>
@@ -3493,8 +3550,8 @@
         let currentTrip = JSON.parse(localStorage.getItem('currentTrip')) || null;
         let travelEditingId = null;
 
-        // Initialize app
-        document.addEventListener('DOMContentLoaded', function() {
+        // Initialize app - extracted to function to avoid duplicate DOMContentLoaded listeners
+        function initializeApp() {
             document.getElementById('date').valueAsDate = new Date();
             document.getElementById('monthlyBudget').value = monthlyBudget;
             
@@ -3513,8 +3570,15 @@
             
             // Check for due recurring expenses on load
             checkRecurringExpenses();
-+            // Auto-post any missing recurring instances for the current month before dashboard render
-+            ensureCurrentMonthRecurringPosted();
+            // Auto-post any missing recurring instances for the current month before dashboard render
+            ensureCurrentMonthRecurringPosted();
+            
+            // Set up automatic recurring processing every hour
+            setInterval(() => {
+                ensureCurrentMonthRecurringPosted();
+                updateDashboard();
+                renderUpcomingRecurring();
+            }, 60 * 60 * 1000); // Every hour
              
             updateDashboard();
             
@@ -3542,7 +3606,7 @@
                     this.parentElement.classList.remove('bounce-in');
                 });
             });
-        });
+        }
 
         // Show notification
         function showNotification(message, type = 'success') {
@@ -4748,6 +4812,59 @@
             }
         }
 
+        // Calculate expected recurring expenses for a given month
+        function calculateExpectedRecurringForMonth(month, year) {
+            let expectedTotal = 0;
+            const today = new Date();
+            
+            recurringExpenses.forEach(recurring => {
+                if (!recurring.isActive) return;
+                
+                // Check if recurring should have instances in this month
+                const startDate = new Date(recurring.startDate);
+                if (startDate.getFullYear() > year || (startDate.getFullYear() === year && startDate.getMonth() > month)) {
+                    return; // Recurring hasn't started yet
+                }
+                
+                // Check if recurring has ended
+                if (recurring.endDate) {
+                    const endDate = new Date(recurring.endDate);
+                    if (endDate.getFullYear() < year || (endDate.getFullYear() === year && endDate.getMonth() < month)) {
+                        return; // Recurring has ended
+                    }
+                }
+                
+                // Calculate how many instances should be in this month
+                let currentDate = new Date(recurring.lastProcessedDate || recurring.startDate);
+                let nextDue = calculateNextDueDate(currentDate.toISOString().split('T')[0], recurring.frequency);
+                let instancesInMonth = 0;
+                
+                while (nextDue.getFullYear() < year || (nextDue.getFullYear() === year && nextDue.getMonth() <= month)) {
+                    if (nextDue.getMonth() === month && nextDue.getFullYear() === year) {
+                        // Check if this instance already exists in expenses
+                        const existingExpense = expenses.some(e => 
+                            e.parentRecurringId === recurring.id && 
+                            new Date(e.date).toDateString() === nextDue.toDateString()
+                        );
+                        
+                        if (!existingExpense) {
+                            instancesInMonth++;
+                        }
+                    }
+                    
+                    currentDate = nextDue;
+                    nextDue = calculateNextDueDate(currentDate.toISOString().split('T')[0], recurring.frequency);
+                    
+                    // Prevent infinite loop
+                    if (nextDue.getFullYear() > year + 1) break;
+                }
+                
+                expectedTotal += instancesInMonth * recurring.amount;
+            });
+            
+            return expectedTotal;
+        }
+
         // Update main page budget summary
         function updateMainBudgetSummary() {
             const currentMonth = new Date().getMonth();
@@ -4757,15 +4874,33 @@
                 return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
             });
             
+            // Calculate expected recurring expenses for this month
+            const expectedRecurringForMonth = calculateExpectedRecurringForMonth(currentMonth, currentYear);
+            
             const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
-            const remaining = monthlyBudget - monthlyTotal;
+            const totalWithRecurring = monthlyTotal + expectedRecurringForMonth;
+            const remaining = monthlyBudget - totalWithRecurring;
             
             // Update main page elements
             document.getElementById('budgetAmountMain').textContent = `€${monthlyBudget.toFixed(2)}`;
-            document.getElementById('spentAmountMain').textContent = `€${monthlyTotal.toFixed(2)}`;
+            document.getElementById('spentAmountMain').textContent = `€${totalWithRecurring.toFixed(2)}`;
             document.getElementById('remainingAmountMain').textContent = `€${remaining.toFixed(2)}`;
-            document.getElementById('monthlyTotalMain').textContent = `€${monthlyTotal.toFixed(2)}`;
+            document.getElementById('monthlyTotalMain').textContent = `€${totalWithRecurring.toFixed(2)}`;
             document.getElementById('expenseCountMain').textContent = monthlyExpenses.length;
+            
+            // Show breakdown if recurring expenses exist
+            if (expectedRecurringForMonth > 0) {
+                const breakdown = `(€${monthlyTotal.toFixed(2)} spent + €${expectedRecurringForMonth.toFixed(2)} recurring)`;
+                document.getElementById('spentAmountMain').title = breakdown;
+                document.getElementById('monthlyTotalMain').title = breakdown;
+                
+                // Show recurring stats card
+                document.getElementById('recurringStatsCard').style.display = 'block';
+                document.getElementById('recurringAmountMain').textContent = `€${expectedRecurringForMonth.toFixed(2)}`;
+                document.getElementById('recurringAmountMain').title = 'Expected recurring expenses not yet processed for this month';
+            } else {
+                document.getElementById('recurringStatsCard').style.display = 'none';
+            }
             
             // Update budget status and progress
             const budgetSummary = document.getElementById('budgetSummaryMain');
@@ -4774,7 +4909,7 @@
             const budgetStatusMain = document.getElementById('budgetStatusMain');
             
             if (monthlyBudget > 0) {
-                const percentage = Math.min((monthlyTotal / monthlyBudget) * 100, 100);
+                const percentage = Math.min((totalWithRecurring / monthlyBudget) * 100, 100);
                 budgetFillMain.style.width = `${percentage}%`;
                 budgetTextMain.textContent = `${Math.round(percentage)}%`;
                 
@@ -5288,6 +5423,59 @@
                     action: 'Discuss group financial goals',
                     priority: 'normal'
                 });
+            }
+
+            // Recurring expenses suggestions
+            const overdueRecurring = recurringExpenses.filter(r => {
+                if (!r.isActive) return false;
+                const nextDue = calculateNextDueDate(r.lastProcessedDate || r.startDate, r.frequency);
+                return nextDue < today;
+            });
+
+            if (overdueRecurring.length > 0) {
+                suggestions.push({
+                    type: 'recurring',
+                    icon: '⚠️',
+                    text: `You have ${overdueRecurring.length} overdue recurring expense(s). Consider processing them to keep your budget accurate.`,
+                    action: 'Process overdue recurring expenses',
+                    priority: 'high'
+                });
+            }
+
+            // Suggest setting up recurring for repeated expenses
+            const categoryFrequency = {};
+            monthlyExpenses.forEach(expense => {
+                if (!expense.isRecurring) {
+                    categoryFrequency[expense.category] = (categoryFrequency[expense.category] || 0) + 1;
+                }
+            });
+
+            Object.entries(categoryFrequency).forEach(([category, count]) => {
+                if (count >= 3) {
+                    suggestions.push({
+                        type: 'recurring-setup',
+                        icon: '🔄',
+                        text: `You've spent on "${category}" ${count} times this month. Consider setting it as a recurring expense for better budgeting.`,
+                        action: `Set up recurring for ${category}`,
+                        priority: 'normal'
+                    });
+                }
+            });
+
+            // Travel-specific suggestions
+            if (currentTrip) {
+                const tripExpenses = monthlyExpenses.filter(e => e.trip === currentTrip.name);
+                const tripTotal = tripExpenses.reduce((sum, e) => sum + e.amount, 0);
+                
+                if (currentTrip.budget && tripTotal > currentTrip.budget * 0.8) {
+                    suggestions.push({
+                        type: 'travel-budget',
+                        icon: '✈️',
+                        text: `You've spent ${Math.round((tripTotal / currentTrip.budget) * 100)}% of your trip budget. Consider reviewing remaining expenses.`,
+                        action: 'Review trip budget',
+                        priority: 'high'
+                    });
+                }
             }
 
             return suggestions;
@@ -6740,6 +6928,9 @@
 
         // Enhanced DOMContentLoaded to include PWA features
         document.addEventListener('DOMContentLoaded', function() {
+            // Initialize the main app first
+            initializeApp();
+            
             // Setup secure event listeners
             setupEventListeners();
             
@@ -7307,15 +7498,41 @@
 +        }
 +
 +        // Render upcoming recurring list (sorted by next due date)
-+        function renderUpcomingRecurring() {
-+            const container = document.getElementById('upcomingRecurringList');
-+            if (!container) return;
-+            const today = new Date();
-+            const active = (recurringExpenses || []).filter(r => r.isActive);
-+            if (active.length === 0) {
-+                container.innerHTML = '<div class="no-expenses">No active recurring expenses</div>';
-+                return;
-+            }
+        function renderUpcomingRecurring() {
+            const container = document.getElementById('upcomingRecurringList');
+            if (!container) return;
+            const today = new Date();
+            const active = (recurringExpenses || []).filter(r => r.isActive);
+            
+            // Calculate monthly recurring total
+            const monthlyTotal = active.reduce((sum, r) => {
+                // Calculate frequency multiplier for monthly total
+                let multiplier = 0;
+                switch(r.frequency) {
+                    case 'daily': multiplier = 30; break;
+                    case 'weekly': multiplier = 4.33; break;
+                    case 'monthly': multiplier = 1; break;
+                    case 'quarterly': multiplier = 0.33; break;
+                    case 'yearly': multiplier = 0.083; break;
+                    default: multiplier = 1;
+                }
+                return sum + (r.amount * multiplier);
+            }, 0);
+            
+            // Update summary display
+            const summaryElement = document.getElementById('recurringSummary');
+            const totalElement = document.getElementById('monthlyRecurringTotal');
+            if (active.length > 0 && summaryElement && totalElement) {
+                summaryElement.style.display = 'block';
+                totalElement.textContent = `€${monthlyTotal.toFixed(2)}`;
+            } else if (summaryElement) {
+                summaryElement.style.display = 'none';
+            }
+            
+            if (active.length === 0) {
+                container.innerHTML = '<div class="no-expenses">No active recurring expenses</div>';
+                return;
+            }
 +
 +            const withNext = active.map(r => {
 +                const next = calculateNextDueDate(r.lastProcessedDate, r.frequency);
@@ -7323,24 +7540,30 @@
 +            }).sort((a, b) => a.next - b.next);
 +
 +            const top = withNext.slice(0, 5);
-+            container.innerHTML = top.map(({ r, next }) => {
-+                const days = Math.ceil((next - today) / (1000 * 60 * 60 * 24));
-+                const icon = categoryIcons[r.category] || '📝';
-+                const status = days < 0 ? `Overdue by ${Math.abs(days)}d` : (days === 0 ? 'Due today' : `In ${days}d`);
-+                return `
-+                    <div class="recurring-item">
-+                        <div class="recurring-details">
-+                            <h4>${icon} ${r.category}</h4>
-+                            <p>${r.description || ''} • ${r.frequency} • 👤 ${r.person}</p>
-+                        </div>
-+                        <div class="recurring-amount">€${r.amount.toFixed(2)}</div>
-+                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem;">
-+                            <span class="recurring-frequency">Next: ${next.toLocaleDateString()}</span>
-+                            <span style="font-size:0.85rem;color:var(--text-secondary);">${status}</span>
-+                        </div>
-+                    </div>
-+                `;
-+            }).join('');
+            container.innerHTML = top.map(({ r, next }) => {
+                const days = Math.ceil((next - today) / (1000 * 60 * 60 * 24));
+                const icon = categoryIcons[r.category] || '📝';
+                const status = days < 0 ? `Overdue by ${Math.abs(days)}d` : (days === 0 ? 'Due today' : `In ${days}d`);
+                
+                // Determine CSS class based on status
+                let itemClass = 'recurring-item';
+                if (days < 0) itemClass += ' overdue';
+                else if (days === 0) itemClass += ' due-today';
+                
+                return `
+                    <div class="${itemClass}">
+                        <div class="recurring-details">
+                            <h4>${icon} ${r.category}</h4>
+                            <p>${r.description || ''} • ${r.frequency} • 👤 ${r.person}</p>
+                        </div>
+                        <div class="recurring-amount">€${r.amount.toFixed(2)}</div>
+                        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:0.25rem;">
+                            <span class="recurring-frequency">Next: ${next.toLocaleDateString()}</span>
+                            <span style="font-size:0.85rem;color:var(--text-secondary);">${status}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
 +        }
     </script>
 </body>
