@@ -2180,6 +2180,51 @@
             margin: 1rem 0;
         }
 
+        /* Your Trips Section */
+        .your-trips-section {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .trips-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .trips-header h3 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+
+        .trips-list-container {
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 0.5rem;
+        }
+
+        .trips-list-container::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .trips-list-container::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 3px;
+        }
+
+        .trips-list-container::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 3px;
+        }
+
         .trip-status {
             padding: 0.25rem 0.5rem;
             border-radius: 12px;
@@ -2236,6 +2281,26 @@
             .travel-expense-amount {
                 margin-right: 0;
                 align-self: flex-end;
+            }
+
+            .trips-header {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .trips-header h3 {
+                text-align: center;
+            }
+
+            .trip-item {
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
+            }
+
+            .trip-item-actions {
+                justify-content: center;
             }
         }
 
@@ -3487,7 +3552,7 @@
                             <div class="current-trip" id="currentTripDisplay">
                                 <span id="tripName">No active trip</span>
                                 <div class="trip-action-buttons">
-                                    <button class="btn btn-secondary" id="manageTripBtn">📝 Manage Trips</button>
+                                    <button class="btn btn-secondary" id="manageTripBtn">✈️ New Trip</button>
                                     <button class="btn btn-success" id="completeTripBtn" style="display: none;">✅ Complete Trip</button>
                                 </div>
                             </div>
@@ -3676,6 +3741,17 @@
                                 <div class="no-expenses">Create a project and start tracking your expenses!</div>
                             </div>
                         </div>
+
+                        <!-- Your Trips Section -->
+                        <div class="your-trips-section card-enhanced">
+                            <div class="trips-header">
+                                <h3><span class="card-icon">🧳</span> Your Trips</h3>
+                                <button class="btn btn-primary" id="addNewTripBtn">✈️ Add New Trip</button>
+                            </div>
+                            <div id="mainTripsList" class="trips-list-container">
+                                <div class="no-trips">✈️ No trips created yet. Start your first adventure!</div>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3684,7 +3760,7 @@
         <!-- Trip Management Modal -->
         <div id="tripModal" class="modal">
             <div class="modal-content">
-                <h2>🧳 Trip Management</h2>
+                <h2>✈️ Create New Trip</h2>
                 <div id="tripModalContent">
                     <!-- Create New Trip -->
                     <div class="trip-form-section">
@@ -7938,10 +8014,19 @@
                 cancelTravelEditBtn.addEventListener('click', cancelTravelEdit);
             }
 
-            // Trip management button
+            // Trip management button (now focuses on creating new trips)
             const manageTripBtn = document.getElementById('manageTripBtn');
             if (manageTripBtn) {
                 manageTripBtn.addEventListener('click', function() {
+                    document.getElementById('tripModal').style.display = 'block';
+                    renderTripsList();
+                });
+            }
+
+            // Add new trip button (from main tab)
+            const addNewTripBtn = document.getElementById('addNewTripBtn');
+            if (addNewTripBtn) {
+                addNewTripBtn.addEventListener('click', function() {
                     document.getElementById('tripModal').style.display = 'block';
                     renderTripsList();
                 });
@@ -8152,6 +8237,7 @@
             updateTravelCategoryBreakdown();
             updateTripStats();
             updatePayerSuggestions();
+            renderTripsList(); // Render trips list on the main tab
             
             // Set today's date for travel form
             if (document.getElementById('travelDate')) {
@@ -8479,11 +8565,11 @@
             if (currentTrip && (currentTrip.status === 'ongoing' || currentTrip.status === 'upcoming')) {
                 const statusEmoji = currentTrip.status === 'ongoing' ? '🟢' : '🟡';
                 tripNameElement.textContent = `${statusEmoji} ${currentTrip.name} (${currentTrip.destination})`;
-                manageTripBtn.textContent = '📝 Manage Trips';
+                manageTripBtn.textContent = '✈️ New Trip';
                 completeTripBtn.style.display = currentTrip.status === 'ongoing' ? 'block' : 'none';
             } else {
                 tripNameElement.textContent = 'No active trip';
-                manageTripBtn.textContent = '🚀 Start Trip';
+                manageTripBtn.textContent = '✈️ New Trip';
                 completeTripBtn.style.display = 'none';
             }
         }
@@ -8645,31 +8731,37 @@
         }
 
         function renderTripsList() {
-            const tripsList = document.getElementById('tripsList');
+            const mainTripsList = document.getElementById('mainTripsList');
+            const modalTripsList = document.getElementById('tripsList');
             
-            if (trips.length === 0) {
-                tripsList.innerHTML = '<div class="no-trips">✈️ No trips created yet. Start your first adventure!</div>';
-                return;
-            }
-
-            tripsList.innerHTML = '';
-            
-            // Auto-update trip statuses based on dates
-            updateTripsStatusBasedOnDates();
-            
-            // Sort trips: ongoing first, then upcoming, then completed (by start date)
-            const sortedTrips = [...trips].sort((a, b) => {
-                const statusOrder = { 'ongoing': 1, 'upcoming': 2, 'active': 3, 'completed': 4 };
-                const aOrder = statusOrder[a.status] || 5;
-                const bOrder = statusOrder[b.status] || 5;
+            // Update both lists (main tab and modal if it exists)
+            [mainTripsList, modalTripsList].forEach(tripsList => {
+                if (!tripsList) return;
                 
-                if (aOrder !== bOrder) return aOrder - bOrder;
-                return new Date(b.startDate) - new Date(a.startDate);
-            });
+                if (trips.length === 0) {
+                    tripsList.innerHTML = '<div class="no-trips">✈️ No trips created yet. Start your first adventure!</div>';
+                    return;
+                }
 
-            sortedTrips.forEach(trip => {
-                const tripElement = createTripElement(trip);
-                tripsList.appendChild(tripElement);
+                tripsList.innerHTML = '';
+                
+                // Auto-update trip statuses based on dates
+                updateTripsStatusBasedOnDates();
+                
+                // Sort trips: ongoing first, then upcoming, then completed (by start date)
+                const sortedTrips = [...trips].sort((a, b) => {
+                    const statusOrder = { 'ongoing': 1, 'upcoming': 2, 'active': 3, 'completed': 4 };
+                    const aOrder = statusOrder[a.status] || 5;
+                    const bOrder = statusOrder[b.status] || 5;
+                    
+                    if (aOrder !== bOrder) return aOrder - bOrder;
+                    return new Date(b.startDate) - new Date(a.startDate);
+                });
+
+                sortedTrips.forEach(trip => {
+                    const tripElement = createTripElement(trip, tripsList.id === 'mainTripsList');
+                    tripsList.appendChild(tripElement);
+                });
             });
             
             // Update payer suggestions
@@ -8723,7 +8815,7 @@
             showNotification('Trip editing coming soon! 🚧', 'info');
         }
 
-        function createTripElement(trip) {
+        function createTripElement(trip, isMainTab = false) {
             const tripDiv = document.createElement('div');
             tripDiv.className = 'trip-item';
             
@@ -8771,7 +8863,9 @@
                 switchBtn.textContent = '🚀 Start Trip';
                 switchBtn.addEventListener('click', () => {
                     switchToTrip(trip.id);
-                    document.getElementById('tripModal').style.display = 'none';
+                    if (!isMainTab) {
+                        document.getElementById('tripModal').style.display = 'none';
+                    }
                 });
                 actionsDiv.appendChild(switchBtn);
                 
@@ -8786,7 +8880,9 @@
                 switchBtn.textContent = '📍 Switch To';
                 switchBtn.addEventListener('click', () => {
                     switchToTrip(trip.id);
-                    document.getElementById('tripModal').style.display = 'none';
+                    if (!isMainTab) {
+                        document.getElementById('tripModal').style.display = 'none';
+                    }
                 });
                 actionsDiv.appendChild(switchBtn);
                 
@@ -8802,7 +8898,9 @@
                 viewBtn.textContent = '👁️ View Details';
                 viewBtn.addEventListener('click', () => {
                     viewTripDetails(trip.id);
-                    document.getElementById('tripModal').style.display = 'none';
+                    if (!isMainTab) {
+                        document.getElementById('tripModal').style.display = 'none';
+                    }
                 });
                 actionsDiv.appendChild(viewBtn);
                 
