@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Tracker Pro</title>
+    <title>Travel Expense Tracker</title>
     
     <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:;">
@@ -13,14 +13,14 @@
     <meta name="referrer" content="strict-origin-when-cross-origin">
     
     <!-- PWA Meta Tags -->
-    <meta name="description" content="Track, manage, and optimize your spending with smart insights and analytics">
+    <meta name="description" content="Track, manage, and optimize your travel and trip expenses with smart insights and analytics">
     <meta name="theme-color" content="#6366f1">
     <meta name="color-scheme" content="light dark">
     
     <!-- Apple PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="ExpenseTracker">
+    <meta name="apple-mobile-web-app-title" content="TravelTracker">
     <meta name="format-detection" content="telephone=no">
     
     <!-- Microsoft PWA Meta Tags -->
@@ -2132,6 +2132,85 @@
             font-weight: 500;
         }
 
+        /* Upcoming Recurring Expenses Widget */
+        .upcoming-recurring-container {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .upcoming-recurring-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: var(--hover-bg);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--primary-gradient);
+            transition: var(--transition);
+        }
+
+        .upcoming-recurring-item:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .upcoming-recurring-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .upcoming-recurring-info {
+            flex: 1;
+        }
+
+        .upcoming-recurring-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            font-size: 0.9rem;
+        }
+
+        .upcoming-recurring-date {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .upcoming-recurring-amount {
+            font-weight: 600;
+            color: var(--danger-gradient);
+            font-size: 1rem;
+        }
+
+        .upcoming-recurring-due-soon {
+            border-left-color: #f59e0b;
+        }
+
+        .upcoming-recurring-overdue {
+            border-left-color: #ef4444;
+            background: rgba(239, 68, 68, 0.05);
+        }
+
+        /* Projection Modal Styles */
+        .projection-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+        }
+
+        .projection-summary {
+            background: var(--hover-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+        }
+
+        .projection-insights {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+        }
+
         .due-soon {
             background: var(--warning-gradient);
             color: var(--text-primary);
@@ -2634,8 +2713,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>💰 Expense Tracker</h1>
-            <p class="subtitle" id="appSubtitle">Track, manage, and optimize your spending</p>
+            <h1>✈️ Travel Expense Tracker</h1>
+            <p class="subtitle" id="appSubtitle">Track, manage, and optimize your travel and trip expenses</p>
             
             <!-- Tracker Type Selector -->
             <div class="tracker-type-selector">
@@ -2981,6 +3060,13 @@
                         <canvas id="expenseChart"></canvas>
                     </div>
                 </div>
+
+                <div class="card">
+                    <h2><span class="card-icon">🔄</span> Upcoming Recurring</h2>
+                    <div id="upcomingRecurringList" class="upcoming-recurring-container">
+                        <p style="color: var(--text-secondary); text-align: center; font-style: italic;">No upcoming recurring expenses</p>
+                    </div>
+                </div>
             </div>
 
             <!-- Enhanced Statistics -->
@@ -3005,6 +3091,11 @@
                     <div class="stat-value" id="weeklyAvg">€0</div>
                     <div class="stat-label">Weekly Avg</div>
                 </div>
+                <div class="stat-card-enhanced" id="projectionCard" style="cursor: pointer;" onclick="showProjectionModal()">
+                    <span class="stat-icon">🔮</span>
+                    <div class="stat-value" id="projectedSpend">€0</div>
+                    <div class="stat-label">Projected Total</div>
+                </div>
             </div>
         </div>
 
@@ -3014,8 +3105,8 @@
                 <!-- Project Management Header -->
                 <div class="trip-header">
                     <div class="trip-info">
-                        <h2><span class="card-icon">📁</span> Project Expense Tracker</h2>
-                        <p class="project-subtitle">Track expenses for travel, events, business projects, or any specific spending goal</p>
+                        <h2><span class="card-icon">📁</span> Project Travel Tracker</h2>
+                        <p class="project-subtitle">Track expenses for trips, events, business travel, or any specific travel spending goal</p>
                         <div class="trip-controls">
                             <div class="current-trip" id="currentTripDisplay">
                                 <span id="tripName">No active project</span>
@@ -3395,6 +3486,19 @@
         </div>
     </div>
     
+    <!-- Budget Projection Modal -->
+    <div id="projectionModal" class="modal">
+        <div class="modal-content">
+            <h2>🔮 Smart Budget Projection</h2>
+            <div id="projectionContent">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeProjectionModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Recurring Expenses Modal -->
     <div id="recurringModal" class="modal">
         <div class="modal-content">
@@ -3422,7 +3526,7 @@
     <div id="guideOverlay" class="guide-overlay" style="display: none;">
         <div class="guide-content">
             <div class="guide-header">
-                <h2 id="guideTitle">Welcome to Expense Tracker Pro! 🎉</h2>
+                <h2 id="guideTitle">Welcome to Travel Expense Tracker! 🎉</h2>
                 <button class="guide-close" id="closeGuideBtn">✖️</button>
             </div>
             <div class="guide-body">
@@ -3506,6 +3610,9 @@
             
             // Load tracker type
             loadTrackerType();
+            
+            // Auto-process past recurring expenses
+            autoProcessPastRecurringExpenses();
             
             // Check for due recurring expenses on load
             checkRecurringExpenses();
@@ -3658,6 +3765,138 @@
             resetForm();
         }
 
+        // Calculate total recurring expenses for the current month
+        function calculateMonthlyRecurringTotal(month, year) {
+            let total = 0;
+            const currentDate = new Date();
+            
+            recurringExpenses.forEach(recurring => {
+                if (!recurring.isActive) return;
+                
+                // Calculate how many times this recurring expense should have occurred this month
+                const occurrences = calculateRecurringOccurrencesForMonth(recurring, month, year);
+                total += recurring.amount * occurrences;
+            });
+            
+            return total;
+        }
+
+        // Calculate how many times a recurring expense should occur in a given month
+        function calculateRecurringOccurrencesForMonth(recurring, month, year) {
+            const startDate = new Date(recurring.lastProcessedDate || recurring.startDate);
+            const monthStart = new Date(year, month, 1);
+            const monthEnd = new Date(year, month + 1, 0);
+            const today = new Date();
+            
+            // Don't count future occurrences beyond today
+            const endDate = monthEnd > today ? today : monthEnd;
+            
+            if (startDate > endDate) return 0;
+            
+            let count = 0;
+            let currentDate = new Date(Math.max(startDate, monthStart));
+            
+            while (currentDate <= endDate) {
+                count++;
+                
+                // Calculate next occurrence based on frequency
+                switch (recurring.frequency) {
+                    case 'daily':
+                        currentDate.setDate(currentDate.getDate() + 1);
+                        break;
+                    case 'weekly':
+                        currentDate.setDate(currentDate.getDate() + 7);
+                        break;
+                    case 'biweekly':
+                        currentDate.setDate(currentDate.getDate() + 14);
+                        break;
+                    case 'monthly':
+                        currentDate.setMonth(currentDate.getMonth() + 1);
+                        break;
+                    case 'quarterly':
+                        currentDate.setMonth(currentDate.getMonth() + 3);
+                        break;
+                    case 'yearly':
+                        currentDate.setFullYear(currentDate.getFullYear() + 1);
+                        break;
+                    default:
+                        return count; // Exit if unknown frequency
+                }
+                
+                // Check if end date is set and we've passed it
+                if (recurring.endDate && currentDate > new Date(recurring.endDate)) {
+                    break;
+                }
+            }
+            
+            return Math.max(0, count - 1); // Subtract 1 because we counted the first occurrence
+        }
+
+        // Auto-process all past recurring expenses for the current month
+        function autoProcessPastRecurringExpenses() {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const today = new Date();
+            let processedCount = 0;
+            
+            recurringExpenses.forEach(recurring => {
+                if (!recurring.isActive) return;
+                
+                let lastProcessed = new Date(recurring.lastProcessedDate || recurring.startDate);
+                let nextDue = calculateNextDueDate(recurring.lastProcessedDate || recurring.startDate, recurring.frequency);
+                
+                // Process all overdue occurrences up to today
+                while (nextDue <= today && nextDue.getMonth() === currentMonth && nextDue.getFullYear() === currentYear) {
+                    // Check if this expense was already added
+                    const existingExpense = expenses.find(e => 
+                        e.parentRecurringId === recurring.id && 
+                        e.date === nextDue.toISOString().split('T')[0]
+                    );
+                    
+                    if (!existingExpense) {
+                        // Create new expense for this occurrence
+                        const newExpense = {
+                            id: Date.now() + Math.random(),
+                            amount: recurring.amount,
+                            category: recurring.category,
+                            person: recurring.person,
+                            description: `${recurring.description} (Auto-recurring)`,
+                            date: nextDue.toISOString().split('T')[0],
+                            timestamp: new Date().toISOString(),
+                            isRecurring: true,
+                            recurringFrequency: recurring.frequency,
+                            parentRecurringId: recurring.id
+                        };
+                        
+                        expenses.push(newExpense);
+                        processedCount++;
+                    }
+                    
+                    // Update last processed date
+                    recurring.lastProcessedDate = nextDue.toISOString().split('T')[0];
+                    
+                    // Calculate next due date
+                    nextDue = calculateNextDueDate(recurring.lastProcessedDate, recurring.frequency);
+                    
+                    // Safety check to prevent infinite loops
+                    if (nextDue <= lastProcessed) break;
+                    lastProcessed = nextDue;
+                }
+            });
+            
+            if (processedCount > 0) {
+                // Save updated data
+                localStorage.setItem('familyExpenses', JSON.stringify(expenses));
+                localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses));
+                
+                // Refresh display
+                filteredExpenses = [...expenses];
+                showNotification(`Auto-processed ${processedCount} past recurring expense(s)`, 'success');
+            }
+            
+            return processedCount;
+        }
+
         // Update dashboard statistics and charts
         function updateDashboard() {
             const currentMonth = new Date().getMonth();
@@ -3667,12 +3906,27 @@
                 return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
             });
             
-            const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
+            // Calculate total including recurring expenses that should be deducted
+            const recurringTotal = calculateMonthlyRecurringTotal(currentMonth, currentYear);
+            const expenseTotal = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
+            const monthlyTotal = expenseTotal + recurringTotal;
             
             // Update budget display
             document.getElementById('budgetAmount').textContent = `€${monthlyBudget.toFixed(2)}`;
             document.getElementById('monthlyTotal').textContent = `€${monthlyTotal.toFixed(2)}`;
-            document.getElementById('expenseCount').textContent = `${monthlyExpenses.length} expense${monthlyExpenses.length !== 1 ? 's' : ''}`;
+            
+            // Show breakdown if there are recurring expenses
+            const expenseCountElement = document.getElementById('expenseCount');
+            if (recurringTotal > 0) {
+                expenseCountElement.innerHTML = `
+                    ${monthlyExpenses.length} expense${monthlyExpenses.length !== 1 ? 's' : ''}<br>
+                    <span style="font-size: 0.8em; color: var(--text-secondary);">
+                        Regular: €${expenseTotal.toFixed(2)} | Recurring: €${recurringTotal.toFixed(2)}
+                    </span>
+                `;
+            } else {
+                expenseCountElement.textContent = `${monthlyExpenses.length} expense${monthlyExpenses.length !== 1 ? 's' : ''}`;
+            }
             
             // Update budget progress
             const budgetFill = document.getElementById('budgetFill');
@@ -3727,8 +3981,32 @@
             const daysLeft = lastDay - today.getDate();
             document.getElementById('daysLeft').textContent = daysLeft;
             
+            // Update budget projection
+            const projection = calculateBudgetProjection();
+            const projectedElement = document.getElementById('projectedSpend');
+            const projectionCard = document.getElementById('projectionCard');
+            
+            projectedElement.textContent = `€${projection.totalProjected.toFixed(2)}`;
+            
+            // Color code based on budget status
+            if (monthlyBudget > 0) {
+                if (projection.totalProjected > monthlyBudget) {
+                    projectionCard.style.background = 'var(--danger-gradient)';
+                    projectionCard.style.color = 'white';
+                } else if (projection.totalProjected > monthlyBudget * 0.8) {
+                    projectionCard.style.background = 'var(--warning-gradient)';
+                    projectionCard.style.color = 'white';
+                } else {
+                    projectionCard.style.background = 'var(--success-gradient)';
+                    projectionCard.style.color = 'white';
+                }
+            }
+            
             // Update chart
             updateExpenseChart(monthlyExpenses);
+            
+            // Update upcoming recurring expenses
+            updateUpcomingRecurringExpenses();
         }
 
         // Update expense chart
@@ -3781,6 +4059,239 @@
                     }
                 }
             });
+        }
+
+        // Update upcoming recurring expenses display
+        function updateUpcomingRecurringExpenses() {
+            const container = document.getElementById('upcomingRecurringList');
+            
+            // Get next 5 upcoming recurring expenses
+            const upcomingExpenses = getUpcomingRecurringExpenses(5);
+            
+            if (upcomingExpenses.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; font-style: italic;">No upcoming recurring expenses</p>';
+                return;
+            }
+            
+            container.innerHTML = '';
+            
+            upcomingExpenses.forEach(item => {
+                const itemElement = document.createElement('div');
+                itemElement.className = 'upcoming-recurring-item';
+                
+                // Add special classes for urgency
+                if (item.daysUntilDue < 0) {
+                    itemElement.classList.add('upcoming-recurring-overdue');
+                } else if (item.daysUntilDue <= 3) {
+                    itemElement.classList.add('upcoming-recurring-due-soon');
+                }
+                
+                const icon = categoryIcons[item.recurring.category] || '📝';
+                
+                itemElement.innerHTML = `
+                    <div class="upcoming-recurring-info">
+                        <div class="upcoming-recurring-title">${icon} ${escapeHtml(item.recurring.description)}</div>
+                        <div class="upcoming-recurring-date">
+                            ${item.daysUntilDue < 0 ? 
+                                `Overdue by ${Math.abs(item.daysUntilDue)} day(s)` : 
+                                item.daysUntilDue === 0 ? 
+                                    'Due today' : 
+                                    `Due in ${item.daysUntilDue} day(s)`
+                            } • ${item.nextDue.toLocaleDateString()}
+                        </div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                        <div class="upcoming-recurring-amount">€${item.recurring.amount.toFixed(2)}</div>
+                        ${item.daysUntilDue <= 0 ? 
+                            `<button class="btn btn-primary btn-sm" onclick="quickAddRecurring('${item.recurring.id}')" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">Add Now</button>` : 
+                            ''
+                        }
+                    </div>
+                `;
+                
+                container.appendChild(itemElement);
+            });
+        }
+
+        // Get upcoming recurring expenses sorted by due date
+        function getUpcomingRecurringExpenses(limit = 5) {
+            const today = new Date();
+            const upcomingList = [];
+            
+            recurringExpenses.forEach(recurring => {
+                if (!recurring.isActive) return;
+                
+                const nextDue = calculateNextDueDate(recurring.lastProcessedDate || recurring.startDate, recurring.frequency);
+                const daysUntilDue = Math.ceil((nextDue - today) / (1000 * 60 * 60 * 24));
+                
+                // Include if it's due within the next 30 days or overdue
+                if (daysUntilDue <= 30) {
+                    upcomingList.push({
+                        recurring: recurring,
+                        nextDue: nextDue,
+                        daysUntilDue: daysUntilDue
+                    });
+                }
+            });
+            
+            // Sort by due date (overdue first, then by date)
+            upcomingList.sort((a, b) => {
+                // Overdue items first
+                if (a.daysUntilDue < 0 && b.daysUntilDue >= 0) return -1;
+                if (b.daysUntilDue < 0 && a.daysUntilDue >= 0) return 1;
+                
+                // Then by due date
+                return a.nextDue - b.nextDue;
+            });
+            
+            return upcomingList.slice(0, limit);
+        }
+
+        // Quick add a specific recurring expense
+        function quickAddRecurring(recurringId) {
+            const recurring = recurringExpenses.find(r => r.id === recurringId);
+            if (!recurring) return;
+            
+            const nextDue = calculateNextDueDate(recurring.lastProcessedDate || recurring.startDate, recurring.frequency);
+            
+            // Create new expense
+            const newExpense = {
+                id: Date.now() + Math.random(),
+                amount: recurring.amount,
+                category: recurring.category,
+                person: recurring.person,
+                description: `${recurring.description} (Quick-added)`,
+                date: nextDue.toISOString().split('T')[0],
+                timestamp: new Date().toISOString(),
+                isRecurring: true,
+                recurringFrequency: recurring.frequency,
+                parentRecurringId: recurring.id
+            };
+            
+            expenses.push(newExpense);
+            
+            // Update last processed date
+            recurring.lastProcessedDate = nextDue.toISOString().split('T')[0];
+            
+            // Save updated data
+            localStorage.setItem('familyExpenses', JSON.stringify(expenses));
+            localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses));
+            
+            // Refresh display
+            filteredExpenses = [...expenses];
+            updateDashboard();
+            filterAndRenderExpenses();
+            
+            showNotification(`Added recurring expense: ${recurring.description}`, 'success');
+        }
+
+        // Show projection modal with detailed breakdown
+        function showProjectionModal() {
+            const projection = calculateBudgetProjection();
+            const content = document.getElementById('projectionContent');
+            
+            const budgetStatus = monthlyBudget > 0 ? 
+                projection.budgetRemaining >= 0 ? 
+                    `✅ Under budget by €${projection.budgetRemaining.toFixed(2)}` :
+                    `⚠️ Over budget by €${Math.abs(projection.budgetRemaining).toFixed(2)}` :
+                'No budget set';
+                
+            content.innerHTML = `
+                <div style="display: grid; gap: 1.5rem;">
+                    <div class="projection-summary">
+                        <h3>📊 Monthly Projection Breakdown</h3>
+                        <div style="display: grid; gap: 1rem; margin-top: 1rem;">
+                            <div class="projection-row">
+                                <span>💰 Current Spending:</span>
+                                <strong>€${projection.currentSpent.toFixed(2)}</strong>
+                            </div>
+                            <div class="projection-row">
+                                <span>📈 Projected Regular:</span>
+                                <strong>€${projection.projectedRegular.toFixed(2)}</strong>
+                            </div>
+                            <div class="projection-row">
+                                <span>🔄 Remaining Recurring:</span>
+                                <strong>€${projection.remainingRecurring.toFixed(2)}</strong>
+                            </div>
+                            <hr style="border: 1px solid var(--border-color); margin: 0.5rem 0;">
+                            <div class="projection-row" style="font-size: 1.1rem; font-weight: 600;">
+                                <span>🔮 Total Projected:</span>
+                                <strong>€${projection.totalProjected.toFixed(2)}</strong>
+                            </div>
+                            <div class="projection-row" style="color: ${projection.budgetRemaining >= 0 ? 'var(--success-color)' : 'var(--danger-color)'};">
+                                <span>🎯 Budget Status:</span>
+                                <strong>${budgetStatus}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="projection-insights">
+                        <h3>💡 Smart Insights</h3>
+                        <ul style="margin: 1rem 0; padding-left: 1.5rem; color: var(--text-secondary);">
+                            <li>Daily average: €${projection.dailyAverage.toFixed(2)} (${projection.daysRemaining} days left)</li>
+                            <li>Recommended daily budget: €${monthlyBudget > 0 ? ((monthlyBudget - projection.currentSpent - projection.remainingRecurring) / Math.max(1, projection.daysRemaining)).toFixed(2) : 'N/A'}</li>
+                            <li>Track your spending to stay on budget!</li>
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('projectionModal').style.display = 'block';
+        }
+
+        function closeProjectionModal() {
+            document.getElementById('projectionModal').style.display = 'none';
+        }
+
+        // Smart budget projection - predict monthly spending based on current trends
+        function calculateBudgetProjection() {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const today = new Date();
+            const dayOfMonth = today.getDate();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            
+            // Calculate current month's spending
+            const monthlyExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+            });
+            
+            const currentSpent = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
+            
+            // Calculate remaining recurring expenses for the month
+            let remainingRecurring = 0;
+            recurringExpenses.forEach(recurring => {
+                if (!recurring.isActive) return;
+                
+                let checkDate = new Date(today);
+                checkDate.setDate(checkDate.getDate() + 1);
+                
+                while (checkDate.getMonth() === currentMonth) {
+                    const nextDue = calculateNextDueDate(recurring.lastProcessedDate || recurring.startDate, recurring.frequency);
+                    if (nextDue.getMonth() === currentMonth && nextDue.getFullYear() === currentYear && nextDue >= checkDate) {
+                        remainingRecurring += recurring.amount;
+                    }
+                    checkDate.setDate(checkDate.getDate() + 1);
+                }
+            });
+            
+            // Project based on current daily average
+            const dailyAverage = currentSpent / dayOfMonth;
+            const remainingDays = daysInMonth - dayOfMonth;
+            const projectedRegular = dailyAverage * remainingDays;
+            
+            const totalProjected = currentSpent + projectedRegular + remainingRecurring;
+            
+            return {
+                currentSpent,
+                projectedRegular,
+                remainingRecurring,
+                totalProjected,
+                daysRemaining: remainingDays,
+                dailyAverage,
+                budgetRemaining: monthlyBudget - totalProjected
+            };
         }
 
         // HTML escape function to prevent XSS
@@ -5386,7 +5897,7 @@
         window.addEventListener('appinstalled', () => {
             console.log('✅ PWA installed successfully');
             hideInstallButton();
-            showNotification('App installed! You can now use Expense Tracker offline.', 'success');
+            showNotification('App installed! You can now use Travel Expense Tracker offline.', 'success');
         });
 
         // Show/hide install button
@@ -5777,7 +6288,7 @@
          // Interactive Guide System
          const guideSteps = [
              {
-                 title: "Welcome to Expense Tracker Pro! 🎉",
+                 title: "Welcome to Travel Expense Tracker! 🎉",
                  content: `
                      <p>This powerful app helps you track expenses, set budgets, manage recurring payments, and get smart financial insights.</p>
                      <p><strong>What you'll learn:</strong></p>

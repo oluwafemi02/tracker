@@ -1,6 +1,6 @@
-# 📱 Expense Tracker Pro - Progressive Web App
+# 📱 Travel Expense Tracker - Progressive Web App
 
-A comprehensive expense tracking application that works seamlessly across all devices, including iOS, with native app-like features.
+A comprehensive travel and expense tracking application that works seamlessly across all devices, including iOS, with native app-like features and intelligent recurring expense management.
 
 ## ✨ Core Features
 
@@ -24,7 +24,10 @@ A comprehensive expense tracking application that works seamlessly across all de
 - **Project**: Track expenses for specific projects, trips, or events
 
 ### 🔄 Smart Automation Features
-- **Recurring Expenses**: Set up automatic recurring transactions with flexible schedules (daily, weekly, monthly, yearly)
+- **Intelligent Recurring Expenses**: Automatically deduct recurring expenses from budget with smart processing
+- **Auto-Processing**: Automatically processes past recurring expenses for the current month
+- **Budget Projection**: AI-powered monthly spending projections based on current trends and upcoming recurring expenses
+- **Smart Recurring Management**: Quick-add overdue recurring expenses with one click
 - **Budget Alerts**: Automatic notifications when approaching or exceeding budget limits
 - **Expense Templates**: Quick-add templates for frequently used expenses
 - **Auto-categorization**: Smart categorization suggestions based on expense patterns
@@ -76,7 +79,7 @@ A comprehensive expense tracking application that works seamlessly across all de
 3. **Enable Notifications** (Optional but recommended):
    - Open the installed app from your home screen
    - When prompted, tap "Allow" for notifications
-   - Or go to Settings > Notifications > ExpenseTracker to configure
+   - Or go to Settings > Notifications > TravelTracker to configure
 
 ### Option 2: Using the Install Button
 
@@ -94,10 +97,12 @@ A comprehensive expense tracking application that works seamlessly across all de
 4. **Smart Search**: Find expenses instantly with powerful search features
 
 ### 🔄 Recurring Expenses Setup
-1. **Create Recurring**: Set up automatic recurring transactions
+1. **Create Recurring**: Set up automatic recurring transactions with intelligent processing
 2. **Flexible Schedules**: Daily, weekly, monthly, or yearly recurrence
-3. **Smart Reminders**: Get notified before due dates
-4. **Automatic Addition**: Choose to auto-add or get reminded to add manually
+3. **Smart Budget Integration**: Recurring expenses automatically deduct from your monthly budget
+4. **Auto-Processing**: Past recurring expenses are automatically processed for the current month
+5. **Quick Actions**: One-click addition of overdue recurring expenses
+6. **Visual Tracking**: See upcoming recurring expenses sorted by due date with urgency indicators
 
 ### 🎯 Budget Management
 1. **Set Monthly Budgets**: Define spending limits by category or overall
