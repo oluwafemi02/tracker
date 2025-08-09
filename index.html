@@ -2291,6 +2291,131 @@
             margin-bottom: 1rem;
         }
 
+        /* Expense Details Modal Styles */
+        .expense-summary {
+            background: var(--hover-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .summary-stats {
+            display: grid;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .summary-stat {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color-light);
+        }
+
+        .summary-stat:last-child {
+            border-bottom: none;
+        }
+
+        .summary-label {
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .summary-value {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .category-section {
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--card-bg);
+        }
+
+        .category-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background: var(--hover-bg);
+            border-bottom: 1px solid var(--border-color);
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+        }
+
+        .category-header h4 {
+            margin: 0;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .category-total {
+            font-weight: 600;
+            color: var(--primary-color);
+            font-size: 1rem;
+        }
+
+        .category-expenses {
+            padding: 0;
+        }
+
+        .expense-detail-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-color-light);
+            transition: var(--transition);
+        }
+
+        .expense-detail-item:hover {
+            background: var(--hover-bg);
+        }
+
+        .expense-detail-item:last-child {
+            border-bottom: none;
+        }
+
+        .expense-detail-info {
+            flex: 1;
+            margin-right: 1rem;
+        }
+
+        .expense-detail-description {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+            font-size: 0.95rem;
+        }
+
+        .expense-detail-meta {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .expense-detail-amount {
+            font-weight: 600;
+            color: var(--danger-color);
+            font-size: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .expense-detail-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 0.5rem;
+            }
+
+            .expense-detail-amount {
+                align-self: flex-end;
+            }
+
+            .summary-stats {
+                gap: 0.5rem;
+            }
+        }
+
         .due-soon {
             background: var(--warning-gradient);
             color: var(--text-primary);
@@ -3592,6 +3717,19 @@
         </div>
     </div>
 
+    <!-- Expense Details Modal -->
+    <div id="expenseDetailsModal" class="modal">
+        <div class="modal-content">
+            <h2>📋 What Your Expenses Are For</h2>
+            <div id="expenseDetailsContent">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeExpenseDetailsModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Budget Projection Modal -->
     <div id="projectionModal" class="modal">
         <div class="modal-content">
@@ -4025,18 +4163,19 @@
             monthlyTotalElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">€${monthlyTotal.toFixed(2)}</span>`;
             monthlyTotalElement.title = "Click to see detailed breakdown of spent amount";
             
-            // Show breakdown if there are recurring expenses
+            // Show breakdown if there are recurring expenses - make clickable
             const expenseCountElement = document.getElementById('expenseCount');
             if (recurringTotal > 0) {
                 expenseCountElement.innerHTML = `
-                    ${monthlyExpenses.length} expense${monthlyExpenses.length !== 1 ? 's' : ''}<br>
+                    <span style="cursor: pointer; text-decoration: underline;" onclick="showExpenseDetailsModal()">${monthlyExpenses.length} expense${monthlyExpenses.length !== 1 ? 's' : ''}</span><br>
                     <span style="font-size: 0.8em; color: var(--text-secondary);">
                         Regular: €${expenseTotal.toFixed(2)} | Recurring: €${recurringTotal.toFixed(2)}
                     </span>
                 `;
             } else {
-                expenseCountElement.textContent = `${monthlyExpenses.length} expense${monthlyExpenses.length !== 1 ? 's' : ''}`;
+                expenseCountElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showExpenseDetailsModal()">${monthlyExpenses.length} expense${monthlyExpenses.length !== 1 ? 's' : ''}</span>`;
             }
+            expenseCountElement.title = "Click to see detailed breakdown of all expenses";
             
             // Update budget progress
             const budgetFill = document.getElementById('budgetFill');
@@ -4569,6 +4708,139 @@
 
         function closeRemainingBreakdownModal() {
             document.getElementById('remainingBreakdownModal').style.display = 'none';
+        }
+
+        // Show detailed expense breakdown focusing on what expenses are for
+        function showExpenseDetailsModal() {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const monthlyExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+            });
+
+            const content = document.getElementById('expenseDetailsContent');
+            
+            if (monthlyExpenses.length === 0) {
+                content.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        <p>No expenses recorded for this month yet.</p>
+                        <p style="margin-top: 1rem;">
+                            <button class="btn btn-primary" onclick="closeExpenseDetailsModal(); showTab('mainTab')">Add Your First Expense</button>
+                        </p>
+                    </div>
+                `;
+                document.getElementById('expenseDetailsModal').style.display = 'block';
+                return;
+            }
+
+            // Group expenses by category for better organization
+            const expensesByCategory = {};
+            monthlyExpenses.forEach(expense => {
+                if (!expensesByCategory[expense.category]) {
+                    expensesByCategory[expense.category] = [];
+                }
+                expensesByCategory[expense.category].push(expense);
+            });
+
+            // Calculate totals
+            const total = monthlyExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const regularExpenses = monthlyExpenses.filter(e => !e.isRecurring && !e.parentRecurringId);
+            const recurringExpenses = monthlyExpenses.filter(e => e.isRecurring || e.parentRecurringId);
+
+            // Create category sections
+            let categorySectionsHtml = '';
+            Object.entries(expensesByCategory)
+                .sort(([,a], [,b]) => b.reduce((sum, e) => sum + e.amount, 0) - a.reduce((sum, e) => sum + e.amount, 0))
+                .forEach(([category, categoryExpenses]) => {
+                    const categoryTotal = categoryExpenses.reduce((sum, e) => sum + e.amount, 0);
+                    const percentage = ((categoryTotal / total) * 100).toFixed(1);
+                    const icon = categoryIcons[category] || '📝';
+                    
+                    // Sort expenses within category by date (newest first)
+                    const sortedCategoryExpenses = [...categoryExpenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+                    
+                    let expensesHtml = '';
+                    sortedCategoryExpenses.forEach(expense => {
+                        const date = new Date(expense.date).toLocaleDateString();
+                        const isRecurring = expense.isRecurring || expense.parentRecurringId;
+                        
+                        expensesHtml += `
+                            <div class="expense-detail-item ${isRecurring ? 'recurring-expense-item' : ''}">
+                                <div class="expense-detail-info">
+                                    <div class="expense-detail-description">
+                                        ${escapeHtml(expense.description)}
+                                        ${isRecurring ? ' <span style="font-size: 0.8em; color: var(--primary-color);">🔄</span>' : ''}
+                                    </div>
+                                    <div class="expense-detail-meta">
+                                        ${expense.person} • ${date}
+                                    </div>
+                                </div>
+                                <div class="expense-detail-amount">€${expense.amount.toFixed(2)}</div>
+                            </div>
+                        `;
+                    });
+
+                    categorySectionsHtml += `
+                        <div class="category-section">
+                            <div class="category-header">
+                                <h4>${icon} ${category}</h4>
+                                <div class="category-total">
+                                    €${categoryTotal.toFixed(2)} (${percentage}%)
+                                </div>
+                            </div>
+                            <div class="category-expenses">
+                                ${expensesHtml}
+                            </div>
+                        </div>
+                    `;
+                });
+
+            // Summary stats
+            const summaryHtml = `
+                <div class="expense-summary">
+                    <h3>📊 Monthly Overview</h3>
+                    <div class="summary-stats">
+                        <div class="summary-stat">
+                            <span class="summary-label">Total Expenses:</span>
+                            <span class="summary-value">€${total.toFixed(2)}</span>
+                        </div>
+                        <div class="summary-stat">
+                            <span class="summary-label">Regular Expenses:</span>
+                            <span class="summary-value">${regularExpenses.length} items (€${regularExpenses.reduce((sum, e) => sum + e.amount, 0).toFixed(2)})</span>
+                        </div>
+                        <div class="summary-stat">
+                            <span class="summary-label">Recurring Expenses:</span>
+                            <span class="summary-value">${recurringExpenses.length} items (€${recurringExpenses.reduce((sum, e) => sum + e.amount, 0).toFixed(2)})</span>
+                        </div>
+                        <div class="summary-stat">
+                            <span class="summary-label">Categories:</span>
+                            <span class="summary-value">${Object.keys(expensesByCategory).length} different</span>
+                        </div>
+                        <div class="summary-stat">
+                            <span class="summary-label">Daily Average:</span>
+                            <span class="summary-value">€${(total / new Date().getDate()).toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            content.innerHTML = `
+                <div style="max-height: 70vh; overflow-y: auto;">
+                    ${summaryHtml}
+                    
+                    <div class="expenses-by-category">
+                        <h3>📋 Expenses by Category</h3>
+                        ${categorySectionsHtml}
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('expenseDetailsModal').style.display = 'block';
+        }
+
+        function closeExpenseDetailsModal() {
+            document.getElementById('expenseDetailsModal').style.display = 'none';
         }
 
         // Smart budget projection - predict monthly spending based on current trends
@@ -5600,7 +5872,10 @@
             monthlyTotalMainElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">€${monthlyTotal.toFixed(2)}</span>`;
             monthlyTotalMainElement.title = "Click to see detailed breakdown of this month's expenses";
             
-            document.getElementById('expenseCountMain').textContent = monthlyExpenses.length;
+            // Make main page expense count clickable
+            const expenseCountMainElement = document.getElementById('expenseCountMain');
+            expenseCountMainElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showExpenseDetailsModal()">${monthlyExpenses.length}</span>`;
+            expenseCountMainElement.title = "Click to see detailed breakdown of all expenses";
             
             // Update budget status and progress
             const budgetSummary = document.getElementById('budgetSummaryMain');
