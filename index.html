@@ -2211,6 +2211,86 @@
             padding: 1.5rem;
         }
 
+        /* Spent Breakdown Modal Styles */
+        .expense-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            margin-bottom: 0.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            transition: var(--transition);
+        }
+
+        .expense-item:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .expense-info {
+            flex: 1;
+            margin-right: 1rem;
+        }
+
+        .expense-description {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 0.25rem;
+        }
+
+        .expense-details {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        .expense-amount {
+            font-weight: 600;
+            color: var(--danger-color);
+            font-size: 1.1rem;
+        }
+
+        .category-summary {
+            background: var(--hover-bg);
+            border-radius: var(--border-radius);
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .category-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid var(--border-color-light);
+        }
+
+        .category-row:last-child {
+            border-bottom: none;
+        }
+
+        .recurring-expense-item {
+            background: rgba(99, 102, 241, 0.1);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        /* Remaining Breakdown Modal Styles */
+        .remaining-section {
+            margin-bottom: 1.5rem;
+        }
+
+        .remaining-section h3 {
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .budget-breakdown {
+            background: var(--hover-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
         .due-soon {
             background: var(--warning-gradient);
             color: var(--text-primary);
@@ -3486,6 +3566,32 @@
         </div>
     </div>
     
+    <!-- Spent Breakdown Modal -->
+    <div id="spentBreakdownModal" class="modal">
+        <div class="modal-content">
+            <h2>💰 Monthly Spending Breakdown</h2>
+            <div id="spentBreakdownContent">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeSpentBreakdownModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Remaining Breakdown Modal -->
+    <div id="remainingBreakdownModal" class="modal">
+        <div class="modal-content">
+            <h2>📊 Remaining Budget & Upcoming Expenses</h2>
+            <div id="remainingBreakdownContent">
+                <!-- Content will be populated by JavaScript -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeRemainingBreakdownModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Budget Projection Modal -->
     <div id="projectionModal" class="modal">
         <div class="modal-content">
@@ -3913,7 +4019,11 @@
             
             // Update budget display
             document.getElementById('budgetAmount').textContent = `€${monthlyBudget.toFixed(2)}`;
-            document.getElementById('monthlyTotal').textContent = `€${monthlyTotal.toFixed(2)}`;
+            
+            // Make monthly total clickable
+            const monthlyTotalElement = document.getElementById('monthlyTotal');
+            monthlyTotalElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">€${monthlyTotal.toFixed(2)}</span>`;
+            monthlyTotalElement.title = "Click to see detailed breakdown of spent amount";
             
             // Show breakdown if there are recurring expenses
             const expenseCountElement = document.getElementById('expenseCount');
@@ -3941,10 +4051,12 @@
                 
                 const remaining = monthlyBudget - monthlyTotal;
                 if (remaining >= 0) {
-                    budgetStatus.textContent = `€${remaining.toFixed(2)} remaining`;
+                    budgetStatus.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">€${remaining.toFixed(2)} remaining</span>`;
+                    budgetStatus.title = "Click to see remaining budget breakdown and upcoming recurring expenses";
                     budgetCard.classList.remove('budget-warning');
                 } else {
-                    budgetStatus.textContent = `€${Math.abs(remaining).toFixed(2)} over budget`;
+                    budgetStatus.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">€${Math.abs(remaining).toFixed(2)} over budget</span>`;
+                    budgetStatus.title = "Click to see budget analysis and upcoming expenses";
                     budgetCard.classList.add('budget-warning');
                 }
             } else {
@@ -4241,6 +4353,222 @@
 
         function closeProjectionModal() {
             document.getElementById('projectionModal').style.display = 'none';
+        }
+
+        // Show detailed breakdown of all monthly spending
+        function showSpentBreakdownModal() {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const monthlyExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+            });
+
+            const content = document.getElementById('spentBreakdownContent');
+            
+            if (monthlyExpenses.length === 0) {
+                content.innerHTML = `
+                    <div style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+                        <p>No expenses recorded for this month yet.</p>
+                        <p style="margin-top: 1rem;">
+                            <button class="btn btn-primary" onclick="closeSpentBreakdownModal(); showTab('mainTab')">Add Your First Expense</button>
+                        </p>
+                    </div>
+                `;
+                document.getElementById('spentBreakdownModal').style.display = 'block';
+                return;
+            }
+
+            // Calculate category totals
+            const categoryTotals = {};
+            monthlyExpenses.forEach(expense => {
+                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+            });
+
+            const total = monthlyExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+            
+            // Sort expenses by date (newest first)
+            const sortedExpenses = [...monthlyExpenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+            let categoryHtml = '';
+            Object.entries(categoryTotals)
+                .sort(([,a], [,b]) => b - a)
+                .forEach(([category, amount]) => {
+                    const icon = categoryIcons[category] || '📝';
+                    const percentage = ((amount / total) * 100).toFixed(1);
+                    categoryHtml += `
+                        <div class="category-row">
+                            <span>${icon} ${category}</span>
+                            <strong>€${amount.toFixed(2)} (${percentage}%)</strong>
+                        </div>
+                    `;
+                });
+
+            let expensesHtml = '';
+            sortedExpenses.forEach(expense => {
+                const icon = categoryIcons[expense.category] || '📝';
+                const date = new Date(expense.date).toLocaleDateString();
+                const isRecurring = expense.isRecurring || expense.parentRecurringId;
+                
+                expensesHtml += `
+                    <div class="expense-item ${isRecurring ? 'recurring-expense-item' : ''}">
+                        <div class="expense-info">
+                            <div class="expense-description">
+                                ${icon} ${escapeHtml(expense.description)}
+                                ${isRecurring ? ' <span style="font-size: 0.8em; color: var(--primary-color);">🔄</span>' : ''}
+                            </div>
+                            <div class="expense-details">
+                                ${expense.category} • ${expense.person} • ${date}
+                            </div>
+                        </div>
+                        <div class="expense-amount">€${expense.amount.toFixed(2)}</div>
+                    </div>
+                `;
+            });
+
+            content.innerHTML = `
+                <div style="max-height: 70vh; overflow-y: auto;">
+                    <div class="category-summary">
+                        <h3>📊 Spending by Category</h3>
+                        ${categoryHtml}
+                        <hr style="margin: 1rem 0; border: 1px solid var(--border-color);">
+                        <div class="category-row" style="font-weight: 600; font-size: 1.1rem;">
+                            <span>💰 Total Spent</span>
+                            <strong>€${total.toFixed(2)}</strong>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3>📋 All Expenses This Month (${monthlyExpenses.length} items)</h3>
+                        <div style="max-height: 40vh; overflow-y: auto;">
+                            ${expensesHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('spentBreakdownModal').style.display = 'block';
+        }
+
+        function closeSpentBreakdownModal() {
+            document.getElementById('spentBreakdownModal').style.display = 'none';
+        }
+
+        // Show detailed breakdown of remaining budget and upcoming recurring expenses
+        function showRemainingBreakdownModal() {
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const monthlyExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+            });
+
+            const spent = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
+            const remaining = monthlyBudget - spent;
+            const content = document.getElementById('remainingBreakdownContent');
+
+            // Get upcoming recurring expenses for the rest of the month
+            const upcomingRecurring = getUpcomingRecurringExpenses(10);
+            const remainingRecurringTotal = upcomingRecurring.reduce((total, item) => total + item.recurring.amount, 0);
+
+            // Calculate days left in month
+            const today = new Date();
+            const daysLeft = new Date(currentYear, currentMonth + 1, 0).getDate() - today.getDate();
+            const dailyBudgetRemaining = daysLeft > 0 ? Math.max(0, remaining - remainingRecurringTotal) / daysLeft : 0;
+
+            let upcomingHtml = '';
+            if (upcomingRecurring.length > 0) {
+                upcomingRecurring.forEach(item => {
+                    const icon = categoryIcons[item.recurring.category] || '📝';
+                    const urgencyClass = item.daysUntilDue <= 0 ? 'style="border-left-color: #ef4444;"' : 
+                                       item.daysUntilDue <= 3 ? 'style="border-left-color: #f59e0b;"' : '';
+                    
+                    upcomingHtml += `
+                        <div class="expense-item recurring-expense-item" ${urgencyClass}>
+                            <div class="expense-info">
+                                <div class="expense-description">
+                                    ${icon} ${escapeHtml(item.recurring.description)}
+                                </div>
+                                <div class="expense-details">
+                                    ${item.recurring.category} • 
+                                    ${item.daysUntilDue <= 0 ? 
+                                        `Overdue by ${Math.abs(item.daysUntilDue)} day(s)` : 
+                                        item.daysUntilDue === 0 ? 'Due today' : 
+                                        `Due in ${item.daysUntilDue} day(s)`} • 
+                                    ${item.nextDue.toLocaleDateString()}
+                                </div>
+                            </div>
+                            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                                <div class="expense-amount">€${item.recurring.amount.toFixed(2)}</div>
+                                ${item.daysUntilDue <= 0 ? 
+                                    `<button class="btn btn-primary btn-sm" onclick="quickAddRecurring('${item.recurring.id}'); closeRemainingBreakdownModal();" style="font-size: 0.7rem; padding: 0.25rem 0.5rem;">Add Now</button>` : 
+                                    ''
+                                }
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                upcomingHtml = '<p style="text-align: center; color: var(--text-secondary); font-style: italic; padding: 1rem;">No upcoming recurring expenses</p>';
+            }
+
+            const budgetStatus = remaining >= 0 ? 'positive' : 'negative';
+            const statusColor = remaining >= 0 ? 'var(--success-color)' : 'var(--danger-color)';
+
+            content.innerHTML = `
+                <div style="max-height: 70vh; overflow-y: auto;">
+                    <div class="budget-breakdown">
+                        <h3>💰 Budget Analysis</h3>
+                        <div class="projection-row">
+                            <span>📊 Monthly Budget:</span>
+                            <strong>€${monthlyBudget.toFixed(2)}</strong>
+                        </div>
+                        <div class="projection-row">
+                            <span>💸 Already Spent:</span>
+                            <strong>€${spent.toFixed(2)}</strong>
+                        </div>
+                        <hr style="margin: 0.5rem 0; border: 1px solid var(--border-color);">
+                        <div class="projection-row" style="color: ${statusColor}; font-weight: 600;">
+                            <span>${remaining >= 0 ? '💰' : '⚠️'} ${remaining >= 0 ? 'Remaining' : 'Over Budget'}:</span>
+                            <strong>€${Math.abs(remaining).toFixed(2)}</strong>
+                        </div>
+                        ${remainingRecurringTotal > 0 ? `
+                            <div class="projection-row">
+                                <span>🔄 Upcoming Recurring:</span>
+                                <strong>-€${remainingRecurringTotal.toFixed(2)}</strong>
+                            </div>
+                            <div class="projection-row" style="color: ${remaining - remainingRecurringTotal >= 0 ? 'var(--success-color)' : 'var(--danger-color)'};">
+                                <span>📅 Available for Discretionary:</span>
+                                <strong>€${(remaining - remainingRecurringTotal).toFixed(2)}</strong>
+                            </div>
+                        ` : ''}
+                    </div>
+
+                    <div class="remaining-section">
+                        <h3>📅 Daily Budget Guidance</h3>
+                        <div style="background: var(--card-bg); padding: 1rem; border-radius: var(--border-radius); border: 1px solid var(--border-color);">
+                            <p style="margin: 0; color: var(--text-secondary);">
+                                <strong>${daysLeft} days left</strong> in this month<br>
+                                Recommended daily spending: <strong style="color: var(--primary-color);">€${dailyBudgetRemaining.toFixed(2)}</strong>
+                                ${dailyBudgetRemaining < 10 ? ' <span style="color: var(--danger-color);">⚠️ Budget carefully!</span>' : ''}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="remaining-section">
+                        <h3>🔄 Upcoming Recurring Expenses</h3>
+                        <div style="max-height: 30vh; overflow-y: auto;">
+                            ${upcomingHtml}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('remainingBreakdownModal').style.display = 'block';
+        }
+
+        function closeRemainingBreakdownModal() {
+            document.getElementById('remainingBreakdownModal').style.display = 'none';
         }
 
         // Smart budget projection - predict monthly spending based on current trends
@@ -5254,11 +5582,24 @@
             const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
             const remaining = monthlyBudget - monthlyTotal;
             
-            // Update main page elements
+            // Update main page elements with clickable amounts
             document.getElementById('budgetAmountMain').textContent = `€${monthlyBudget.toFixed(2)}`;
-            document.getElementById('spentAmountMain').textContent = `€${monthlyTotal.toFixed(2)}`;
-            document.getElementById('remainingAmountMain').textContent = `€${remaining.toFixed(2)}`;
-            document.getElementById('monthlyTotalMain').textContent = `€${monthlyTotal.toFixed(2)}`;
+            
+            // Make spent amount clickable
+            const spentElement = document.getElementById('spentAmountMain');
+            spentElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">€${monthlyTotal.toFixed(2)}</span>`;
+            spentElement.title = "Click to see detailed breakdown of spent amount";
+            
+            // Make remaining amount clickable
+            const remainingElement = document.getElementById('remainingAmountMain');
+            remainingElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">€${remaining.toFixed(2)}</span>`;
+            remainingElement.title = "Click to see remaining budget breakdown and upcoming recurring expenses";
+            
+            // Make monthly total clickable too
+            const monthlyTotalMainElement = document.getElementById('monthlyTotalMain');
+            monthlyTotalMainElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">€${monthlyTotal.toFixed(2)}</span>`;
+            monthlyTotalMainElement.title = "Click to see detailed breakdown of this month's expenses";
+            
             document.getElementById('expenseCountMain').textContent = monthlyExpenses.length;
             
             // Update budget status and progress
@@ -5273,10 +5614,12 @@
                 budgetTextMain.textContent = `${Math.round(percentage)}%`;
                 
                 if (remaining >= 0) {
-                    budgetStatusMain.textContent = `€${remaining.toFixed(2)} remaining this month`;
+                    budgetStatusMain.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">€${remaining.toFixed(2)} remaining this month</span>`;
+                    budgetStatusMain.title = "Click to see remaining budget breakdown and upcoming recurring expenses";
                     budgetSummary.classList.remove('warning-budget');
                 } else {
-                    budgetStatusMain.textContent = `€${Math.abs(remaining).toFixed(2)} over budget this month`;
+                    budgetStatusMain.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">€${Math.abs(remaining).toFixed(2)} over budget this month</span>`;
+                    budgetStatusMain.title = "Click to see budget analysis and upcoming expenses";
                     budgetSummary.classList.add('warning-budget');
                 }
             } else {
