@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Travel Expense Tracker</title>
+    <title>Expense Tracker</title>
     
     <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:;">
@@ -13,14 +13,14 @@
     <meta name="referrer" content="strict-origin-when-cross-origin">
     
     <!-- PWA Meta Tags -->
-    <meta name="description" content="Track, manage, and optimize your travel and trip expenses with smart insights and analytics">
+    <meta name="description" content="Track, manage, and optimize your expenses with smart insights and analytics">
     <meta name="theme-color" content="#6366f1">
     <meta name="color-scheme" content="light dark">
     
     <!-- Apple PWA Meta Tags -->
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="apple-mobile-web-app-title" content="TravelTracker">
+    <meta name="apple-mobile-web-app-title" content="ExpenseTracker">
     <meta name="format-detection" content="telephone=no">
     
     <!-- Microsoft PWA Meta Tags -->
@@ -1834,6 +1834,15 @@
             align-items: center;
             gap: 1rem;
             flex-wrap: wrap;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .trip-action-buttons {
+            display: flex;
+            gap: 0.75rem;
+            align-items: center;
+            flex-wrap: wrap;
         }
 
         #tripName {
@@ -2416,6 +2425,52 @@
             }
         }
 
+        /* Trip Status and Payer Breakdown Styles */
+        .trip-status {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-block;
+            margin-top: 0.5rem;
+        }
+
+        .trip-status.active {
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+        }
+
+        .trip-status.completed {
+            background: rgba(99, 102, 241, 0.1);
+            color: #6366f1;
+        }
+
+        .payer-breakdown {
+            margin-bottom: 1.5rem;
+            padding: 1rem;
+            background: var(--hover-bg);
+            border-radius: var(--border-radius);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .payer-breakdown h4 {
+            margin: 0 0 0.75rem 0;
+            color: var(--text-primary);
+        }
+
+        .payer-expenses {
+            display: grid;
+            gap: 0.5rem;
+        }
+
+        .payer-expense-item {
+            padding: 0.5rem;
+            background: var(--card-bg);
+            border-radius: 0.5rem;
+            border: 1px solid var(--border-color-light);
+            font-size: 0.9rem;
+        }
+
         .due-soon {
             background: var(--warning-gradient);
             color: var(--text-primary);
@@ -2918,8 +2973,8 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>✈️ Travel Expense Tracker</h1>
-            <p class="subtitle" id="appSubtitle">Track, manage, and optimize your travel and trip expenses</p>
+            <h1>💰 Expense Tracker</h1>
+            <p class="subtitle" id="appSubtitle">Track, manage, and optimize your expenses with smart insights</p>
             
             <!-- Tracker Type Selector -->
             <div class="tracker-type-selector">
@@ -2934,7 +2989,7 @@
             <!-- Navigation Tabs -->
             <div class="nav-tabs">
                 <button class="nav-tab active" data-tab="main">📋 Expenses</button>
-                <button class="nav-tab" data-tab="travel">📁 Projects</button>
+                <button class="nav-tab" data-tab="travel">🧳 Trips</button>
                 <button class="nav-tab" data-tab="dashboard">📊 Dashboard</button>
                 <button class="nav-tab" data-tab="settings">⚙️ Settings</button>
                 <button class="help-btn" id="helpBtn" title="Need help? Start the interactive guide!">❓</button>
@@ -3304,18 +3359,21 @@
             </div>
         </div>
 
-        <!-- Projects Tab Content -->
+        <!-- Trips Tab Content -->
         <div id="travelTab" class="tab-content">
             <div class="travel-tracker">
                 <!-- Project Management Header -->
                 <div class="trip-header">
                     <div class="trip-info">
-                        <h2><span class="card-icon">📁</span> Project Travel Tracker</h2>
+                        <h2><span class="card-icon">🧳</span> Trip Expense Tracker</h2>
                         <p class="project-subtitle">Track expenses for trips, events, business travel, or any specific travel spending goal</p>
                         <div class="trip-controls">
                             <div class="current-trip" id="currentTripDisplay">
-                                <span id="tripName">No active project</span>
-                                <button class="btn btn-secondary" id="manageTripBtn">📝 Manage Projects</button>
+                                <span id="tripName">No active trip</span>
+                                <div class="trip-action-buttons">
+                                    <button class="btn btn-secondary" id="manageTripBtn">📝 Manage Trips</button>
+                                    <button class="btn btn-success" id="completeTripBtn" style="display: none;">✅ Complete Trip</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -3377,7 +3435,7 @@
                     <div class="travel-form-panel">
                         <!-- Project Expense Form -->
                         <div class="travel-expense-form card-enhanced">
-                            <h3><span class="card-icon">➕</span> Add Project Expense</h3>
+                            <h3><span class="card-icon">➕</span> Add Trip Expense</h3>
                             <form id="travelExpenseForm">
                                 <div class="form-grid">
                                     <div class="input-group">
@@ -3422,6 +3480,19 @@
                                         <input type="text" id="travelLocation" placeholder="e.g., Office Depot, Local Restaurant">
                                     </div>
                                     
+                                    <div class="input-group">
+                                        <span class="input-icon">👤</span>
+                                        <label for="travelPayer">Payer</label>
+                                        <select id="travelPayer" required>
+                                            <option value="">Who paid?</option>
+                                            <option value="Me">Me</option>
+                                            <option value="Friend 1">Friend 1</option>
+                                            <option value="Friend 2">Friend 2</option>
+                                            <option value="Friend 3">Friend 3</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                    </div>
+                                    
                                     <div class="input-group" style="grid-column: 1 / -1;">
                                         <span class="input-icon">📝</span>
                                         <label for="travelDescription">Description (optional)</label>
@@ -3431,7 +3502,7 @@
                                 
                                 <div class="btn-actions">
                                     <button type="button" id="cancelTravelEdit" style="display: none;" class="btn btn-secondary">✖️ Cancel</button>
-                                    <button type="submit" class="btn bounce-in">💾 Add to Project</button>
+                                    <button type="submit" class="btn bounce-in">💾 Add to Trip</button>
                                 </div>
                             </form>
                         </div>
@@ -3446,12 +3517,12 @@
                     </div>
 
                     <div class="travel-list-panel">
-                        <!-- Project Expense List -->
+                        <!-- Trip Expense List -->
                         <div class="travel-expense-list">
                             <div class="travel-list-header">
-                                <h3><span class="card-icon">📋</span> Project Expenses</h3>
+                                <h3><span class="card-icon">📋</span> Trip Expenses</h3>
                                 
-                                <!-- Project Search -->
+                                <!-- Trip Search -->
                                 <div class="search-container">
                                     <div class="search-input-wrapper">
                                         <span class="search-icon">🔍</span>
@@ -3770,7 +3841,7 @@
     <div id="guideOverlay" class="guide-overlay" style="display: none;">
         <div class="guide-content">
             <div class="guide-header">
-                <h2 id="guideTitle">Welcome to Travel Expense Tracker! 🎉</h2>
+                <h2 id="guideTitle">Welcome to Expense Tracker! 🎉</h2>
                 <button class="guide-close" id="closeGuideBtn">✖️</button>
             </div>
             <div class="guide-body">
@@ -6515,7 +6586,7 @@
         window.addEventListener('appinstalled', () => {
             console.log('✅ PWA installed successfully');
             hideInstallButton();
-            showNotification('App installed! You can now use Travel Expense Tracker offline.', 'success');
+            showNotification('App installed! You can now use Expense Tracker offline.', 'success');
         });
 
         // Show/hide install button
@@ -6906,7 +6977,7 @@
          // Interactive Guide System
          const guideSteps = [
              {
-                 title: "Welcome to Travel Expense Tracker! 🎉",
+                 title: "Welcome to Expense Tracker! 🎉",
                  content: `
                      <p>This powerful app helps you track expenses, set budgets, manage recurring payments, and get smart financial insights.</p>
                      <p><strong>What you'll learn:</strong></p>
@@ -7689,6 +7760,7 @@
                         category: document.getElementById('travelCategory').value,
                         date: document.getElementById('travelDate').value,
                         location: document.getElementById('travelLocation').value,
+                        payer: document.getElementById('travelPayer').value,
                         description: document.getElementById('travelDescription').value
                     };
 
@@ -7700,6 +7772,7 @@
                             expense.category = formData.category;
                             expense.date = formData.date;
                             expense.location = formData.location;
+                            expense.payer = formData.payer;
                             expense.description = formData.description;
                             
                             localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses));
@@ -7732,6 +7805,16 @@
                 manageTripBtn.addEventListener('click', function() {
                     document.getElementById('tripModal').style.display = 'block';
                     renderTripsList();
+                });
+            }
+
+            // Complete trip button
+            const completeTripBtn = document.getElementById('completeTripBtn');
+            if (completeTripBtn) {
+                completeTripBtn.addEventListener('click', function() {
+                    if (currentTrip && confirm(`Are you sure you want to complete the trip "${currentTrip.name}"? You can reopen it later if needed.`)) {
+                        completeTrip(currentTrip.id);
+                    }
                 });
             }
 
@@ -8008,6 +8091,128 @@
             }
         }
 
+        // Trip Management Functions
+        function completeTrip(tripId) {
+            const trip = trips.find(t => t.id === tripId);
+            if (trip) {
+                trip.status = 'completed';
+                trip.completedDate = new Date().toISOString();
+                localStorage.setItem('trips', JSON.stringify(trips));
+                
+                // Clear current trip if it was the completed one
+                if (currentTrip && currentTrip.id === tripId) {
+                    currentTrip = null;
+                    localStorage.removeItem('currentTrip');
+                }
+                
+                updateTripDisplay();
+                showNotification(`🎉 Trip "${trip.name}" completed successfully!`, 'success');
+            }
+        }
+
+        function reopenTrip(tripId) {
+            const trip = trips.find(t => t.id === tripId);
+            if (trip) {
+                trip.status = 'active';
+                delete trip.completedDate;
+                localStorage.setItem('trips', JSON.stringify(trips));
+                
+                showNotification(`🔄 Trip "${trip.name}" reopened!`, 'success');
+                renderTripsList();
+            }
+        }
+
+        function viewTripDetails(tripId) {
+            const trip = trips.find(t => t.id === tripId);
+            if (!trip) return;
+            
+            const tripExpenses = travelExpenses.filter(e => e.tripId === tripId);
+            const total = tripExpenses.reduce((sum, e) => sum + e.amount, 0);
+            
+            // Group expenses by payer
+            const expensesByPayer = {};
+            tripExpenses.forEach(expense => {
+                const payer = expense.payer || 'Unknown';
+                if (!expensesByPayer[payer]) {
+                    expensesByPayer[payer] = { total: 0, expenses: [] };
+                }
+                expensesByPayer[payer].total += expense.amount;
+                expensesByPayer[payer].expenses.push(expense);
+            });
+
+            let payerBreakdown = '';
+            Object.entries(expensesByPayer)
+                .sort(([,a], [,b]) => b.total - a.total)
+                .forEach(([payer, data]) => {
+                    payerBreakdown += `
+                        <div class="payer-breakdown">
+                            <h4>👤 ${payer}: €${data.total.toFixed(2)} (${data.expenses.length} expenses)</h4>
+                            <div class="payer-expenses">
+                                ${data.expenses.map(e => `
+                                    <div class="payer-expense-item">
+                                        ${e.category} - €${e.amount.toFixed(2)} 
+                                        <span style="color: var(--text-secondary);">(${new Date(e.date).toLocaleDateString()})</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+
+            const modalContent = `
+                <div style="max-height: 60vh; overflow-y: auto;">
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3>🧳 ${trip.name}</h3>
+                        <p><strong>📍 Destination:</strong> ${trip.destination}</p>
+                        <p><strong>📅 Dates:</strong> ${new Date(trip.startDate).toLocaleDateString()} - ${trip.endDate ? new Date(trip.endDate).toLocaleDateString() : 'Ongoing'}</p>
+                        <p><strong>💰 Total Spent:</strong> €${total.toFixed(2)}</p>
+                        <p><strong>📊 Status:</strong> ${trip.status === 'completed' ? '✅ Completed' : '🔄 Active'}</p>
+                        ${trip.completedDate ? `<p><strong>🎉 Completed:</strong> ${new Date(trip.completedDate).toLocaleDateString()}</p>` : ''}
+                    </div>
+                    
+                    ${payerBreakdown ? `
+                        <div style="margin-bottom: 1.5rem;">
+                            <h3>💳 Expenses by Payer</h3>
+                            ${payerBreakdown}
+                        </div>
+                    ` : ''}
+                    
+                    <div class="trip-actions" style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;">
+                        ${trip.status === 'completed' ? 
+                            `<button class="btn btn-primary" onclick="reopenTrip('${trip.id}'); closeTripDetailsModal();">🔄 Reopen Trip</button>` :
+                            `<button class="btn btn-success" onclick="completeTrip('${trip.id}'); closeTripDetailsModal();">✅ Complete Trip</button>`
+                        }
+                        <button class="btn btn-secondary" onclick="closeTripDetailsModal()">Close</button>
+                    </div>
+                </div>
+            `;
+
+            // Create trip details modal if it doesn't exist
+            let tripDetailsModal = document.getElementById('tripDetailsModal');
+            if (!tripDetailsModal) {
+                tripDetailsModal = document.createElement('div');
+                tripDetailsModal.id = 'tripDetailsModal';
+                tripDetailsModal.className = 'modal';
+                tripDetailsModal.innerHTML = `
+                    <div class="modal-content">
+                        <h2>🧳 Trip Details</h2>
+                        <div id="tripDetailsContent"></div>
+                    </div>
+                `;
+                document.body.appendChild(tripDetailsModal);
+            }
+
+            document.getElementById('tripDetailsContent').innerHTML = modalContent;
+            tripDetailsModal.style.display = 'block';
+        }
+
+        function closeTripDetailsModal() {
+            const modal = document.getElementById('tripDetailsModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
         // Travel Expense Functions
         function addTravelExpense(expenseData) {
             if (!currentTrip) {
@@ -8022,6 +8227,7 @@
                 category: expenseData.category,
                 date: expenseData.date,
                 location: expenseData.location || '',
+                payer: expenseData.payer || 'Me',
                 description: expenseData.description || '',
                 createdAt: new Date().toISOString()
             };
@@ -8045,6 +8251,7 @@
                 document.getElementById('travelCategory').value = expense.category;
                 document.getElementById('travelDate').value = expense.date;
                 document.getElementById('travelLocation').value = expense.location;
+                document.getElementById('travelPayer').value = expense.payer || 'Me';
                 document.getElementById('travelDescription').value = expense.description;
                 
                 document.getElementById('cancelTravelEdit').style.display = 'block';
@@ -8080,13 +8287,16 @@
         function updateTripDisplay() {
             const tripNameElement = document.getElementById('tripName');
             const manageTripBtn = document.getElementById('manageTripBtn');
+            const completeTripBtn = document.getElementById('completeTripBtn');
             
-            if (currentTrip) {
+            if (currentTrip && currentTrip.status !== 'completed') {
                 tripNameElement.textContent = `${currentTrip.name} (${currentTrip.destination})`;
                 manageTripBtn.textContent = '📝 Manage Trips';
+                completeTripBtn.style.display = 'block';
             } else {
                 tripNameElement.textContent = 'No active trip';
                 manageTripBtn.textContent = '🚀 Start Trip';
+                completeTripBtn.style.display = 'none';
             }
         }
 
@@ -8154,6 +8364,10 @@
             const details = document.createElement('p');
             const formattedDate = new Date(expense.date).toLocaleDateString();
             let detailsText = `📅 ${formattedDate}`;
+            
+            if (expense.payer) {
+                detailsText += ` • 👤 Paid by: ${expense.payer}`;
+            }
             
             if (expense.location) {
                 detailsText += ` • 📍 ${expense.location}`;
@@ -8306,6 +8520,22 @@
                 completeBtn.textContent = '✅ Complete';
                 completeBtn.addEventListener('click', () => completeTrip(trip.id));
                 actionsDiv.appendChild(completeBtn);
+            } else {
+                // Completed trip actions
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'btn btn-info';
+                viewBtn.textContent = '👁️ View Details';
+                viewBtn.addEventListener('click', () => {
+                    viewTripDetails(trip.id);
+                    document.getElementById('tripModal').style.display = 'none';
+                });
+                actionsDiv.appendChild(viewBtn);
+                
+                const reopenBtn = document.createElement('button');
+                reopenBtn.className = 'btn btn-warning';
+                reopenBtn.textContent = '🔄 Reopen';
+                reopenBtn.addEventListener('click', () => reopenTrip(trip.id));
+                actionsDiv.appendChild(reopenBtn);
             }
             
             const deleteBtn = document.createElement('button');
