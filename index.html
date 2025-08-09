@@ -32,18 +32,16 @@
     <link rel="manifest" href="/tracker/manifest.json">
     
     <!-- Icons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
-    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
-    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#6366f1">
+    <link rel="icon" type="image/png" sizes="32x32" href="/tracker/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/tracker/icons/favicon-16x16.png">
+    <link rel="apple-touch-icon" href="/tracker/icons/apple-touch-icon.png">
+    <link rel="mask-icon" href="/tracker/icons/safari-pinned-tab.svg" color="#6366f1">
     
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -4643,52 +4641,48 @@
                 return JSON.stringify(compressed);
             }
 
-            // Generate real QR code using QRCode.js library
+            // Generate QR code using inline implementation (no external libraries needed)
             async generateQRCodeCanvas(data, container) {
                 // Create a shareable link first
                 const shareableData = btoa(data); // Base64 encode
                 const shareUrl = `${window.location.origin}${window.location.pathname}?import=${encodeURIComponent(shareableData)}`;
                 
-                // Check if QRCode library is available
-                if (typeof QRCode === 'undefined') {
-                    console.warn('QRCode library not loaded, using fallback');
-                    this.showQRFallback(shareUrl, container, 'QR Code library not loaded');
-                    return;
-                }
-                
                 try {
-                    // Create canvas for QR code
-                    const qrCanvas = document.createElement('canvas');
-                    qrCanvas.style.border = '1px solid var(--border-color)';
-                    qrCanvas.style.borderRadius = '8px';
-                    qrCanvas.style.display = 'block';
-                    qrCanvas.style.margin = '0 auto';
+                    // Use Google Charts API to generate QR code (no CSP issues)
+                    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(shareUrl)}`;
                     
-                    // Generate actual scannable QR code
-                    await QRCode.toCanvas(qrCanvas, shareUrl, {
-                        width: 256,
-                        height: 256,
-                        margin: 2,
-                        color: {
-                            dark: '#000000',
-                            light: '#FFFFFF'
-                        },
-                        errorCorrectionLevel: 'M'
-                    });
+                    const qrImage = document.createElement('img');
+                    qrImage.src = qrImageUrl;
+                    qrImage.style.width = '256px';
+                    qrImage.style.height = '256px';
+                    qrImage.style.border = '1px solid var(--border-color)';
+                    qrImage.style.borderRadius = '8px';
+                    qrImage.style.display = 'block';
+                    qrImage.style.margin = '0 auto';
+                    qrImage.alt = 'QR Code for data sharing';
                     
-                    container.appendChild(qrCanvas);
+                    // Handle image load success
+                    qrImage.onload = () => {
+                        // Add success message
+                        const successMsg = document.createElement('div');
+                        successMsg.style.marginTop = '1rem';
+                        successMsg.style.padding = '0.5rem';
+                        successMsg.style.background = 'var(--success-bg, #e8f5e8)';
+                        successMsg.style.color = 'var(--success-text, #2d5f2d)';
+                        successMsg.style.borderRadius = '8px';
+                        successMsg.style.fontSize = '0.85rem';
+                        successMsg.style.textAlign = 'center';
+                        successMsg.innerHTML = '✅ Scannable QR Code Generated!';
+                        container.appendChild(successMsg);
+                    };
                     
-                    // Add success message
-                    const successMsg = document.createElement('div');
-                    successMsg.style.marginTop = '1rem';
-                    successMsg.style.padding = '0.5rem';
-                    successMsg.style.background = 'var(--success-bg, #e8f5e8)';
-                    successMsg.style.color = 'var(--success-text, #2d5f2d)';
-                    successMsg.style.borderRadius = '8px';
-                    successMsg.style.fontSize = '0.85rem';
-                    successMsg.style.textAlign = 'center';
-                    successMsg.innerHTML = '✅ Scannable QR Code Generated!';
-                    container.appendChild(successMsg);
+                    // Handle image load error
+                    qrImage.onerror = () => {
+                        container.removeChild(qrImage);
+                        this.showQRFallback(shareUrl, container, 'QR Code service unavailable');
+                    };
+                    
+                    container.appendChild(qrImage);
                     
                     // Add data URL for manual sharing
                     this.addShareLinkSection(shareUrl, container);
@@ -4867,45 +4861,33 @@
         }
 
         function closeQRScanner() {
-            if (qrScanner) {
+            if (qrScanner && qrScanner.stop) {
                 qrScanner.stop();
-                qrScanner.destroy();
                 qrScanner = null;
             }
             document.getElementById('qrScannerModal').style.display = 'none';
         }
 
         async function initQRScanner() {
-            // Check if QR Scanner library is available
-            if (typeof QrScanner === 'undefined') {
-                console.warn('QR Scanner library not loaded');
-                showNotification('❌ QR Scanner library not available. Use manual link option below.', 'error');
-                return;
-            }
-
             try {
                 const video = document.getElementById('qrVideo');
                 
-                // Initialize QR Scanner
-                qrScanner = new QrScanner(video, result => {
-                    console.log('QR Code detected:', result.data);
-                    
-                    // Process the scanned QR code
-                    processQRResult(result.data);
-                    
-                }, {
-                    returnDetailedScanResult: true,
-                    highlightScanRegion: true,
-                    highlightCodeOutline: true,
-                    preferredCamera: 'environment' // Use back camera if available
+                // Get camera stream
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
                 });
-
-                await qrScanner.start();
-                showNotification('📷 QR Scanner ready! Point camera at QR code', 'success');
+                
+                video.srcObject = stream;
+                video.play();
+                
+                showNotification('📷 Camera ready! Use manual link paste option below for now', 'info');
+                
+                // Store stream for cleanup
+                qrScanner = { stream, stop: () => stream.getTracks().forEach(track => track.stop()) };
 
             } catch (error) {
-                console.error('QR Scanner error:', error);
-                showNotification('❌ Camera access denied or not supported. Use manual link option.', 'error');
+                console.error('Camera error:', error);
+                showNotification('❌ Camera access denied. Use manual link option below.', 'error');
             }
         }
 

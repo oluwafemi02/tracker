@@ -70,7 +70,7 @@
       "name": "Add Expense",
       "short_name": "Add",
       "description": "Quickly add a new expense",
-      "url": "/index.html?action=add",
+      "url": "/tracker/?action=add",
       "icons": [
         {
           "src": "icons/shortcut-add.png",
@@ -83,7 +83,7 @@
       "name": "Dashboard",
       "short_name": "Stats",
       "description": "View spending analytics",
-      "url": "/index.html?tab=dashboard",
+      "url": "/tracker/?tab=dashboard",
       "icons": [
         {
           "src": "icons/shortcut-dashboard.png",
@@ -96,7 +96,7 @@
       "name": "Budget Settings",
       "short_name": "Budget",
       "description": "Manage your budget",
-      "url": "/index.html?tab=settings",
+      "url": "/tracker/?tab=settings",
       "icons": [
         {
           "src": "icons/shortcut-settings.png",
@@ -109,7 +109,7 @@
       "name": "Recurring Expenses",
       "short_name": "Recurring",
       "description": "Manage recurring payments",
-      "url": "/index.html?action=recurring",
+      "url": "/tracker/?action=recurring",
       "icons": [
         {
           "src": "icons/shortcut-recurring.png",
@@ -124,7 +124,7 @@
   "prefer_related_applications": false,
   
   "share_target": {
-    "action": "/index.html",
+    "action": "/tracker/",
     "method": "GET",
     "params": {
       "title": "title",

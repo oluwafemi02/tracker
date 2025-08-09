@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Icon Generator</title>
+</head>
+<body>
+    <h1>Generating Icons...</h1>
+    <canvas id="canvas" style="border: 1px solid #ccc;"></canvas>
+    <div id="status"></div>
+
+    <script>
+        function generateIcon(size, filename) {
+            const canvas = document.getElementById('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = size;
+            canvas.height = size;
+            
+            // Create gradient background
+            const gradient = ctx.createLinearGradient(0, 0, size, size);
+            gradient.addColorStop(0, '#667eea');
+            gradient.addColorStop(1, '#764ba2');
+            
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, size, size);
+            
+            // Add rounded corners
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, size * 0.15);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Add dollar sign
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${size * 0.6}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('$', size / 2, size / 2);
+            
+            // Convert to blob and download
+            canvas.toBlob(function(blob) {
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                a.click();
+                URL.revokeObjectURL(url);
+            }, 'image/png');
+        }
+
+        // Generate all required icons
+        const sizes = [16, 32, 72, 96, 128, 144, 152, 192, 384, 512];
+        let generated = 0;
+
+        function generateNext() {
+            if (generated < sizes.length) {
+                const size = sizes[generated];
+                setTimeout(() => {
+                    generateIcon(size, `icon-${size}x${size}.png`);
+                    if (size === 16) generateIcon(size, 'favicon-16x16.png');
+                    if (size === 32) generateIcon(size, 'favicon-32x32.png');
+                    generated++;
+                    document.getElementById('status').innerHTML = `Generated ${generated}/${sizes.length} icons`;
+                    generateNext();
+                }, 500);
+            } else {
+                document.getElementById('status').innerHTML = 'All icons generated! Check your downloads folder.';
+            }
+        }
+
+        // Start generation
+        generateNext();
+    </script>
+</body>
+</html>
