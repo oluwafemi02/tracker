@@ -29,7 +29,7 @@
     <meta name="msapplication-tap-highlight" content="no">
     
     <!-- Manifest -->
-    <link rel="manifest" href="/manifest.json">
+    <link rel="manifest" href="/tracker/manifest.json">
     
     <!-- Icons -->
     <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
@@ -42,7 +42,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     
             <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
         <script src="https://cdn.jsdelivr.net/npm/qr-scanner@1.4.2/qr-scanner.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
@@ -4645,11 +4645,18 @@
 
             // Generate real QR code using QRCode.js library
             async generateQRCodeCanvas(data, container) {
+                // Create a shareable link first
+                const shareableData = btoa(data); // Base64 encode
+                const shareUrl = `${window.location.origin}${window.location.pathname}?import=${encodeURIComponent(shareableData)}`;
+                
+                // Check if QRCode library is available
+                if (typeof QRCode === 'undefined') {
+                    console.warn('QRCode library not loaded, using fallback');
+                    this.showQRFallback(shareUrl, container, 'QR Code library not loaded');
+                    return;
+                }
+                
                 try {
-                    // Create a shareable link first
-                    const shareableData = btoa(data); // Base64 encode
-                    const shareUrl = `${window.location.origin}${window.location.pathname}?import=${encodeURIComponent(shareableData)}`;
-                    
                     // Create canvas for QR code
                     const qrCanvas = document.createElement('canvas');
                     qrCanvas.style.border = '1px solid var(--border-color)';
@@ -4684,44 +4691,50 @@
                     container.appendChild(successMsg);
                     
                     // Add data URL for manual sharing
-                    const dataUrl = document.createElement('div');
-                    dataUrl.style.marginTop = '1rem';
-                    dataUrl.style.padding = '1rem';
-                    dataUrl.style.background = 'var(--bg-secondary)';
-                    dataUrl.style.borderRadius = '8px';
-                    dataUrl.style.fontSize = '0.8rem';
-                    dataUrl.style.wordBreak = 'break-all';
-                    
-                    dataUrl.innerHTML = `
-                        <strong>📋 Alternative: Share this link</strong><br>
-                        <textarea readonly style="width: 100%; height: 60px; margin-top: 0.5rem; resize: none; font-size: 0.7rem; color: var(--text-primary);">${shareUrl}</textarea>
-                        <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="navigator.clipboard.writeText('${shareUrl}').then(() => showNotification('📋 Link copied to clipboard!', 'success'))">📋 Copy Link</button>
-                    `;
-                    
-                    container.appendChild(dataUrl);
+                    this.addShareLinkSection(shareUrl, container);
                     
                 } catch (error) {
                     console.error('QR Code generation error:', error);
-                    
-                    // Fallback to link sharing if QR generation fails
-                    const fallbackDiv = document.createElement('div');
-                    fallbackDiv.style.padding = '2rem';
-                    fallbackDiv.style.textAlign = 'center';
-                    fallbackDiv.style.background = 'var(--bg-secondary)';
-                    fallbackDiv.style.borderRadius = '8px';
-                    
-                    const shareableData = btoa(data);
-                    const shareUrl = `${window.location.origin}${window.location.pathname}?import=${encodeURIComponent(shareableData)}`;
-                    
-                    fallbackDiv.innerHTML = `
-                        <p>❌ QR Code generation failed</p>
-                        <p style="margin: 1rem 0;">📋 Use this link instead:</p>
-                        <textarea readonly style="width: 100%; height: 60px; margin: 0.5rem 0; font-size: 0.7rem; color: var(--text-primary);">${shareUrl}</textarea>
-                        <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${shareUrl}').then(() => showNotification('📋 Link copied!', 'success'))">📋 Copy Link</button>
-                    `;
-                    
-                    container.appendChild(fallbackDiv);
+                    this.showQRFallback(shareUrl, container, 'QR Code generation failed');
                 }
+            }
+
+            // Add share link section
+            addShareLinkSection(shareUrl, container) {
+                const dataUrl = document.createElement('div');
+                dataUrl.style.marginTop = '1rem';
+                dataUrl.style.padding = '1rem';
+                dataUrl.style.background = 'var(--bg-secondary)';
+                dataUrl.style.borderRadius = '8px';
+                dataUrl.style.fontSize = '0.8rem';
+                dataUrl.style.wordBreak = 'break-all';
+                
+                dataUrl.innerHTML = `
+                    <strong>📋 Alternative: Share this link</strong><br>
+                    <textarea readonly style="width: 100%; height: 60px; margin-top: 0.5rem; resize: none; font-size: 0.7rem; color: var(--text-primary);">${shareUrl}</textarea>
+                    <button class="btn btn-secondary" style="width: 100%; margin-top: 0.5rem;" onclick="navigator.clipboard.writeText('${shareUrl}').then(() => showNotification('📋 Link copied to clipboard!', 'success'))">📋 Copy Link</button>
+                `;
+                
+                container.appendChild(dataUrl);
+            }
+
+            // Fallback when QR generation fails
+            showQRFallback(shareUrl, container, errorMessage) {
+                const fallbackDiv = document.createElement('div');
+                fallbackDiv.style.padding = '2rem';
+                fallbackDiv.style.textAlign = 'center';
+                fallbackDiv.style.background = 'var(--bg-secondary)';
+                fallbackDiv.style.borderRadius = '8px';
+                
+                fallbackDiv.innerHTML = `
+                    <p>❌ ${errorMessage}</p>
+                    <p style="margin: 1rem 0;">📋 Use this link to share your data:</p>
+                    <textarea readonly style="width: 100%; height: 60px; margin: 0.5rem 0; font-size: 0.7rem; color: var(--text-primary);">${shareUrl}</textarea>
+                    <button class="btn btn-primary" onclick="navigator.clipboard.writeText('${shareUrl}').then(() => showNotification('📋 Link copied!', 'success'))">📋 Copy Link</button>
+                    <p style="margin-top: 1rem; font-size: 0.8rem; color: var(--text-secondary);">You can share this link via messaging, email, or any other method</p>
+                `;
+                
+                container.appendChild(fallbackDiv);
             }
 
 
@@ -4863,6 +4876,13 @@
         }
 
         async function initQRScanner() {
+            // Check if QR Scanner library is available
+            if (typeof QrScanner === 'undefined') {
+                console.warn('QR Scanner library not loaded');
+                showNotification('❌ QR Scanner library not available. Use manual link option below.', 'error');
+                return;
+            }
+
             try {
                 const video = document.getElementById('qrVideo');
                 
