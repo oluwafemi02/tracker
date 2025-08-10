@@ -32,9 +32,9 @@
     <link rel="manifest" href="/tracker/manifest.json">
     
     <!-- Icons -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/tracker/icons/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/tracker/icons/favicon-16x16.png">
-    <link rel="apple-touch-icon" href="/tracker/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/svg+xml" sizes="32x32" href="/tracker/icons/favicon-32x32.svg">
+    <link rel="icon" type="image/svg+xml" sizes="16x16" href="/tracker/icons/favicon-16x16.svg">
+    <link rel="apple-touch-icon" href="/tracker/icons/apple-touch-icon.svg">
     <link rel="mask-icon" href="/tracker/icons/safari-pinned-tab.svg" color="#6366f1">
     
     <!-- Preconnect for performance -->
@@ -4643,13 +4643,23 @@
 
             // Generate QR code using inline implementation (no external libraries needed)
             async generateQRCodeCanvas(data, container) {
-                // Create a shareable link first
-                const shareableData = btoa(data); // Base64 encode
-                const shareUrl = `${window.location.origin}${window.location.pathname}?import=${encodeURIComponent(shareableData)}`;
-                
                 try {
-                    // Use Google Charts API to generate QR code (no CSP issues)
-                    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&data=${encodeURIComponent(shareUrl)}`;
+                    // Store data temporarily and create a short URL
+                    const dataId = 'qr_' + Date.now();
+                    const shortData = this.createCompressedData();
+                    const shareableData = btoa(shortData);
+                    
+                    // Check if URL would be too long for QR code
+                    const shareUrl = `${window.location.origin}${window.location.pathname}?import=${encodeURIComponent(shareableData)}`;
+                    
+                    if (shareUrl.length > 1500) {
+                        // URL too long, use text-based fallback
+                        this.showQRFallback(shareUrl, container, 'Data too large for QR code');
+                        return;
+                    }
+                    
+                    // Generate QR code with shorter URL
+                    const qrImageUrl = `https://api.qrserver.com/v1/create-qr-code/?size=256x256&format=png&data=${encodeURIComponent(shareUrl)}`;
                     
                     const qrImage = document.createElement('img');
                     qrImage.src = qrImageUrl;
@@ -4672,7 +4682,7 @@
                         successMsg.style.borderRadius = '8px';
                         successMsg.style.fontSize = '0.85rem';
                         successMsg.style.textAlign = 'center';
-                        successMsg.innerHTML = '✅ Scannable QR Code Generated!';
+                        successMsg.innerHTML = '✅ Scannable QR Code Generated!<br><small>Contains recent expenses & budget</small>';
                         container.appendChild(successMsg);
                     };
                     
@@ -4684,12 +4694,16 @@
                     
                     container.appendChild(qrImage);
                     
-                    // Add data URL for manual sharing
-                    this.addShareLinkSection(shareUrl, container);
+                    // Add data URL for manual sharing (with full data)
+                    const fullData = this.getAllData();
+                    const fullShareableData = btoa(JSON.stringify(fullData));
+                    const fullShareUrl = `${window.location.origin}${window.location.pathname}?import=${encodeURIComponent(fullShareableData)}`;
+                    this.addShareLinkSection(fullShareUrl, container);
                     
                 } catch (error) {
                     console.error('QR Code generation error:', error);
-                    this.showQRFallback(shareUrl, container, 'QR Code generation failed');
+                    const fallbackUrl = `${window.location.origin}${window.location.pathname}`;
+                    this.showQRFallback(fallbackUrl, container, 'QR Code generation failed');
                 }
             }
 

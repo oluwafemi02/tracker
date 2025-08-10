@@ -1,11 +1,9 @@
 const CACHE_NAME = 'expense-tracker-v2.0.0';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/icons/icon-192x192.png',
-  '/icons/icon-512x512.png',
-  // Add other essential assets
+  '/tracker/',
+  '/tracker/index.html',
+  '/tracker/manifest.json',
+  // Only cache files that exist
 ];
 
 // Install event - cache resources
