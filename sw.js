@@ -1,4 +1,4 @@
-const CACHE_NAME = 'expense-tracker-v2.0.0';
+const CACHE_NAME = 'expense-tracker-v2.1.0-toggle-fix';
 const urlsToCache = [
   '/tracker/',
   '/tracker/index.html',
@@ -40,13 +40,41 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch event - serve from cache when offline
+// Fetch event - network first for HTML, cache first for others
 self.addEventListener('fetch', event => {
   // Skip non-GET requests and Chrome extension requests
   if (event.request.method !== 'GET' || event.request.url.startsWith('chrome-extension://')) {
     return;
   }
 
+  // For HTML files (main app), always try network first to get latest version
+  if (event.request.destination === 'document' || event.request.url.includes('index.html') || event.request.url.endsWith('/tracker/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // If network succeeds, cache and return the fresh version
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME)
+              .then(cache => {
+                cache.put(event.request, responseToCache);
+              });
+            return response;
+          }
+          return response;
+        })
+        .catch(() => {
+          // If network fails, fall back to cache
+          return caches.match(event.request)
+            .then(cachedResponse => {
+              return cachedResponse || caches.match('/tracker/index.html');
+            });
+        })
+    );
+    return;
+  }
+
+  // For other resources, use cache first strategy
   event.respondWith(
     caches.match(event.request)
       .then(response => {
@@ -75,7 +103,7 @@ self.addEventListener('fetch', event => {
       }).catch(() => {
         // If both cache and network fail, show offline page for navigation requests
         if (event.request.destination === 'document') {
-          return caches.match('/index.html');
+          return caches.match('/tracker/index.html');
         }
       })
   );

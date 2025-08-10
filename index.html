@@ -4263,6 +4263,7 @@
                     <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
                         <button class="btn btn-warning" id="exportAllDataBtn">📥 Export All Data</button>
                         <button class="btn btn-danger" id="clearAllDataBtn">🗑️ Clear All Data</button>
+                        <button class="btn btn-warning" id="clearCacheBtn">🔄 Clear Cache & Reload</button>
                     </div>
                 </div>
             </div>
@@ -7730,22 +7731,42 @@
         let swRegistration = null;
         let notificationPermission = 'default';
 
-        // Register Service Worker and setup PWA features
+        // Register Service Worker and setup PWA features with aggressive updates
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async () => {
                 try {
                     swRegistration = await navigator.serviceWorker.register('/tracker/sw.js');
                     console.log('✅ Service Worker registered:', swRegistration);
                     
+                    // Force immediate update check
+                    swRegistration.update();
+                    
                     // Check for updates
                     swRegistration.addEventListener('updatefound', () => {
                         const newWorker = swRegistration.installing;
                         newWorker.addEventListener('statechange', () => {
-                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                                showUpdateNotification();
+                            if (newWorker.state === 'installed') {
+                                if (navigator.serviceWorker.controller) {
+                                    // New version available - force immediate reload
+                                    console.log('🔄 New app version detected, force reloading...');
+                                    showNotification('App updated! Reloading to get latest features...', 'success');
+                                    setTimeout(() => {
+                                        window.location.reload(true);
+                                    }, 1500);
+                                } else {
+                                    // First install
+                                    console.log('✅ App installed and ready to use offline');
+                                }
                             }
                         });
                     });
+                    
+                    // Also listen for controller changes
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        console.log('🔄 Service Worker updated, reloading for latest version...');
+                        window.location.reload(true);
+                    });
+                    
                 } catch (error) {
                     console.error('❌ Service Worker registration failed:', error);
                 }
@@ -8737,6 +8758,41 @@
             }
         }
 
+        // Force cache clear and app reload (for debugging cache issues)
+        async function forceClearCacheAndReload() {
+            try {
+                // Clear all caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                    console.log('🗑️ All caches cleared');
+                }
+                
+                // Unregister service worker
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(registrations.map(reg => reg.unregister()));
+                    console.log('🚫 Service worker unregistered');
+                }
+                
+                // Force hard reload
+                window.location.reload(true);
+            } catch (error) {
+                console.error('❌ Error clearing cache:', error);
+                window.location.reload(true);
+            }
+        }
+
+        // Add to window for debugging
+        window.forceClearCacheAndReload = forceClearCacheAndReload;
+
+        // Check version on app load and force update if needed
+        window.addEventListener('load', () => {
+            // Add version to console for debugging
+            console.log('📱 App Version: 2.1.0-toggle-fix');
+            console.log('🔧 If you have cache issues, run: forceClearCacheAndReload()');
+        });
+
         // Listen for messages from service worker
         navigator.serviceWorker.addEventListener('message', event => {
             console.log('📨 Message from SW:', event.data);
@@ -8883,6 +8939,16 @@
             
             if (clearAllDataBtn) {
                 clearAllDataBtn.addEventListener('click', clearAllData);
+            }
+
+            // Clear cache button
+            const clearCacheBtn = document.getElementById('clearCacheBtn');
+            if (clearCacheBtn) {
+                clearCacheBtn.addEventListener('click', () => {
+                    if (confirm('This will clear the app cache and reload. Your data will be preserved. Continue?')) {
+                        forceClearCacheAndReload();
+                    }
+                });
             }
 
             // Initialize sync manager after DOM is loaded
