@@ -4626,16 +4626,25 @@
                 qrContainer.appendChild(instructions);
             }
 
-            // Create compressed data for QR code
+            // Create ultra-compressed data for QR code
             createCompressedData() {
                 const data = this.getAllData();
                 
-                // Create a compressed version with only essential data
+                // Ultra-light compression - only most essential data
                 const compressed = {
-                    e: data.expenses?.slice(-50) || [], // Last 50 expenses
+                    e: (data.expenses?.slice(-10) || []).map(e => ({
+                        a: e.amount, // amount
+                        c: e.category?.substring(0, 10) || '', // category (truncated)
+                        d: e.date,
+                        p: e.person?.substring(0, 5) || '' // person (truncated)
+                    })),
                     b: data.monthlyBudget || 0,
-                    r: data.recurringExpenses || [],
-                    v: '1.0c' // Compressed version marker
+                    r: (data.recurringExpenses?.slice(0, 5) || []).map(r => ({
+                        a: r.amount,
+                        c: r.category?.substring(0, 8) || '',
+                        f: r.frequency?.substring(0, 1) || '' // m/w/q/y
+                    })),
+                    v: '2' // Ultra-compressed version
                 };
                 
                 return JSON.stringify(compressed);
@@ -4650,12 +4659,27 @@
                     const shareableData = btoa(shortData);
                     
                     // Check if URL would be too long for QR code
-                    const shareUrl = `${window.location.origin}${window.location.pathname}?import=${encodeURIComponent(shareableData)}`;
+                    let shareUrl = `${window.location.origin}${window.location.pathname}?import=${encodeURIComponent(shareableData)}`;
                     
-                    if (shareUrl.length > 1500) {
-                        // URL too long, use text-based fallback
-                        this.showQRFallback(shareUrl, container, 'Data too large for QR code');
-                        return;
+                    console.log('QR URL length:', shareUrl.length);
+                    
+                    if (shareUrl.length > 800) {
+                        // Try even more aggressive compression
+                        const minimalData = JSON.stringify({
+                            b: this.getAllData().monthlyBudget || 0,
+                            e: Math.round((this.getAllData().expenses?.length || 0) / 10) * 10, // Expense count (rounded)
+                            v: '3' // Minimal version
+                        });
+                        const minimalUrl = `${window.location.origin}${window.location.pathname}?import=${encodeURIComponent(btoa(minimalData))}`;
+                        
+                        if (minimalUrl.length > 600) {
+                            // Still too long, use text-based fallback
+                            this.showQRFallback(shareUrl, container, 'Data too large for QR code');
+                            return;
+                        } else {
+                            // Use minimal data for QR
+                            shareUrl = minimalUrl;
+                        }
                     }
                     
                     // Generate QR code with shorter URL
@@ -4682,7 +4706,8 @@
                         successMsg.style.borderRadius = '8px';
                         successMsg.style.fontSize = '0.85rem';
                         successMsg.style.textAlign = 'center';
-                        successMsg.innerHTML = '✅ Scannable QR Code Generated!<br><small>Contains recent expenses & budget</small>';
+                        const compressionLevel = shareUrl.length > 400 ? 'minimal data (budget only)' : 'compressed data (recent expenses)';
+                        successMsg.innerHTML = `✅ Scannable QR Code Generated!<br><small>Contains ${compressionLevel}</small>`;
                         container.appendChild(successMsg);
                     };
                     
@@ -4830,15 +4855,56 @@
                     const parsedData = JSON.parse(decodedData);
                     
                     // Check if it's compressed data
-                    if (parsedData.v === '1.0c') {
-                        // Expand compressed data
-                        const expandedData = {
-                            expenses: parsedData.e || [],
-                            monthlyBudget: parsedData.b || 0,
-                            recurringExpenses: parsedData.r || [],
-                            version: '1.0',
-                            syncTimestamp: new Date().toISOString()
-                        };
+                    if (parsedData.v === '1.0c' || parsedData.v === '2' || parsedData.v === '3') {
+                        let expandedData;
+                        
+                        if (parsedData.v === '3') {
+                            // Minimal version - just budget and expense count
+                            expandedData = {
+                                expenses: [],
+                                monthlyBudget: parsedData.b || 0,
+                                recurringExpenses: [],
+                                version: '1.0',
+                                syncTimestamp: new Date().toISOString(),
+                                note: `QR Code contained budget: $${parsedData.b}, approx. ${parsedData.e} expenses`
+                            };
+                        } else if (parsedData.v === '2') {
+                            // Ultra-compressed format
+                            expandedData = {
+                                expenses: (parsedData.e || []).map(e => ({
+                                    id: Date.now() + Math.random(),
+                                    amount: e.a,
+                                    category: e.c,
+                                    date: e.d,
+                                    person: e.p,
+                                    description: `${e.c} (from QR)`,
+                                    timestamp: new Date().toISOString(),
+                                    isRecurring: false
+                                })),
+                                monthlyBudget: parsedData.b || 0,
+                                recurringExpenses: (parsedData.r || []).map(r => ({
+                                    id: Date.now() + Math.random(),
+                                    amount: r.a,
+                                    category: r.c,
+                                    frequency: r.f === 'm' ? 'monthly' : r.f === 'w' ? 'weekly' : r.f === 'q' ? 'quarterly' : 'yearly',
+                                    isActive: true,
+                                    description: `${r.c} (from QR)`,
+                                    person: 'Family',
+                                    startDate: new Date().toISOString().split('T')[0]
+                                })),
+                                version: '1.0',
+                                syncTimestamp: new Date().toISOString()
+                            };
+                        } else {
+                            // Old compressed format
+                            expandedData = {
+                                expenses: parsedData.e || [],
+                                monthlyBudget: parsedData.b || 0,
+                                recurringExpenses: parsedData.r || [],
+                                version: '1.0',
+                                syncTimestamp: new Date().toISOString()
+                            };
+                        }
                         
                         if (confirm('🔗 Data received from shared link! Import this data?\n\nThis will replace your current data.')) {
                             if (syncManager && syncManager.importAllData(expandedData)) {
