@@ -1280,6 +1280,15 @@
             background: var(--card-bg) !important;
         }
 
+        /* Inline toggle functionality */
+        #mainBudgetToggle:checked + span {
+            background-color: #4285f4 !important;
+        }
+
+        #mainBudgetToggle:checked + span span {
+            transform: translateX(26px) !important;
+        }
+
         @keyframes bounceIn {
             0% { transform: scale(0.3) rotate(-5deg); opacity: 0; }
             50% { transform: scale(1.05) rotate(2deg); }
@@ -3833,7 +3842,7 @@
                                     <div class="input-group">
                                         <span class="input-icon">📅</span>
                                         <label for="travelDate">Date</label>
-                                        <input type="date" id="travelDate" required>
+                                        <input type="date" id="travelDate" required autocomplete="off">
                                     </div>
                                     
                                     <div class="input-group">
@@ -3852,23 +3861,31 @@
                                         </datalist>
                                     </div>
 
-                                    <div class="input-group" style="grid-column: 1 / -1; margin: 1rem 0;">
-                                        <div class="toggle-container" style="display: flex !important; align-items: center; gap: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; border: 1px solid #e1e5e9; min-height: 60px;">
-                                            <span class="input-icon" style="font-size: 1.2rem;">💰</span>
-                                            <label for="deductFromMainBudget" style="flex: 1; margin: 0; font-weight: 500; cursor: pointer;">
+                                </div>
+                                
+                                <!-- Main Budget Toggle - Outside grid for visibility -->
+                                <div style="margin: 1rem 0; padding: 1rem; background: #f0f8ff; border: 2px solid #4285f4; border-radius: 8px;">
+                                    <div style="display: flex; align-items: center; gap: 1rem;">
+                                        <span style="font-size: 1.5rem;">💰</span>
+                                        <div style="flex: 1;">
+                                            <label style="font-weight: 600; color: #333; cursor: pointer; display: block;" for="mainBudgetToggle">
                                                 Deduct from Main Budget
-                                                <small style="display: block; color: #6c757d; font-weight: normal; margin-top: 0.25rem; font-size: 0.85rem;">
-                                                    Also add this expense to main budget expenses
-                                                </small>
                                             </label>
-                                            <div class="toggle-switch" style="display: block;">
-                                                <input type="checkbox" id="deductFromMainBudget" class="toggle-input">
-                                                <label for="deductFromMainBudget" class="toggle-label">
-                                                    <span class="toggle-slider"></span>
-                                                </label>
-                                            </div>
+                                            <small style="color: #666; font-size: 0.85rem;">
+                                                Also add this expense to main budget expenses
+                                            </small>
                                         </div>
+                                        <label style="position: relative; display: inline-block; width: 60px; height: 34px;">
+                                            <input type="checkbox" id="mainBudgetToggle" style="opacity: 0; width: 0; height: 0;">
+                                            <span style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px;">
+                                                <span style="position: absolute; content: ''; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;"></span>
+                                            </span>
+                                        </label>
                                     </div>
+                                </div>
+                                
+                                <div class="form-grid" style="margin-top: 0;">
+                                    <!-- Dummy div to restart grid -->
                                     
                                     <div class="input-group" style="grid-column: 1 / -1;">
                                         <span class="input-icon">📝</span>
@@ -3981,13 +3998,13 @@
                                 <div class="input-group">
                                     <span class="input-icon">📅</span>
                                     <label for="newTripStartDate">Start Date</label>
-                                    <input type="date" id="newTripStartDate" required>
+                                    <input type="date" id="newTripStartDate" required autocomplete="off">
                                 </div>
                                 
                                 <div class="input-group">
                                     <span class="input-icon">📅</span>
                                     <label for="newTripEndDate">End Date</label>
-                                    <input type="date" id="newTripEndDate">
+                                    <input type="date" id="newTripEndDate" autocomplete="off">
                                 </div>
                                 
                                 <div class="input-group">
@@ -9062,7 +9079,7 @@
                         location: document.getElementById('travelLocation').value,
                         payer: document.getElementById('travelPayer').value,
                         description: document.getElementById('travelDescription').value,
-                        deductFromMainBudget: document.getElementById('deductFromMainBudget').checked
+                        deductFromMainBudget: document.getElementById('mainBudgetToggle').checked
                     };
 
                     if (travelEditingId) {
@@ -9116,7 +9133,7 @@
                         addTravelExpense(formData);
                         this.reset();
                         document.getElementById('travelDate').valueAsDate = new Date();
-                        document.getElementById('deductFromMainBudget').checked = false;
+                        document.getElementById('mainBudgetToggle').checked = false;
                     }
                 });
             }
@@ -9180,7 +9197,19 @@
                         budget: document.getElementById('newTripBudget').value
                     };
 
-                    createNewTrip(tripData);
+                    if (window.editingTripId) {
+                        // Update existing trip
+                        updateTrip(window.editingTripId, tripData);
+                        window.editingTripId = null;
+                        
+                        // Reset form button and modal title
+                        document.querySelector('#newTripForm button[type="submit"]').textContent = '✈️ Create Trip';
+                        document.querySelector('#tripModal h2').textContent = '✈️ Create New Trip';
+                    } else {
+                        // Create new trip
+                        createNewTrip(tripData);
+                    }
+                    
                     this.reset();
                     document.getElementById('tripModal').style.display = 'none';
                 });
@@ -9190,6 +9219,12 @@
             const closeTripModalBtn = document.getElementById('closeTripModalBtn');
             if (closeTripModalBtn) {
                 closeTripModalBtn.addEventListener('click', function() {
+                    // Reset edit mode
+                    if (window.editingTripId) {
+                        window.editingTripId = null;
+                        document.querySelector('#newTripForm button[type="submit"]').textContent = '✈️ Create Trip';
+                        document.querySelector('#tripModal h2').textContent = '✈️ Create New Trip';
+                    }
                     document.getElementById('tripModal').style.display = 'none';
                 });
             }
@@ -9479,8 +9514,8 @@
         function reopenTrip(tripId) {
             const trip = trips.find(t => t.id === tripId);
             if (trip) {
-                // Remove completed status
-                trip.status = 'ongoing'; // Default to ongoing when reopened
+                // First, remove completed status so updateTripsStatusBasedOnDates can work
+                trip.status = 'ongoing'; // Force to ongoing first
                 delete trip.completedDate;
                 
                 // If there's an end date and it's in the past, remove it so trip can continue
@@ -9488,21 +9523,23 @@
                     delete trip.endDate;
                 }
                 
+                // Save the changes first
                 localStorage.setItem('trips', JSON.stringify(trips));
                 
-                // Update trip statuses to ensure correct status
-                updateTripsStatusBasedOnDates();
+                // Set as current active trip immediately
+                currentTrip = trip;
+                localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
                 
-                // Set as current trip if no current trip is active
-                if (!currentTrip || currentTrip.status === 'completed') {
-                    currentTrip = trip;
-                    localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
-                    updateTripDisplay();
-                    initializeTravelTab();
-                }
+                // Update all UI elements
+                updateTripDisplay();
+                initializeTravelTab();
+                renderTripsList();
+                
+                // Update trip statuses after reopening
+                updateTripsStatusBasedOnDates();
+                localStorage.setItem('trips', JSON.stringify(trips));
                 
                 showNotification(`🔄 Trip "${trip.name}" reopened and activated!`, 'success');
-                renderTripsList();
             }
         }
 
@@ -9670,7 +9707,7 @@
                 document.getElementById('travelLocation').value = expense.location;
                 document.getElementById('travelPayer').value = expense.payer || 'Me';
                 document.getElementById('travelDescription').value = expense.description;
-                document.getElementById('deductFromMainBudget').checked = expense.deductFromMainBudget || false;
+                document.getElementById('mainBudgetToggle').checked = expense.deductFromMainBudget || false;
                 
                 document.getElementById('cancelTravelEdit').style.display = 'block';
                 document.querySelector('#travelExpenseForm button[type="submit"]').textContent = '💾 Update Expense';
@@ -9718,7 +9755,7 @@
             travelEditingId = null;
             document.getElementById('travelExpenseForm').reset();
             document.getElementById('travelDate').valueAsDate = new Date();
-            document.getElementById('deductFromMainBudget').checked = false; // Reset toggle
+            document.getElementById('mainBudgetToggle').checked = false; // Reset toggle
             document.getElementById('cancelTravelEdit').style.display = 'none';
             document.querySelector('#travelExpenseForm button[type="submit"]').textContent = '💾 Add to Trip';
         }
@@ -10007,9 +10044,57 @@
             });
         }
 
+        function updateTrip(tripId, tripData) {
+            const trip = trips.find(t => t.id === tripId);
+            if (!trip) return;
+            
+            // Update trip data
+            trip.name = tripData.name;
+            trip.destination = tripData.destination;
+            trip.startDate = tripData.startDate;
+            trip.endDate = tripData.endDate || null;
+            trip.budget = tripData.budget ? parseFloat(tripData.budget) : null;
+            
+            // Save to localStorage
+            localStorage.setItem('trips', JSON.stringify(trips));
+            
+            // Update current trip if this is the current one
+            if (currentTrip && currentTrip.id === tripId) {
+                currentTrip = trip;
+                localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+                updateTripDisplay();
+            }
+            
+            // Update trip statuses and refresh display
+            updateTripsStatusBasedOnDates();
+            renderTripsList();
+            
+            showNotification(`✅ Trip "${trip.name}" updated successfully!`, 'success');
+        }
+
         function editTrip(tripId) {
-            // TODO: Implement trip editing functionality
-            showNotification('Trip editing coming soon! 🚧', 'info');
+            const trip = trips.find(t => t.id === tripId);
+            if (!trip) return;
+            
+            // Populate the trip form with existing data
+            document.getElementById('newTripName').value = trip.name;
+            document.getElementById('newTripDestination').value = trip.destination;
+            document.getElementById('newTripStartDate').value = trip.startDate;
+            document.getElementById('newTripEndDate').value = trip.endDate || '';
+            document.getElementById('newTripBudget').value = trip.budget || '';
+            
+            // Store the ID for updating
+            window.editingTripId = tripId;
+            
+            // Change form button text and modal title
+            document.querySelector('#newTripForm button[type="submit"]').textContent = '💾 Update Trip';
+            document.querySelector('#tripModal h2').textContent = '✏️ Edit Trip';
+            
+            // Show the modal
+            document.getElementById('tripModal').style.display = 'block';
+            
+            // Scroll to form
+            document.getElementById('tripForm').scrollIntoView({ behavior: 'smooth' });
         }
 
         function createTripElement(trip, isMainTab = false) {
