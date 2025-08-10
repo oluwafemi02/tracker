@@ -1241,7 +1241,7 @@
             display: block;
             width: 50px;
             height: 28px;
-            background-color: var(--border-color);
+            background-color: #ccc;
             border-radius: 14px;
             cursor: pointer;
             position: relative;
@@ -1261,7 +1261,7 @@
         }
 
         .toggle-input:checked + .toggle-label {
-            background-color: var(--primary-color, #667eea);
+            background-color: #667eea;
         }
 
         .toggle-input:checked + .toggle-label .toggle-slider {
@@ -3852,16 +3852,16 @@
                                         </datalist>
                                     </div>
 
-                                    <div class="input-group" style="grid-column: 1 / -1;">
-                                        <div class="toggle-container" style="display: flex; align-items: center; gap: 1rem; padding: 1rem; background: var(--bg-secondary); border-radius: 8px; border: 1px solid var(--border-color);">
-                                            <span class="input-icon">💰</span>
-                                            <label for="deductFromMainBudget" style="flex: 1; margin: 0; font-weight: 500;">
+                                    <div class="input-group" style="grid-column: 1 / -1; margin: 1rem 0;">
+                                        <div class="toggle-container" style="display: flex !important; align-items: center; gap: 1rem; padding: 1rem; background: #f8f9fa; border-radius: 8px; border: 1px solid #e1e5e9; min-height: 60px;">
+                                            <span class="input-icon" style="font-size: 1.2rem;">💰</span>
+                                            <label for="deductFromMainBudget" style="flex: 1; margin: 0; font-weight: 500; cursor: pointer;">
                                                 Deduct from Main Budget
-                                                <small style="display: block; color: var(--text-secondary); font-weight: normal; margin-top: 0.25rem;">
+                                                <small style="display: block; color: #6c757d; font-weight: normal; margin-top: 0.25rem; font-size: 0.85rem;">
                                                     Also add this expense to main budget expenses
                                                 </small>
                                             </label>
-                                            <div class="toggle-switch">
+                                            <div class="toggle-switch" style="display: block;">
                                                 <input type="checkbox" id="deductFromMainBudget" class="toggle-input">
                                                 <label for="deductFromMainBudget" class="toggle-label">
                                                     <span class="toggle-slider"></span>
@@ -9479,11 +9479,29 @@
         function reopenTrip(tripId) {
             const trip = trips.find(t => t.id === tripId);
             if (trip) {
-                trip.status = 'active';
+                // Remove completed status
+                trip.status = 'ongoing'; // Default to ongoing when reopened
                 delete trip.completedDate;
+                
+                // If there's an end date and it's in the past, remove it so trip can continue
+                if (trip.endDate && new Date(trip.endDate) < new Date()) {
+                    delete trip.endDate;
+                }
+                
                 localStorage.setItem('trips', JSON.stringify(trips));
                 
-                showNotification(`🔄 Trip "${trip.name}" reopened!`, 'success');
+                // Update trip statuses to ensure correct status
+                updateTripsStatusBasedOnDates();
+                
+                // Set as current trip if no current trip is active
+                if (!currentTrip || currentTrip.status === 'completed') {
+                    currentTrip = trip;
+                    localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+                    updateTripDisplay();
+                    initializeTravelTab();
+                }
+                
+                showNotification(`🔄 Trip "${trip.name}" reopened and activated!`, 'success');
                 renderTripsList();
             }
         }
