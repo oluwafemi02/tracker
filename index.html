@@ -1289,6 +1289,24 @@
             transform: translateX(26px) !important;
         }
 
+        /* Recurring expense toggle functionality */
+        #isRecurring:checked + .recurring-toggle-slider {
+            background-color: #4285f4 !important;
+        }
+
+        #isRecurring:checked + .recurring-toggle-slider span {
+            transform: translateX(22px) !important;
+        }
+
+        /* Dark mode toggle functionality */
+        #darkModeToggle:checked + .dark-mode-toggle-slider {
+            background-color: #4285f4 !important;
+        }
+
+        #darkModeToggle:checked + .dark-mode-toggle-slider span {
+            transform: translateX(22px) !important;
+        }
+
         @keyframes bounceIn {
             0% { transform: scale(0.3) rotate(-5deg); opacity: 0; }
             50% { transform: scale(1.05) rotate(2deg); }
@@ -3366,11 +3384,14 @@
                 <button class="help-btn" id="helpBtn" title="Need help? Start the interactive guide!">❓</button>
             </div>
             
-            <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 1rem;">
-                <span style="font-size: 0.9rem; color: var(--text-secondary);">Dark Mode</span>
-                <label class="toggle-switch">
-                    <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()">
-                    <span class="toggle-slider"></span>
+            <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 0.75rem; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px;">
+                <span style="font-size: 1rem;">🌙</span>
+                <span style="font-size: 0.9rem; color: #333; font-weight: 500;">Dark Mode</span>
+                <label style="position: relative; display: inline-block; width: 50px; height: 28px;">
+                    <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()" style="opacity: 0; width: 0; height: 0;">
+                    <span class="dark-mode-toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px;">
+                        <span style="position: absolute; content: ''; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;"></span>
+                    </span>
                 </label>
             </div>
         </div>
@@ -3537,12 +3558,17 @@
                                 
                                 <!-- Recurring Expense Options -->
                                 <div class="input-group" style="grid-column: 1 / -1;">
-                                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;">
-                                        <label class="toggle-switch">
-                                            <input type="checkbox" id="isRecurring" onchange="toggleRecurringOptions()">
-                                            <span class="toggle-slider"></span>
+                                    <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; padding: 0.75rem; background: #f0f8ff; border: 2px solid #4285f4; border-radius: 8px;">
+                                        <span style="font-size: 1.2rem;">🔄</span>
+                                        <label for="isRecurring" style="flex: 1; margin: 0; cursor: pointer; font-weight: 500; color: #333;">
+                                            Make this a recurring expense
                                         </label>
-                                        <label for="isRecurring" style="margin: 0; cursor: pointer; font-weight: 500;">🔄 Make this a recurring expense</label>
+                                        <label style="position: relative; display: inline-block; width: 50px; height: 28px;">
+                                            <input type="checkbox" id="isRecurring" onchange="toggleRecurringOptions()" style="opacity: 0; width: 0; height: 0;">
+                                            <span class="recurring-toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px;">
+                                                <span style="position: absolute; content: ''; height: 20px; width: 20px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;"></span>
+                                            </span>
+                                        </label>
                                     </div>
                                     
                                     <div id="recurringOptions" style="display: none;">
@@ -8789,7 +8815,7 @@
         // Check version on app load and force update if needed
         window.addEventListener('load', () => {
             // Add version to console for debugging
-            console.log('📱 App Version: 2.1.0-toggle-fix');
+            console.log('📱 App Version: 2.1.1-all-toggles-fix');
             console.log('🔧 If you have cache issues, run: forceClearCacheAndReload()');
         });
 
