@@ -165,13 +165,13 @@ class PremiumManager {
         const trialDaysLeft = this.getTrialDaysRemaining();
 
         modal.innerHTML = `
-            <div style="background: white; border-radius: 16px; padding: 2rem; max-width: 500px; margin: 1rem; position: relative;">
-                <button onclick="this.closest('.premium-paywall-modal').remove()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer;">×</button>
+            <div class="premium-modal-content" style="background: var(--card-bg, white); color: var(--text-primary, #333); border-radius: 16px; padding: 2rem; max-width: 500px; margin: 1rem; position: relative;">
+                <button onclick="this.closest('.premium-paywall-modal').remove()" style="position: absolute; top: 1rem; right: 1rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--text-secondary, #666);">×</button>
                 
                 <div style="text-align: center; margin-bottom: 2rem;">
                     <div style="font-size: 4rem; margin-bottom: 1rem;">👑</div>
-                    <h2 style="font-size: 2rem; margin-bottom: 0.5rem;">Premium Feature</h2>
-                    <p style="color: #666; font-size: 1.1rem;">${customMessage || `This feature requires a Premium subscription`}</p>
+                    <h2 style="font-size: 2rem; margin-bottom: 0.5rem; color: var(--text-primary, #333);">Premium Feature</h2>
+                    <p style="color: var(--text-secondary, #666); font-size: 1.1rem;">${customMessage || `This feature requires a Premium subscription`}</p>
                 </div>
 
                 ${trialDaysLeft > 0 ? `
@@ -180,15 +180,15 @@ class PremiumManager {
                     </div>
                 ` : ''}
 
-                <div style="background: #f3f4f6; border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;">
-                    <h3 style="margin-bottom: 1rem;">Premium includes:</h3>
+                <div style="background: var(--background-alt, #f3f4f6); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem;">
+                    <h3 style="margin-bottom: 1rem; color: var(--text-primary, #333);">Premium includes:</h3>
                     <ul style="list-style: none; padding: 0; margin: 0;">
-                        <li style="padding: 0.5rem 0;">✅ Unlimited projects & trips</li>
-                        <li style="padding: 0.5rem 0;">✅ Advanced analytics & charts</li>
-                        <li style="padding: 0.5rem 0;">✅ Excel & PDF exports</li>
-                        <li style="padding: 0.5rem 0;">✅ Cloud sync (coming soon)</li>
-                        <li style="padding: 0.5rem 0;">✅ Priority support</li>
-                        <li style="padding: 0.5rem 0;">✅ All future features</li>
+                        <li style="padding: 0.5rem 0; color: var(--text-primary, #333);">✅ Unlimited projects & trips</li>
+                        <li style="padding: 0.5rem 0; color: var(--text-primary, #333);">✅ Advanced analytics & charts</li>
+                        <li style="padding: 0.5rem 0; color: var(--text-primary, #333);">✅ Excel & PDF exports</li>
+                        <li style="padding: 0.5rem 0; color: var(--text-primary, #333);">✅ Cloud sync (coming soon)</li>
+                        <li style="padding: 0.5rem 0; color: var(--text-primary, #333);">✅ Priority support</li>
+                        <li style="padding: 0.5rem 0; color: var(--text-primary, #333);">✅ All future features</li>
                     </ul>
                 </div>
 
@@ -203,12 +203,12 @@ class PremiumManager {
                         ${trialAvailable ? 'Or Subscribe Now - $4.99/month' : 'Subscribe Now - $4.99/month'}
                     </button>
                     
-                    <button onclick="this.closest('.premium-paywall-modal').remove()" style="background: transparent; border: none; color: #666; padding: 0.5rem; cursor: pointer;">
+                    <button onclick="this.closest('.premium-paywall-modal').remove()" style="background: transparent; border: none; color: var(--text-secondary, #666); padding: 0.5rem; cursor: pointer;">
                         Maybe later
                     </button>
                 </div>
 
-                <p style="text-align: center; color: #999; font-size: 0.875rem; margin-top: 1rem;">
+                <p style="text-align: center; color: var(--text-secondary, #999); font-size: 0.875rem; margin-top: 1rem;">
                     No credit card required for trial • Cancel anytime
                 </p>
             </div>

@@ -67,6 +67,7 @@
             --background-alt: #f1f5f9;
             --card-bg: #ffffff;
             --card-bg-hover: #fefefe;
+            --input-bg: #ffffff;
             --border-color: #e2e8f0;
             --border-color-light: #f1f5f9;
             --hover-bg: #f8fafc;
@@ -365,7 +366,7 @@
             border-radius: 8px;
             font-size: 1rem;
             transition: var(--transition);
-            background: white;
+            background: var(--input-bg);
             color: var(--text-primary);
             font-family: inherit;
         }
@@ -566,7 +567,7 @@
             top: 100%;
             left: 0;
             right: 0;
-            background: white;
+            background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             box-shadow: var(--shadow-lg);
@@ -581,6 +582,7 @@
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             transition: var(--transition);
+            color: var(--text-primary);
         }
 
         .search-result-item:last-child {
@@ -1450,7 +1452,8 @@
             border-radius: var(--border-radius);
             font-size: 1rem;
             transition: var(--transition);
-            background: var(--card-bg);
+            background: var(--input-bg);
+            color: var(--text-primary);
             font-family: inherit;
         }
 
@@ -1583,11 +1586,143 @@
         /* Dark Mode Support */
         .dark-mode {
             --background: #1a202c;
+            --background-alt: #2d3748;
             --card-bg: #2d3748;
             --text-primary: #f7fafc;
             --text-secondary: #a0aec0;
             --border-color: #4a5568;
             --hover-bg: #4a5568;
+            --input-bg: #374151;
+            --shadow: rgba(0, 0, 0, 0.2);
+        }
+        
+        /* Fix text visibility in dark mode */
+        .dark-mode input,
+        .dark-mode textarea,
+        .dark-mode select {
+            background-color: var(--input-bg);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        
+        .dark-mode input::placeholder,
+        .dark-mode textarea::placeholder {
+            color: var(--text-secondary);
+            opacity: 0.7;
+        }
+        
+        .dark-mode .search-input-wrapper {
+            background-color: var(--input-bg);
+        }
+        
+        .dark-mode #searchInput {
+            color: var(--text-primary);
+        }
+        
+        .dark-mode .modal-content {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+        }
+        
+        .dark-mode .modal-content h2,
+        .dark-mode .modal-content h3,
+        .dark-mode .modal-content p {
+            color: var(--text-primary);
+        }
+        
+        .dark-mode .modal-content label {
+            color: var(--text-secondary);
+        }
+        
+        /* Additional dark mode fixes for better text visibility */
+        .dark-mode .expense-item,
+        .dark-mode .transaction-item {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+        }
+        
+        .dark-mode .expense-item:hover,
+        .dark-mode .transaction-item:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        .dark-mode .expense-category,
+        .dark-mode .expense-amount,
+        .dark-mode .expense-date,
+        .dark-mode .expense-description {
+            color: var(--text-primary);
+        }
+        
+        .dark-mode .search-results {
+            background-color: var(--card-bg);
+            border-color: var(--border-color);
+        }
+        
+        .dark-mode .search-result-item {
+            color: var(--text-primary);
+        }
+        
+        .dark-mode .search-result-item:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        .dark-mode .input-icon {
+            color: var(--text-secondary);
+        }
+        
+        .dark-mode .btn {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+            border-color: var(--border-color);
+        }
+        
+        .dark-mode .btn:hover {
+            background-color: var(--hover-bg);
+        }
+        
+        .dark-mode .btn-primary {
+            background: var(--primary-gradient);
+            color: white;
+            border: none;
+        }
+        
+        .dark-mode .section-header h2,
+        .dark-mode .section-header p {
+            color: var(--text-primary);
+        }
+        
+        .dark-mode .stat-card {
+            background-color: var(--card-bg);
+        }
+        
+        .dark-mode .stat-value,
+        .dark-mode .stat-label {
+            color: var(--text-primary);
+        }
+        
+        .dark-mode .budget-card {
+            background-color: var(--card-bg);
+        }
+        
+        .dark-mode .budget-name,
+        .dark-mode .budget-amount {
+            color: var(--text-primary);
+        }
+        
+        .dark-mode .tab-content h2,
+        .dark-mode .tab-content h3,
+        .dark-mode .tab-content p {
+            color: var(--text-primary);
+        }
+        
+        .dark-mode .empty-state {
+            color: var(--text-secondary);
+        }
+        
+        .dark-mode .notification {
+            background-color: var(--card-bg);
+            color: var(--text-primary);
+            border-color: var(--border-color);
         }
 
         /* Modern Modal */
@@ -4436,25 +4571,44 @@
     <!-- Security Fixes -->
     <script src="security-fixes.js"></script>
     
-    <!-- Analytics (Free Options) -->
-    <!-- Option 1: Google Analytics (Uncomment when ready) -->
-    <!--
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-XXXXXXXXXX');
-    </script>
-    -->
+    <!-- Analytics Implementation -->
+    <!-- Privacy-Friendly Analytics with Conversion Tracking -->
     
-    <!-- Simple Analytics Implementation -->
+    <!-- Option 1: Privacy-First Analytics (Default) -->
     <script>
-        // Simple privacy-focused analytics
-        class SimpleAnalytics {
+        // Enhanced privacy-focused analytics with conversion tracking
+        class PrivacyAnalytics {
             constructor() {
                 this.events = [];
                 this.sessionId = this.getSessionId();
+                this.userId = this.getAnonymousUserId();
+                this.conversionGoals = {
+                    premium_upgrade: false,
+                    email_signup: false,
+                    first_expense: false,
+                    budget_created: false,
+                    export_used: false
+                };
+                this.init();
+            }
+
+            init() {
+                // Check for DNT (Do Not Track)
+                if (navigator.doNotTrack === "1" || window.doNotTrack === "1") {
+                    console.log('Analytics disabled: DNT enabled');
+                    this.disabled = true;
+                    return;
+                }
+
+                // Check for consent
+                const consent = localStorage.getItem('analytics_consent');
+                if (consent === 'false') {
+                    this.disabled = true;
+                    return;
+                }
+
+                // Check URL parameters for campaigns
+                this.trackCampaignData();
             }
 
             getSessionId() {
@@ -4466,14 +4620,44 @@
                 return sessionId;
             }
 
+            getAnonymousUserId() {
+                let userId = localStorage.getItem('anonymous_user_id');
+                if (!userId) {
+                    userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    localStorage.setItem('anonymous_user_id', userId);
+                }
+                return userId;
+            }
+
+            trackCampaignData() {
+                const urlParams = new URLSearchParams(window.location.search);
+                const campaignData = {
+                    source: urlParams.get('utm_source') || urlParams.get('ref') || document.referrer,
+                    medium: urlParams.get('utm_medium'),
+                    campaign: urlParams.get('utm_campaign'),
+                    upgrade: urlParams.get('upgrade')
+                };
+
+                if (Object.values(campaignData).some(v => v)) {
+                    sessionStorage.setItem('campaign_data', JSON.stringify(campaignData));
+                }
+            }
+
             track(event, properties = {}) {
+                if (this.disabled) return;
+
+                const campaignData = JSON.parse(sessionStorage.getItem('campaign_data') || '{}');
                 const analyticsData = {
                     event,
-                    properties,
+                    properties: { ...properties, ...campaignData },
                     timestamp: new Date().toISOString(),
                     sessionId: this.sessionId,
+                    userId: this.userId,
                     userAgent: navigator.userAgent,
-                    screenSize: `${window.screen.width}x${window.screen.height}`
+                    screenSize: `${window.screen.width}x${window.screen.height}`,
+                    viewport: `${window.innerWidth}x${window.innerHeight}`,
+                    language: navigator.language,
+                    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
                 };
 
                 // Store locally
@@ -4483,28 +4667,110 @@
                 const storedEvents = JSON.parse(localStorage.getItem('analytics_events') || '[]');
                 storedEvents.push(analyticsData);
                 
-                // Keep only last 100 events
-                if (storedEvents.length > 100) {
-                    storedEvents.splice(0, storedEvents.length - 100);
+                // Keep only last 500 events
+                if (storedEvents.length > 500) {
+                    storedEvents.splice(0, storedEvents.length - 500);
                 }
                 
                 localStorage.setItem('analytics_events', JSON.stringify(storedEvents));
+                
+                // Check for conversions
+                this.checkConversion(event, properties);
                 
                 // Log to console in development
                 if (window.location.hostname === 'localhost') {
                     console.log('📊 Analytics Event:', event, properties);
                 }
+
+                // Send to privacy-friendly service if configured
+                this.sendToService(analyticsData);
             }
 
-            trackPageView() {
+            checkConversion(event, properties) {
+                // Track conversion goals
+                switch (event) {
+                    case 'premium_trial_start':
+                    case 'premium_purchase':
+                        this.conversionGoals.premium_upgrade = true;
+                        this.trackConversion('premium_upgrade', properties);
+                        break;
+                    case 'email_signup':
+                        this.conversionGoals.email_signup = true;
+                        this.trackConversion('email_signup', properties);
+                        break;
+                    case 'expense_added':
+                        if (!this.conversionGoals.first_expense) {
+                            this.conversionGoals.first_expense = true;
+                            this.trackConversion('first_expense', properties);
+                        }
+                        break;
+                    case 'budget_created':
+                        this.conversionGoals.budget_created = true;
+                        this.trackConversion('budget_created', properties);
+                        break;
+                    case 'export_completed':
+                        this.conversionGoals.export_used = true;
+                        this.trackConversion('export_used', properties);
+                        break;
+                }
+            }
+
+            trackConversion(conversionType, properties) {
+                this.track('conversion', {
+                    type: conversionType,
+                    ...properties,
+                    value: this.getConversionValue(conversionType)
+                });
+            }
+
+            getConversionValue(conversionType) {
+                const values = {
+                    premium_upgrade: 4.99,
+                    email_signup: 0.50,
+                    first_expense: 0.10,
+                    budget_created: 0.25,
+                    export_used: 0.15
+                };
+                return values[conversionType] || 0;
+            }
+
+            sendToService(data) {
+                // Option A: Plausible Analytics (privacy-friendly)
+                if (window.plausible) {
+                    window.plausible(data.event, { props: data.properties });
+                }
+
+                // Option B: Simple Analytics (privacy-friendly)
+                if (window.sa_event) {
+                    window.sa_event(data.event, data.properties);
+                }
+
+                // Option C: Custom endpoint
+                if (window.ANALYTICS_ENDPOINT) {
+                    fetch(window.ANALYTICS_ENDPOINT, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(data),
+                        mode: 'cors',
+                        keepalive: true
+                    }).catch(() => {}); // Fail silently
+                }
+            }
+
+            trackPageView(customPath) {
                 this.track('page_view', {
-                    path: window.location.pathname,
+                    path: customPath || window.location.pathname,
+                    title: document.title,
                     referrer: document.referrer
                 });
             }
 
             trackExpenseAdded(category, amount) {
-                this.track('expense_added', { category, amount });
+                this.track('expense_added', { 
+                    category, 
+                    amount,
+                    currency: 'USD' // Update based on user preference
+                });
             }
 
             trackFeatureUsed(feature) {
@@ -4515,7 +4781,17 @@
                 this.track('error', {
                     message: error.message || error,
                     stack: error.stack,
-                    context
+                    context,
+                    url: window.location.href
+                });
+            }
+
+            trackTiming(category, variable, time) {
+                this.track('timing', {
+                    category,
+                    variable,
+                    time,
+                    label: `${category}_${variable}`
                 });
             }
 
@@ -4524,11 +4800,27 @@
                 const summary = {
                     totalEvents: events.length,
                     uniqueSessions: new Set(events.map(e => e.sessionId)).size,
-                    eventTypes: {}
+                    uniqueUsers: new Set(events.map(e => e.userId)).size,
+                    conversions: this.conversionGoals,
+                    eventTypes: {},
+                    topPages: {},
+                    sources: {}
                 };
 
                 events.forEach(event => {
+                    // Count event types
                     summary.eventTypes[event.event] = (summary.eventTypes[event.event] || 0) + 1;
+                    
+                    // Track page views
+                    if (event.event === 'page_view') {
+                        const path = event.properties.path;
+                        summary.topPages[path] = (summary.topPages[path] || 0) + 1;
+                    }
+                    
+                    // Track sources
+                    if (event.properties.source) {
+                        summary.sources[event.properties.source] = (summary.sources[event.properties.source] || 0) + 1;
+                    }
                 });
 
                 return summary;
@@ -4536,11 +4828,17 @@
         }
 
         // Initialize analytics
-        window.analytics = new SimpleAnalytics();
+        window.analytics = new PrivacyAnalytics();
         
         // Track page view on load
         window.addEventListener('load', () => {
             window.analytics.trackPageView();
+            
+            // Track performance metrics
+            if (window.performance && window.performance.timing) {
+                const loadTime = window.performance.timing.loadEventEnd - window.performance.timing.navigationStart;
+                window.analytics.trackTiming('performance', 'page_load', loadTime);
+            }
         });
 
         // Track errors
@@ -4551,7 +4849,64 @@
         window.addEventListener('unhandledrejection', (e) => {
             window.analytics.trackError(e.reason, 'unhandled_promise');
         });
+
+        // Track important user interactions
+        document.addEventListener('DOMContentLoaded', () => {
+            // Track PWA install prompt
+            window.addEventListener('beforeinstallprompt', (e) => {
+                window.analytics.track('pwa_install_prompt_shown');
+                
+                e.userChoice.then((result) => {
+                    window.analytics.track('pwa_install_prompt_result', { 
+                        outcome: result.outcome 
+                    });
+                });
+            });
+
+            // Track app standalone usage
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                window.analytics.track('pwa_standalone_usage');
+            }
+        });
     </script>
+
+    <!-- Option 2: Google Analytics 4 (Uncomment and configure if preferred) -->
+    <!--
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      
+      // Configure with privacy settings
+      gtag('config', 'G-XXXXXXXXXX', {
+        'anonymize_ip': true,
+        'allow_google_signals': false,
+        'allow_ad_personalization_signals': false,
+        'restricted_data_processing': true
+      });
+      
+      // Enhanced ecommerce and conversion tracking
+      gtag('event', 'page_view', {
+        'send_to': 'G-XXXXXXXXXX',
+        'user_properties': {
+          'user_type': localStorage.getItem('premium_user') ? 'premium' : 'free'
+        }
+      });
+    </script>
+    -->
+
+    <!-- Option 3: Plausible Analytics (Privacy-friendly alternative) -->
+    <!--
+    <script defer data-domain="yourdomain.com" src="https://plausible.io/js/script.js"></script>
+    <script>window.plausible = window.plausible || function() { (window.plausible.q = window.plausible.q || []).push(arguments) }</script>
+    -->
+
+    <!-- Option 4: Simple Analytics (Privacy-friendly alternative) -->
+    <!--
+    <script async defer src="https://scripts.simpleanalyticscdn.com/latest.js"></script>
+    <noscript><img src="https://queue.simpleanalyticscdn.com/noscript.gif" alt="" referrerpolicy="no-referrer-when-downgrade" /></noscript>
+    -->
     
     <script>
         // Global variables
