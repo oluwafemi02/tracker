@@ -126,7 +126,12 @@ class PaymentManager {
         const plan = this.products[planType];
         
         if (!plan || !plan.id) {
-            alert('Payment integration is being set up. Please check back soon!');
+            // Use showNotification if available, otherwise fallback to alert
+            if (window.showNotification) {
+                window.showNotification('Payment integration is being set up. Please check back soon!', 'info');
+            } else {
+                alert('Payment integration is being set up. Please check back soon!');
+            }
             
             // Track checkout attempt
             if (window.analytics) {
