@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analytics Setup - Expense Tracker</title>
+</head>
+<body>
+    <h1>Free Analytics Options for Expense Tracker</h1>
+    
+    <h2>Option 1: Plausible Analytics (Free for 30 days, then self-host)</h2>
+    <pre><code>
+    <!-- Add to index.html <head> -->
+    <script defer data-domain="yourdomain.com" src="https://plausible.io/js/script.js"></script>
+    </code></pre>
+
+    <h2>Option 2: Umami (Free, self-hosted)</h2>
+    <pre><code>
+    <!-- Add to index.html <head> -->
+    <script async src="https://your-umami-instance.com/script.js" data-website-id="YOUR-WEBSITE-ID"></script>
+    </code></pre>
+
+    <h2>Option 3: Simple Custom Analytics (Free)</h2>
+    <script>
+    // analytics.js - Add this to your index.html
+    class SimpleAnalytics {
+        constructor() {
+            this.endpoint = 'https://api.github.com/repos/YOUR_USERNAME/tracker/dispatches';
+            this.token = null; // Optional: GitHub token for more requests
+        }
+
+        track(event, properties = {}) {
+            // Store locally first
+            const analyticsData = {
+                event,
+                properties,
+                timestamp: new Date().toISOString(),
+                sessionId: this.getSessionId(),
+                userAgent: navigator.userAgent,
+                screenSize: `${window.screen.width}x${window.screen.height}`,
+                platform: navigator.platform
+            };
+
+            // Save to localStorage for batch sending
+            const events = JSON.parse(localStorage.getItem('analytics_events') || '[]');
+            events.push(analyticsData);
+            localStorage.setItem('analytics_events', JSON.stringify(events));
+
+            // Batch send every 10 events or daily
+            if (events.length >= 10) {
+                this.sendBatch();
+            }
+        }
+
+        getSessionId() {
+            let sessionId = sessionStorage.getItem('session_id');
+            if (!sessionId) {
+                sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                sessionStorage.setItem('session_id', sessionId);
+            }
+            return sessionId;
+        }
+
+        async sendBatch() {
+            const events = JSON.parse(localStorage.getItem('analytics_events') || '[]');
+            if (events.length === 0) return;
+
+            try {
+                // Option 1: Send to GitHub as an issue (free)
+                // Option 2: Send to a free service like JSONBin
+                // Option 3: Store in a Google Sheet via Apps Script
+                
+                // Clear after successful send
+                localStorage.setItem('analytics_events', '[]');
+            } catch (error) {
+                console.error('Analytics send failed:', error);
+            }
+        }
+
+        // Track common events
+        trackPageView(page) {
+            this.track('page_view', { page });
+        }
+
+        trackExpenseAdded(category, amount) {
+            this.track('expense_added', { category, amount });
+        }
+
+        trackFeatureUsed(feature) {
+            this.track('feature_used', { feature });
+        }
+
+        trackError(error, context) {
+            this.track('error', { 
+                message: error.message,
+                stack: error.stack,
+                context 
+            });
+        }
+    }
+
+    // Initialize analytics
+    const analytics = new SimpleAnalytics();
+
+    // Auto-track page views
+    analytics.trackPageView(window.location.pathname);
+
+    // Track navigation
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('nav-tab')) {
+            analytics.trackFeatureUsed(`tab_${e.target.textContent.toLowerCase()}`);
+        }
+    });
+
+    // Track errors
+    window.addEventListener('error', (e) => {
+        analytics.trackError(e.error, 'window_error');
+    });
+
+    window.addEventListener('unhandledrejection', (e) => {
+        analytics.trackError(new Error(e.reason), 'unhandled_promise');
+    });
+    </script>
+
+    <h2>Option 4: Google Analytics (Free)</h2>
+    <pre><code>
+    <!-- Add to index.html <head> -->
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+    </code></pre>
+
+    <h2>Privacy-Focused Implementation</h2>
+    <script>
+    // Add to your index.html for GDPR compliance
+    function initAnalytics() {
+        const consent = localStorage.getItem('analytics_consent');
+        
+        if (consent === null) {
+            // Show consent banner
+            showConsentBanner();
+        } else if (consent === 'true') {
+            // Initialize chosen analytics
+            loadAnalytics();
+        }
+    }
+
+    function showConsentBanner() {
+        const banner = document.createElement('div');
+        banner.style.cssText = `
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #333;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            z-index: 9999;
+        `;
+        
+        banner.innerHTML = `
+            <p>We use analytics to improve your experience. No personal data is collected.</p>
+            <button onclick="acceptAnalytics()">Accept</button>
+            <button onclick="rejectAnalytics()">Reject</button>
+        `;
+        
+        document.body.appendChild(banner);
+    }
+
+    function acceptAnalytics() {
+        localStorage.setItem('analytics_consent', 'true');
+        document.querySelector('[style*="position: fixed"]').remove();
+        loadAnalytics();
+    }
+
+    function rejectAnalytics() {
+        localStorage.setItem('analytics_consent', 'false');
+        document.querySelector('[style*="position: fixed"]').remove();
+    }
+    </script>
+</body>
+</html>

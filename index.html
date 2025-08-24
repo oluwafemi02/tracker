@@ -783,7 +783,6 @@
                 min-width: 140px;
             }
         }
-
         @media (max-width: 480px) {
             .search-input-wrapper {
                 padding: 0.5rem;
@@ -1581,7 +1580,6 @@
             margin-bottom: 1rem;
             display: block;
         }
-
         /* Dark Mode Support */
         .dark-mode {
             --background: #1a202c;
@@ -2381,7 +2379,6 @@
             border-color: var(--danger) !important;
             background: linear-gradient(145deg, var(--card-bg) 0%, rgba(244, 67, 54, 0.05) 100%) !important;
         }
-
         .sync-option-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -3180,7 +3177,6 @@
             color: var(--text-primary);
             margin-bottom: 0.5rem;
         }
-
         .quick-stat-label {
             color: var(--text-secondary);
             font-size: 0.9rem;
@@ -3659,6 +3655,9 @@
                                     </select>
                                 </div>
                                 <button class="btn btn-success" id="exportCSVBtn">📥 Export CSV</button>
+                                <button class="btn btn-success" id="exportJSONBtn">📥 Export JSON</button>
+                                <button class="btn btn-warning" id="exportExcelBtn" data-premium-feature="excel_export">📊 Export Excel</button>
+                                <button class="btn btn-warning" id="exportPDFBtn" data-premium-feature="pdf_export">📄 Export PDF</button>
                             </div>
                         </div>
                         
@@ -3755,7 +3754,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Trips Tab Content -->
         <div id="travelTab" class="tab-content">
             <div class="travel-tracker">
@@ -4426,7 +4424,135 @@
         </div>
         <div class="guide-spotlight" id="guideSpotlight"></div>
     </div>
+    <!-- Premium Features Manager -->
+    <script src="premium-features.js"></script>
+    
+    <!-- Error Logging System -->
+    <script src="error-logging.js"></script>
+    
+    <!-- Payment Integration -->
+    <script src="payment-integration.js"></script>
+    
+    <!-- Security Fixes -->
+    <script src="security-fixes.js"></script>
+    
+    <!-- Analytics (Free Options) -->
+    <!-- Option 1: Google Analytics (Uncomment when ready) -->
+    <!--
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+    -->
+    
+    <!-- Simple Analytics Implementation -->
+    <script>
+        // Simple privacy-focused analytics
+        class SimpleAnalytics {
+            constructor() {
+                this.events = [];
+                this.sessionId = this.getSessionId();
+            }
 
+            getSessionId() {
+                let sessionId = sessionStorage.getItem('session_id');
+                if (!sessionId) {
+                    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    sessionStorage.setItem('session_id', sessionId);
+                }
+                return sessionId;
+            }
+
+            track(event, properties = {}) {
+                const analyticsData = {
+                    event,
+                    properties,
+                    timestamp: new Date().toISOString(),
+                    sessionId: this.sessionId,
+                    userAgent: navigator.userAgent,
+                    screenSize: `${window.screen.width}x${window.screen.height}`
+                };
+
+                // Store locally
+                this.events.push(analyticsData);
+                
+                // Save to localStorage for persistence
+                const storedEvents = JSON.parse(localStorage.getItem('analytics_events') || '[]');
+                storedEvents.push(analyticsData);
+                
+                // Keep only last 100 events
+                if (storedEvents.length > 100) {
+                    storedEvents.splice(0, storedEvents.length - 100);
+                }
+                
+                localStorage.setItem('analytics_events', JSON.stringify(storedEvents));
+                
+                // Log to console in development
+                if (window.location.hostname === 'localhost') {
+                    console.log('📊 Analytics Event:', event, properties);
+                }
+            }
+
+            trackPageView() {
+                this.track('page_view', {
+                    path: window.location.pathname,
+                    referrer: document.referrer
+                });
+            }
+
+            trackExpenseAdded(category, amount) {
+                this.track('expense_added', { category, amount });
+            }
+
+            trackFeatureUsed(feature) {
+                this.track('feature_used', { feature });
+            }
+
+            trackError(error, context) {
+                this.track('error', {
+                    message: error.message || error,
+                    stack: error.stack,
+                    context
+                });
+            }
+
+            getAnalyticsSummary() {
+                const events = JSON.parse(localStorage.getItem('analytics_events') || '[]');
+                const summary = {
+                    totalEvents: events.length,
+                    uniqueSessions: new Set(events.map(e => e.sessionId)).size,
+                    eventTypes: {}
+                };
+
+                events.forEach(event => {
+                    summary.eventTypes[event.event] = (summary.eventTypes[event.event] || 0) + 1;
+                });
+
+                return summary;
+            }
+        }
+
+        // Initialize analytics
+        window.analytics = new SimpleAnalytics();
+        
+        // Track page view on load
+        window.addEventListener('load', () => {
+            window.analytics.trackPageView();
+        });
+
+        // Track errors
+        window.addEventListener('error', (e) => {
+            window.analytics.trackError(e.error || e.message, 'window_error');
+        });
+
+        window.addEventListener('unhandledrejection', (e) => {
+            window.analytics.trackError(e.reason, 'unhandled_promise');
+        });
+    </script>
+    
     <script>
         // Global variables
         let expenses = JSON.parse(localStorage.getItem('familyExpenses')) || [];
@@ -4937,8 +5063,24 @@
         }
 
         function setupFirebaseSync() {
-            showNotification('🔥 Firebase sync coming soon! Use Export/Import for now.', 'info');
+            // Check premium access for cloud sync
+            if (window.premiumManager && !window.premiumManager.hasFeature('cloudSync')) {
+                window.premiumManager.showPaywall('cloud_sync', 'Cloud sync requires a Premium subscription');
+                closeSyncSetupModal();
+                return;
+            }
+            
+            // Firebase setup placeholder
+            showNotification('☁️ Cloud sync coming soon! (Premium feature in development)', 'info');
             closeSyncSetupModal();
+            
+            /* Implementation placeholder:
+            // Initialize Firebase
+            const firebaseConfig = {
+                // Config will be added when payment integration is ready
+            };
+            firebase.initializeApp(firebaseConfig);
+            */
         }
 
         function setupLocalSync() {
@@ -5206,7 +5348,6 @@
             updateDashboard();
             showNotification('Budget updated successfully!', 'success');
         }
-
         // Handle expense form submission
         function handleExpenseSubmit(e) {
             e.preventDefault();
@@ -5275,6 +5416,11 @@
             updateDashboard();
             filterAndRenderExpenses(); // Use new pagination system
             resetForm();
+            
+            // Track expense added
+            if (window.analytics) {
+                window.analytics.trackExpenseAdded(expense.category, expense.amount);
+            }
         }
 
         // Calculate total recurring expenses for the current month
@@ -5985,7 +6131,6 @@
         function closeRemainingBreakdownModal() {
             document.getElementById('remainingBreakdownModal').style.display = 'none';
         }
-
         // Show detailed expense breakdown focusing on what expenses are for
         function showExpenseDetailsModal() {
             const currentMonth = new Date().getMonth();
@@ -6401,34 +6546,107 @@
 
         // Export to CSV
         function exportToCSV() {
-            if (expenses.length === 0) {
-                showNotification('No expenses to export', 'error');
-                return;
-            }
+            const headers = ['Date', 'Amount', 'Category', 'Person', 'Description'];
+            const rows = filteredExpenses.map(expense => [
+                expense.date,
+                expense.amount.toFixed(2),
+                expense.category,
+                expense.person,
+                expense.description || ''
+            ]);
             
-            const headers = ['Date', 'Category', 'Amount', 'Person', 'Description'];
-            const csvContent = [
-                headers.join(','),
-                ...expenses.map(expense => [
-                    expense.date,
-                    expense.category,
-                    expense.amount,
-                    expense.person,
-                    `"${expense.description || ''}"`
-                ].join(','))
-            ].join('\n');
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csvContent += row.map(field => `"${field}"`).join(',') + '\n';
+            });
             
             const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `family-expenses-${new Date().toISOString().split('T')[0]}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `expenses_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
             
-            showNotification('Expenses exported successfully!', 'success');
+            showNotification('Expenses exported to CSV successfully!', 'success');
+        }
+
+        // Export to JSON
+        function exportToJSON() {
+            const exportData = {
+                version: "1.0",
+                exportDate: new Date().toISOString(),
+                expenses: filteredExpenses,
+                recurringExpenses: recurringExpenses,
+                monthlyBudget: monthlyBudget,
+                customCategories: customCategories,
+                metadata: {
+                    totalExpenses: filteredExpenses.length,
+                    dateRange: {
+                        from: filteredExpenses.length > 0 ? filteredExpenses[filteredExpenses.length - 1].date : null,
+                        to: filteredExpenses.length > 0 ? filteredExpenses[0].date : null
+                    }
+                }
+            };
+            
+            const jsonString = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `expenses_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification('Expenses exported to JSON successfully!', 'success');
+        }
+
+        // Export to Excel (Premium Feature)
+        function exportToExcel() {
+            // Check premium access
+            if (!window.premiumManager || !window.premiumManager.canExportExcel()) {
+                if (window.premiumManager) {
+                    window.premiumManager.showPaywall('excel_export', 'Excel export requires a Premium subscription');
+                } else {
+                    showNotification('Excel export is a premium feature (in progress)', 'warning');
+                }
+                return;
+            }
+
+            // Premium Excel export implementation
+            showNotification('Excel export coming soon! (Premium feature in development)', 'info');
+            
+            /* Implementation placeholder:
+            // Will use SheetJS library
+            const ws = XLSX.utils.json_to_sheet(filteredExpenses);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Expenses");
+            XLSX.writeFile(wb, `expenses_${new Date().toISOString().split('T')[0]}.xlsx`);
+            */
+        }
+
+        // Export to PDF (Premium Feature)
+        function exportToPDF() {
+            // Check premium access
+            if (!window.premiumManager || !window.premiumManager.canExportPDF()) {
+                if (window.premiumManager) {
+                    window.premiumManager.showPaywall('pdf_export', 'PDF export requires a Premium subscription');
+                } else {
+                    showNotification('PDF export is a premium feature (in progress)', 'warning');
+                }
+                return;
+            }
+
+            // Premium PDF export implementation
+            showNotification('PDF export coming soon! (Premium feature in development)', 'info');
+            
+            /* Implementation placeholder:
+            // Will use jsPDF library
+            const doc = new jsPDF();
+            doc.text('Expense Report', 10, 10);
+            // Add expense data to PDF
+            doc.save(`expenses_${new Date().toISOString().split('T')[0]}.pdf`);
+            */
         }
 
         // Dark mode toggle
@@ -6768,7 +6986,6 @@
                 customCategoryGroup.style.display = 'none';
             }
         }
-
         function addCustomCategory() {
             const nameInput = document.getElementById('customCategory');
             const iconInput = document.getElementById('customCategoryIcon');
@@ -7530,7 +7747,6 @@
                 personSelect.setAttribute('required', 'required');
             }
         }
-
         // Smart Suggestions Engine
         function generateSmartSuggestions() {
             const currentMonth = new Date().getMonth();
@@ -8159,7 +8375,6 @@
             showNotification('Test notification sent! 📱', 'success');
             updateNotificationStatus();
         }
-
         // Update notification status display
         function updateNotificationStatus() {
             const statusDiv = document.getElementById('notificationStatus');
@@ -8852,7 +9067,6 @@
         function showUpdateNotification() {
             showNotification('🔄 New version available! Refresh to update.', 'info');
         }
-
         // Setup secure event listeners (replaces inline onclick handlers)
         function setupEventListeners() {
             // Navigation tabs
@@ -9045,6 +9259,24 @@
             const exportCSVBtn = document.getElementById('exportCSVBtn');
             if (exportCSVBtn) {
                 exportCSVBtn.addEventListener('click', exportToCSV);
+            }
+
+            // Export JSON button
+            const exportJSONBtn = document.getElementById('exportJSONBtn');
+            if (exportJSONBtn) {
+                exportJSONBtn.addEventListener('click', exportToJSON);
+            }
+
+            // Export Excel button (Premium)
+            const exportExcelBtn = document.getElementById('exportExcelBtn');
+            if (exportExcelBtn) {
+                exportExcelBtn.addEventListener('click', exportToExcel);
+            }
+
+            // Export PDF button (Premium)
+            const exportPDFBtn = document.getElementById('exportPDFBtn');
+            if (exportPDFBtn) {
+                exportPDFBtn.addEventListener('click', exportToPDF);
             }
 
             // Set budget button
@@ -9634,7 +9866,6 @@
                 showNotification(`🔄 Trip "${trip.name}" reopened and activated!`, 'success');
             }
         }
-
         function viewTripDetails(tripId) {
             const trip = trips.find(t => t.id === tripId);
             if (!trip) return;

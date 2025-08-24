@@ -1,0 +1,56 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+    
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.npm
+        key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+        restore-keys: |
+          ${{ runner.os }}-node-
+    
+    - name: Validate files
+      run: |
+        echo "Checking required files..."
+        test -f index.html || exit 1
+        test -f manifest.json || exit 1
+        test -f sw.js || exit 1
+        test -d icons || exit 1
+        echo "✅ All required files present"
+    
+    - name: Validate manifest.json
+      run: |
+        echo "Validating manifest.json..."
+        python3 -m json.tool manifest.json > /dev/null
+        echo "✅ manifest.json is valid"
+    
+    - name: Update service worker cache version
+      run: |
+        TIMESTAMP=$(date +%s)
+        sed -i "s/const CACHE_NAME = .*/const CACHE_NAME = 'expense-tracker-v2-$TIMESTAMP';/" sw.js
+        echo "✅ Updated cache version to: expense-tracker-v2-$TIMESTAMP"
+    
+    - name: Deploy to GitHub Pages
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./
+        cname: # Add your custom domain here if you have one
