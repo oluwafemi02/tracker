@@ -783,7 +783,6 @@
                 min-width: 140px;
             }
         }
-
         @media (max-width: 480px) {
             .search-input-wrapper {
                 padding: 0.5rem;
@@ -1581,7 +1580,6 @@
             margin-bottom: 1rem;
             display: block;
         }
-
         /* Dark Mode Support */
         .dark-mode {
             --background: #1a202c;
@@ -2381,7 +2379,6 @@
             border-color: var(--danger) !important;
             background: linear-gradient(145deg, var(--card-bg) 0%, rgba(244, 67, 54, 0.05) 100%) !important;
         }
-
         .sync-option-cards {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
@@ -3180,7 +3177,6 @@
             color: var(--text-primary);
             margin-bottom: 0.5rem;
         }
-
         .quick-stat-label {
             color: var(--text-secondary);
             font-size: 0.9rem;
@@ -3659,6 +3655,7 @@
                                     </select>
                                 </div>
                                 <button class="btn btn-success" id="exportCSVBtn">📥 Export CSV</button>
+                                <button class="btn btn-success" id="exportJSONBtn">📥 Export JSON</button>
                             </div>
                         </div>
                         
@@ -3755,7 +3752,6 @@
                 </div>
             </div>
         </div>
-
         <!-- Trips Tab Content -->
         <div id="travelTab" class="tab-content">
             <div class="travel-tracker">
@@ -4426,7 +4422,6 @@
         </div>
         <div class="guide-spotlight" id="guideSpotlight"></div>
     </div>
-
     <script>
         // Global variables
         let expenses = JSON.parse(localStorage.getItem('familyExpenses')) || [];
@@ -5206,7 +5201,6 @@
             updateDashboard();
             showNotification('Budget updated successfully!', 'success');
         }
-
         // Handle expense form submission
         function handleExpenseSubmit(e) {
             e.preventDefault();
@@ -5985,7 +5979,6 @@
         function closeRemainingBreakdownModal() {
             document.getElementById('remainingBreakdownModal').style.display = 'none';
         }
-
         // Show detailed expense breakdown focusing on what expenses are for
         function showExpenseDetailsModal() {
             const currentMonth = new Date().getMonth();
@@ -6401,34 +6394,59 @@
 
         // Export to CSV
         function exportToCSV() {
-            if (expenses.length === 0) {
-                showNotification('No expenses to export', 'error');
-                return;
-            }
+            const headers = ['Date', 'Amount', 'Category', 'Person', 'Description'];
+            const rows = filteredExpenses.map(expense => [
+                expense.date,
+                expense.amount.toFixed(2),
+                expense.category,
+                expense.person,
+                expense.description || ''
+            ]);
             
-            const headers = ['Date', 'Category', 'Amount', 'Person', 'Description'];
-            const csvContent = [
-                headers.join(','),
-                ...expenses.map(expense => [
-                    expense.date,
-                    expense.category,
-                    expense.amount,
-                    expense.person,
-                    `"${expense.description || ''}"`
-                ].join(','))
-            ].join('\n');
+            let csvContent = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csvContent += row.map(field => `"${field}"`).join(',') + '\n';
+            });
             
             const blob = new Blob([csvContent], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `family-expenses-${new Date().toISOString().split('T')[0]}.csv`;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `expenses_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
             
-            showNotification('Expenses exported successfully!', 'success');
+            showNotification('Expenses exported to CSV successfully!', 'success');
+        }
+
+        // Export to JSON
+        function exportToJSON() {
+            const exportData = {
+                version: "1.0",
+                exportDate: new Date().toISOString(),
+                expenses: filteredExpenses,
+                recurringExpenses: recurringExpenses,
+                monthlyBudget: monthlyBudget,
+                customCategories: customCategories,
+                metadata: {
+                    totalExpenses: filteredExpenses.length,
+                    dateRange: {
+                        from: filteredExpenses.length > 0 ? filteredExpenses[filteredExpenses.length - 1].date : null,
+                        to: filteredExpenses.length > 0 ? filteredExpenses[0].date : null
+                    }
+                }
+            };
+            
+            const jsonString = JSON.stringify(exportData, null, 2);
+            const blob = new Blob([jsonString], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `expenses_${new Date().toISOString().split('T')[0]}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification('Expenses exported to JSON successfully!', 'success');
         }
 
         // Dark mode toggle
@@ -6768,7 +6786,6 @@
                 customCategoryGroup.style.display = 'none';
             }
         }
-
         function addCustomCategory() {
             const nameInput = document.getElementById('customCategory');
             const iconInput = document.getElementById('customCategoryIcon');
@@ -7530,7 +7547,6 @@
                 personSelect.setAttribute('required', 'required');
             }
         }
-
         // Smart Suggestions Engine
         function generateSmartSuggestions() {
             const currentMonth = new Date().getMonth();
@@ -8159,7 +8175,6 @@
             showNotification('Test notification sent! 📱', 'success');
             updateNotificationStatus();
         }
-
         // Update notification status display
         function updateNotificationStatus() {
             const statusDiv = document.getElementById('notificationStatus');
@@ -8852,7 +8867,6 @@
         function showUpdateNotification() {
             showNotification('🔄 New version available! Refresh to update.', 'info');
         }
-
         // Setup secure event listeners (replaces inline onclick handlers)
         function setupEventListeners() {
             // Navigation tabs
@@ -9045,6 +9059,18 @@
             const exportCSVBtn = document.getElementById('exportCSVBtn');
             if (exportCSVBtn) {
                 exportCSVBtn.addEventListener('click', exportToCSV);
+            }
+
+            // Export JSON button
+            const exportJSONBtn = document.getElementById('exportJSONBtn');
+            if (exportJSONBtn) {
+                exportJSONBtn.addEventListener('click', exportToJSON);
+            }
+
+            // Export JSON button
+            const exportJSONBtn = document.getElementById('exportJSONBtn');
+            if (exportJSONBtn) {
+                exportJSONBtn.addEventListener('click', exportToJSON);
             }
 
             // Set budget button
@@ -9634,7 +9660,6 @@
                 showNotification(`🔄 Trip "${trip.name}" reopened and activated!`, 'success');
             }
         }
-
         function viewTripDetails(tripId) {
             const trip = trips.find(t => t.id === tripId);
             if (!trip) return;

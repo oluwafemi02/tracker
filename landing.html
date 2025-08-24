@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ExpenseTracker Pro - Smart Expense Management for Everyone</title>
+    <meta name="description" content="Track expenses, manage budgets, and gain financial insights with our privacy-focused Progressive Web App. Works offline, syncs everywhere.">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://yourdomain.com/">
+    <meta property="og:title" content="ExpenseTracker Pro - Smart Expense Management">
+    <meta property="og:description" content="Track expenses, manage budgets, and gain financial insights with our privacy-focused PWA.">
+    <meta property="og:image" content="https://yourdomain.com/og-image.png">
+
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://yourdomain.com/">
+    <meta property="twitter:title" content="ExpenseTracker Pro">
+    <meta property="twitter:description" content="Track expenses, manage budgets, and gain financial insights.">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: #fff;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+        }
+
+        nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #6366f1;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        .nav-links a:hover {
+            color: #6366f1;
+        }
+
+        .cta-button {
+            background: #6366f1;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .cta-button:hover {
+            background: #5558e3;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(99, 102, 241, 0.3);
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 120px 0 80px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+
+        .hero h1 {
+            font-size: 3.5rem;
+            margin-bottom: 1rem;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .hero-button {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 1.1rem;
+            transition: all 0.3s;
+            display: inline-block;
+        }
+
+        .primary-button {
+            background: white;
+            color: #6366f1;
+        }
+
+        .primary-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+        }
+
+        .secondary-button {
+            background: transparent;
+            color: white;
+            border: 2px solid white;
+        }
+
+        .secondary-button:hover {
+            background: white;
+            color: #6366f1;
+        }
+
+        /* Features Section */
+        .features {
+            padding: 80px 0;
+            background: #f8f9fa;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+            color: #333;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: all 0.3s;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        }
+
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: #333;
+        }
+
+        .feature-card p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        /* Coming Soon Badge */
+        .coming-soon {
+            display: inline-block;
+            background: #fbbf24;
+            color: #78350f;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        /* Email Signup Section */
+        .signup {
+            padding: 80px 0;
+            background: #1a1a1a;
+            color: white;
+            text-align: center;
+        }
+
+        .signup h2 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .signup p {
+            font-size: 1.25rem;
+            margin-bottom: 2rem;
+            opacity: 0.8;
+        }
+
+        .email-form {
+            display: flex;
+            gap: 1rem;
+            max-width: 500px;
+            margin: 0 auto;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .email-input {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            min-width: 250px;
+        }
+
+        .submit-button {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .submit-button:hover {
+            background: #5558e3;
+            transform: translateY(-2px);
+        }
+
+        /* Pricing Section */
+        .pricing {
+            padding: 80px 0;
+        }
+
+        .pricing h2 {
+            text-align: center;
+            font-size: 2.5rem;
+            margin-bottom: 3rem;
+        }
+
+        .pricing-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .pricing-card {
+            background: white;
+            border: 2px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            transition: all 0.3s;
+        }
+
+        .pricing-card.featured {
+            border-color: #6366f1;
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.2);
+        }
+
+        .pricing-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .price {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #6366f1;
+            margin-bottom: 1rem;
+        }
+
+        .price-period {
+            font-size: 1rem;
+            color: #666;
+        }
+
+        .pricing-features {
+            list-style: none;
+            margin: 2rem 0;
+            text-align: left;
+        }
+
+        .pricing-features li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .check-icon {
+            color: #10b981;
+        }
+
+        /* Footer */
+        footer {
+            background: #1a1a1a;
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-bottom: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-links a {
+            color: white;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: opacity 0.3s;
+        }
+
+        .footer-links a:hover {
+            opacity: 1;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <nav class="container">
+            <div class="logo">💰 ExpenseTracker Pro</div>
+            <ul class="nav-links">
+                <li><a href="#features">Features</a></li>
+                <li><a href="#pricing">Pricing</a></li>
+                <li><a href="#about">About</a></li>
+            </ul>
+            <a href="index.html" class="cta-button">Try It Free</a>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h1>Smart Expense Tracking<br>That Actually Works</h1>
+            <p>Track expenses, manage budgets, and gain financial insights with our privacy-focused Progressive Web App. Works offline, syncs everywhere.</p>
+            <div class="hero-buttons">
+                <a href="index.html" class="hero-button primary-button">Start Free Trial</a>
+                <a href="#features" class="hero-button secondary-button">See How It Works</a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <h2>Everything You Need to Master Your Finances</h2>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">📱</div>
+                    <h3>Works Everywhere</h3>
+                    <p>Install on iOS, Android, or use in any browser. Full offline support means you can track expenses anywhere.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔒</div>
+                    <h3>Privacy First</h3>
+                    <p>Your data stays on your device. No tracking, no ads, no selling your information. Ever.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📊</div>
+                    <h3>Smart Insights</h3>
+                    <p>AI-powered spending analysis helps you understand where your money goes and how to save more.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3>Recurring Expenses</h3>
+                    <p>Never forget a subscription again. Automatic tracking and reminders for all your recurring payments.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">👨‍👩‍👧‍👦</div>
+                    <h3>Family & Groups</h3>
+                    <p>Track personal, family, or group expenses. Perfect for households, trips, and shared projects.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">☁️</div>
+                    <h3>Cloud Sync <span class="coming-soon">Coming Soon</span></h3>
+                    <p>Seamlessly sync across all your devices. Your data, everywhere you need it.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Pricing Section -->
+    <section class="pricing" id="pricing">
+        <div class="container">
+            <h2>Simple, Transparent Pricing</h2>
+            <div class="pricing-cards">
+                <div class="pricing-card">
+                    <h3>Free Forever</h3>
+                    <div class="price">$0<span class="price-period">/month</span></div>
+                    <ul class="pricing-features">
+                        <li><span class="check-icon">✓</span> Unlimited expenses</li>
+                        <li><span class="check-icon">✓</span> Basic categories</li>
+                        <li><span class="check-icon">✓</span> CSV export</li>
+                        <li><span class="check-icon">✓</span> Offline support</li>
+                        <li><span class="check-icon">✓</span> 1 project/trip</li>
+                    </ul>
+                    <a href="index.html" class="cta-button" style="width: 100%; display: block;">Get Started</a>
+                </div>
+                <div class="pricing-card featured">
+                    <h3>Pro</h3>
+                    <div class="price">$4.99<span class="price-period">/month</span></div>
+                    <ul class="pricing-features">
+                        <li><span class="check-icon">✓</span> Everything in Free</li>
+                        <li><span class="check-icon">✓</span> Unlimited projects</li>
+                        <li><span class="check-icon">✓</span> Advanced analytics</li>
+                        <li><span class="check-icon">✓</span> Excel & PDF export</li>
+                        <li><span class="check-icon">✓</span> Cloud sync (soon)</li>
+                        <li><span class="check-icon">✓</span> Priority support</li>
+                    </ul>
+                    <a href="#" class="cta-button" style="width: 100%; display: block;">Coming Soon</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Email Signup -->
+    <section class="signup">
+        <div class="container">
+            <h2>Be First to Know</h2>
+            <p>Get notified when Pro features launch and receive a special early-bird discount!</p>
+            <form class="email-form" id="emailForm">
+                <input type="email" class="email-input" placeholder="Enter your email" required>
+                <button type="submit" class="submit-button">Notify Me</button>
+            </form>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <div class="footer-links">
+                <a href="#">Privacy Policy</a>
+                <a href="#">Terms of Service</a>
+                <a href="https://github.com/yourusername/tracker">GitHub</a>
+                <a href="#">Contact</a>
+            </div>
+            <p>&copy; 2024 ExpenseTracker Pro. Built with ❤️ for financial freedom.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                document.querySelector(this.getAttribute('href')).scrollIntoView({
+                    behavior: 'smooth'
+                });
+            });
+        });
+
+        // Email form submission
+        document.getElementById('emailForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = e.target.querySelector('input[type="email"]').value;
+            
+            // Free email collection options:
+            // 1. Google Forms (embed hidden iframe)
+            // 2. Netlify Forms (if hosting on Netlify)
+            // 3. FormSubmit.co (free form backend)
+            // 4. Store in localStorage and export later
+            
+            // For now, store locally
+            const subscribers = JSON.parse(localStorage.getItem('email_subscribers') || '[]');
+            subscribers.push({
+                email,
+                timestamp: new Date().toISOString(),
+                source: 'landing_page'
+            });
+            localStorage.setItem('email_subscribers', JSON.stringify(subscribers));
+            
+            // Show success message
+            e.target.innerHTML = '<p style="color: #10b981; font-size: 1.2rem;">✓ Thanks! We\'ll notify you soon.</p>';
+        });
+    </script>
+</body>
+</html>
