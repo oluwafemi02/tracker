@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Email Collection Setup - Expense Tracker</title>
+</head>
+<body>
+    <h1>Email Collection Options (All Free)</h1>
+    
+    <h2>Option 1: FormSubmit.co (Recommended - No Backend Required)</h2>
+    <pre><code>
+    <!-- Add this form to your landing page -->
+    <form action="https://formsubmit.co/YOUR_EMAIL_HERE" method="POST">
+        <input type="hidden" name="_subject" value="New ExpenseTracker Signup!">
+        <input type="hidden" name="_captcha" value="false">
+        <input type="hidden" name="_next" value="https://yourdomain.com/thanks.html">
+        
+        <input type="email" name="email" placeholder="Enter your email" required>
+        <button type="submit">Get Early Access</button>
+    </form>
+    </code></pre>
+
+    <h2>Option 2: Google Forms (Embedded)</h2>
+    <pre><code>
+    <!-- Create a Google Form and embed it -->
+    <iframe src="https://docs.google.com/forms/d/e/YOUR_FORM_ID/viewform?embedded=true" 
+            width="640" height="400" frameborder="0" marginheight="0" marginwidth="0">
+        Loading…
+    </iframe>
+    </code></pre>
+
+    <h2>Option 3: Netlify Forms (If hosting on Netlify)</h2>
+    <pre><code>
+    <form name="newsletter" method="POST" data-netlify="true">
+        <input type="email" name="email" placeholder="Your email" required>
+        <button type="submit">Subscribe</button>
+    </form>
+    </code></pre>
+
+    <h2>Option 4: Local Storage Collection</h2>
+    <script>
+    // Email collection system using localStorage
+    class EmailCollector {
+        constructor() {
+            this.subscribers = this.loadSubscribers();
+        }
+
+        loadSubscribers() {
+            try {
+                return JSON.parse(localStorage.getItem('email_subscribers')) || [];
+            } catch (e) {
+                return [];
+            }
+        }
+
+        saveSubscribers() {
+            localStorage.setItem('email_subscribers', JSON.stringify(this.subscribers));
+        }
+
+        addSubscriber(email, source = 'unknown') {
+            const subscriber = {
+                email: email.toLowerCase().trim(),
+                source: source,
+                timestamp: new Date().toISOString(),
+                id: Date.now() + Math.random()
+            };
+
+            // Check if already exists
+            if (this.subscribers.some(s => s.email === subscriber.email)) {
+                return { success: false, message: 'Email already subscribed' };
+            }
+
+            this.subscribers.push(subscriber);
+            this.saveSubscribers();
+
+            // Track in analytics
+            if (window.analytics) {
+                window.analytics.track('email_signup', { source });
+            }
+
+            return { success: true, message: 'Successfully subscribed!' };
+        }
+
+        exportSubscribers() {
+            const data = {
+                subscribers: this.subscribers,
+                totalCount: this.subscribers.length,
+                exportDate: new Date().toISOString()
+            };
+
+            const csv = this.convertToCSV();
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `subscribers_${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        convertToCSV() {
+            const headers = ['Email', 'Source', 'Date'];
+            const rows = this.subscribers.map(s => [
+                s.email,
+                s.source,
+                new Date(s.timestamp).toLocaleDateString()
+            ]);
+
+            let csv = headers.join(',') + '\n';
+            rows.forEach(row => {
+                csv += row.map(field => `"${field}"`).join(',') + '\n';
+            });
+
+            return csv;
+        }
+
+        getStats() {
+            const stats = {
+                total: this.subscribers.length,
+                bySource: {},
+                last7Days: 0,
+                last30Days: 0
+            };
+
+            const now = new Date();
+            const sevenDaysAgo = new Date(now - 7 * 24 * 60 * 60 * 1000);
+            const thirtyDaysAgo = new Date(now - 30 * 24 * 60 * 60 * 1000);
+
+            this.subscribers.forEach(sub => {
+                // Count by source
+                stats.bySource[sub.source] = (stats.bySource[sub.source] || 0) + 1;
+
+                // Count recent signups
+                const subDate = new Date(sub.timestamp);
+                if (subDate > sevenDaysAgo) stats.last7Days++;
+                if (subDate > thirtyDaysAgo) stats.last30Days++;
+            });
+
+            return stats;
+        }
+    }
+
+    // Initialize email collector
+    window.emailCollector = new EmailCollector();
+    </script>
+
+    <h2>Working Email Form Example</h2>
+    <form id="emailSignupForm" style="max-width: 400px; margin: 2rem auto; padding: 1rem; border: 1px solid #ddd; border-radius: 8px;">
+        <h3>Join Our Launch List</h3>
+        <p>Be the first to know when premium features launch!</p>
+        
+        <input type="email" 
+               id="emailInput" 
+               placeholder="your@email.com" 
+               required 
+               style="width: 100%; padding: 0.75rem; margin-bottom: 1rem; border: 1px solid #ddd; border-radius: 4px;">
+        
+        <label style="display: block; margin-bottom: 1rem;">
+            <input type="checkbox" id="acceptTerms" required>
+            I agree to receive product updates (no spam!)
+        </label>
+        
+        <button type="submit" 
+                style="width: 100%; padding: 0.75rem; background: #6366f1; color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Get Early Access
+        </button>
+        
+        <div id="formMessage" style="margin-top: 1rem; text-align: center;"></div>
+    </form>
+
+    <div style="max-width: 600px; margin: 2rem auto; padding: 1rem; background: #f5f5f5; border-radius: 8px;">
+        <h3>Email Collector Stats</h3>
+        <div id="emailStats"></div>
+        <button onclick="window.emailCollector.exportSubscribers()" style="margin-top: 1rem;">Export Subscribers CSV</button>
+    </div>
+
+    <script>
+    // Email form handler
+    document.getElementById('emailSignupForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        
+        const email = document.getElementById('emailInput').value;
+        const acceptTerms = document.getElementById('acceptTerms').checked;
+        
+        if (!acceptTerms) {
+            document.getElementById('formMessage').innerHTML = 
+                '<p style="color: red;">Please accept the terms to continue.</p>';
+            return;
+        }
+        
+        const result = window.emailCollector.addSubscriber(email, 'landing_page');
+        
+        if (result.success) {
+            document.getElementById('formMessage').innerHTML = 
+                '<p style="color: green;">✓ ' + result.message + '</p>';
+            document.getElementById('emailSignupForm').reset();
+            updateStats();
+        } else {
+            document.getElementById('formMessage').innerHTML = 
+                '<p style="color: red;">' + result.message + '</p>';
+        }
+    });
+
+    // Update stats display
+    function updateStats() {
+        const stats = window.emailCollector.getStats();
+        document.getElementById('emailStats').innerHTML = `
+            <p><strong>Total Subscribers:</strong> ${stats.total}</p>
+            <p><strong>Last 7 days:</strong> ${stats.last7Days}</p>
+            <p><strong>Last 30 days:</strong> ${stats.last30Days}</p>
+            <p><strong>By Source:</strong></p>
+            <ul>
+                ${Object.entries(stats.bySource).map(([source, count]) => 
+                    `<li>${source}: ${count}</li>`
+                ).join('')}
+            </ul>
+        `;
+    }
+
+    // Initial stats
+    updateStats();
+    </script>
+
+    <h2>Integration with EmailJS (200 free emails/month)</h2>
+    <pre><code>
+    <!-- Add to your HTML head -->
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script>
+        emailjs.init("YOUR_PUBLIC_KEY");
+        
+        // Send welcome email
+        function sendWelcomeEmail(userEmail) {
+            emailjs.send("service_id", "template_id", {
+                to_email: userEmail,
+                subject: "Welcome to ExpenseTracker!"
+            });
+        }
+    </script>
+    </code></pre>
+
+    <h2>Free Email Marketing Services</h2>
+    <ul>
+        <li><strong>Mailchimp:</strong> Free up to 500 contacts</li>
+        <li><strong>SendinBlue:</strong> 300 emails/day free</li>
+        <li><strong>MailerLite:</strong> 1,000 subscribers free</li>
+        <li><strong>ConvertKit:</strong> 300 subscribers free</li>
+    </ul>
+</body>
+</html>

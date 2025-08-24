@@ -3656,6 +3656,8 @@
                                 </div>
                                 <button class="btn btn-success" id="exportCSVBtn">📥 Export CSV</button>
                                 <button class="btn btn-success" id="exportJSONBtn">📥 Export JSON</button>
+                                <button class="btn btn-warning" id="exportExcelBtn" data-premium-feature="excel_export">📊 Export Excel</button>
+                                <button class="btn btn-warning" id="exportPDFBtn" data-premium-feature="pdf_export">📄 Export PDF</button>
                             </div>
                         </div>
                         
@@ -4422,6 +4424,132 @@
         </div>
         <div class="guide-spotlight" id="guideSpotlight"></div>
     </div>
+    <!-- Premium Features Manager -->
+    <script src="premium-features.js"></script>
+    
+    <!-- Error Logging System -->
+    <script src="error-logging.js"></script>
+    
+    <!-- Payment Integration -->
+    <script src="payment-integration.js"></script>
+    
+    <!-- Analytics (Free Options) -->
+    <!-- Option 1: Google Analytics (Uncomment when ready) -->
+    <!--
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-XXXXXXXXXX"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-XXXXXXXXXX');
+    </script>
+    -->
+    
+    <!-- Simple Analytics Implementation -->
+    <script>
+        // Simple privacy-focused analytics
+        class SimpleAnalytics {
+            constructor() {
+                this.events = [];
+                this.sessionId = this.getSessionId();
+            }
+
+            getSessionId() {
+                let sessionId = sessionStorage.getItem('session_id');
+                if (!sessionId) {
+                    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    sessionStorage.setItem('session_id', sessionId);
+                }
+                return sessionId;
+            }
+
+            track(event, properties = {}) {
+                const analyticsData = {
+                    event,
+                    properties,
+                    timestamp: new Date().toISOString(),
+                    sessionId: this.sessionId,
+                    userAgent: navigator.userAgent,
+                    screenSize: `${window.screen.width}x${window.screen.height}`
+                };
+
+                // Store locally
+                this.events.push(analyticsData);
+                
+                // Save to localStorage for persistence
+                const storedEvents = JSON.parse(localStorage.getItem('analytics_events') || '[]');
+                storedEvents.push(analyticsData);
+                
+                // Keep only last 100 events
+                if (storedEvents.length > 100) {
+                    storedEvents.splice(0, storedEvents.length - 100);
+                }
+                
+                localStorage.setItem('analytics_events', JSON.stringify(storedEvents));
+                
+                // Log to console in development
+                if (window.location.hostname === 'localhost') {
+                    console.log('📊 Analytics Event:', event, properties);
+                }
+            }
+
+            trackPageView() {
+                this.track('page_view', {
+                    path: window.location.pathname,
+                    referrer: document.referrer
+                });
+            }
+
+            trackExpenseAdded(category, amount) {
+                this.track('expense_added', { category, amount });
+            }
+
+            trackFeatureUsed(feature) {
+                this.track('feature_used', { feature });
+            }
+
+            trackError(error, context) {
+                this.track('error', {
+                    message: error.message || error,
+                    stack: error.stack,
+                    context
+                });
+            }
+
+            getAnalyticsSummary() {
+                const events = JSON.parse(localStorage.getItem('analytics_events') || '[]');
+                const summary = {
+                    totalEvents: events.length,
+                    uniqueSessions: new Set(events.map(e => e.sessionId)).size,
+                    eventTypes: {}
+                };
+
+                events.forEach(event => {
+                    summary.eventTypes[event.event] = (summary.eventTypes[event.event] || 0) + 1;
+                });
+
+                return summary;
+            }
+        }
+
+        // Initialize analytics
+        window.analytics = new SimpleAnalytics();
+        
+        // Track page view on load
+        window.addEventListener('load', () => {
+            window.analytics.trackPageView();
+        });
+
+        // Track errors
+        window.addEventListener('error', (e) => {
+            window.analytics.trackError(e.error || e.message, 'window_error');
+        });
+
+        window.addEventListener('unhandledrejection', (e) => {
+            window.analytics.trackError(e.reason, 'unhandled_promise');
+        });
+    </script>
+    
     <script>
         // Global variables
         let expenses = JSON.parse(localStorage.getItem('familyExpenses')) || [];
@@ -4932,8 +5060,24 @@
         }
 
         function setupFirebaseSync() {
-            showNotification('🔥 Firebase sync coming soon! Use Export/Import for now.', 'info');
+            // Check premium access for cloud sync
+            if (window.premiumManager && !window.premiumManager.hasFeature('cloudSync')) {
+                window.premiumManager.showPaywall('cloud_sync', 'Cloud sync requires a Premium subscription');
+                closeSyncSetupModal();
+                return;
+            }
+            
+            // Firebase setup placeholder
+            showNotification('☁️ Cloud sync coming soon! (Premium feature in development)', 'info');
             closeSyncSetupModal();
+            
+            /* Implementation placeholder:
+            // Initialize Firebase
+            const firebaseConfig = {
+                // Config will be added when payment integration is ready
+            };
+            firebase.initializeApp(firebaseConfig);
+            */
         }
 
         function setupLocalSync() {
@@ -5269,6 +5413,11 @@
             updateDashboard();
             filterAndRenderExpenses(); // Use new pagination system
             resetForm();
+            
+            // Track expense added
+            if (window.analytics) {
+                window.analytics.trackExpenseAdded(expense.category, expense.amount);
+            }
         }
 
         // Calculate total recurring expenses for the current month
@@ -6447,6 +6596,54 @@
             URL.revokeObjectURL(url);
             
             showNotification('Expenses exported to JSON successfully!', 'success');
+        }
+
+        // Export to Excel (Premium Feature)
+        function exportToExcel() {
+            // Check premium access
+            if (!window.premiumManager || !window.premiumManager.canExportExcel()) {
+                if (window.premiumManager) {
+                    window.premiumManager.showPaywall('excel_export', 'Excel export requires a Premium subscription');
+                } else {
+                    showNotification('Excel export is a premium feature (in progress)', 'warning');
+                }
+                return;
+            }
+
+            // Premium Excel export implementation
+            showNotification('Excel export coming soon! (Premium feature in development)', 'info');
+            
+            /* Implementation placeholder:
+            // Will use SheetJS library
+            const ws = XLSX.utils.json_to_sheet(filteredExpenses);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Expenses");
+            XLSX.writeFile(wb, `expenses_${new Date().toISOString().split('T')[0]}.xlsx`);
+            */
+        }
+
+        // Export to PDF (Premium Feature)
+        function exportToPDF() {
+            // Check premium access
+            if (!window.premiumManager || !window.premiumManager.canExportPDF()) {
+                if (window.premiumManager) {
+                    window.premiumManager.showPaywall('pdf_export', 'PDF export requires a Premium subscription');
+                } else {
+                    showNotification('PDF export is a premium feature (in progress)', 'warning');
+                }
+                return;
+            }
+
+            // Premium PDF export implementation
+            showNotification('PDF export coming soon! (Premium feature in development)', 'info');
+            
+            /* Implementation placeholder:
+            // Will use jsPDF library
+            const doc = new jsPDF();
+            doc.text('Expense Report', 10, 10);
+            // Add expense data to PDF
+            doc.save(`expenses_${new Date().toISOString().split('T')[0]}.pdf`);
+            */
         }
 
         // Dark mode toggle
@@ -9067,10 +9264,16 @@
                 exportJSONBtn.addEventListener('click', exportToJSON);
             }
 
-            // Export JSON button
-            const exportJSONBtn = document.getElementById('exportJSONBtn');
-            if (exportJSONBtn) {
-                exportJSONBtn.addEventListener('click', exportToJSON);
+            // Export Excel button (Premium)
+            const exportExcelBtn = document.getElementById('exportExcelBtn');
+            if (exportExcelBtn) {
+                exportExcelBtn.addEventListener('click', exportToExcel);
+            }
+
+            // Export PDF button (Premium)
+            const exportPDFBtn = document.getElementById('exportPDFBtn');
+            if (exportPDFBtn) {
+                exportPDFBtn.addEventListener('click', exportToPDF);
             }
 
             // Set budget button
