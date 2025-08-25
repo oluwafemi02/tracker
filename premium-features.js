@@ -127,7 +127,15 @@ class PremiumManager {
         
         // Check direct features
         if (featureName in tier) {
-            return tier[featureName] === true || tier[featureName] === -1 || tier[featureName] > 0;
+            const feature = tier[featureName];
+            // Handle boolean values
+            if (typeof feature === 'boolean') return feature;
+            // Handle numeric values (-1 for unlimited, positive for limits)
+            if (typeof feature === 'number') return feature === -1 || feature > 0;
+            // Handle arrays (like exportFormats)
+            if (Array.isArray(feature)) return feature.length > 0;
+            // Default to true if feature exists
+            return true;
         }
         
         // Check limits
