@@ -6771,6 +6771,314 @@
         function closeRemainingBreakdownModal() {
             document.getElementById('remainingBreakdownModal').style.display = 'none';
         }
+        // Show expense detail view modal
+        let currentExpenseDetail = null;
+        let budgetImpactChart = null;
+
+        function showExpenseDetailModal(expenseId) {
+            const expense = expenses.find(e => e.id === expenseId);
+            if (!expense) return;
+            
+            currentExpenseDetail = expense;
+            
+            // Update basic information
+            document.getElementById('expenseDetailTitle').textContent = `${categoryIcons[expense.category] || '📝'} ${expense.category} Details`;
+            document.getElementById('detailCategory').textContent = expense.category;
+            document.getElementById('detailAmount').textContent = `€${expense.amount.toFixed(2)}`;
+            document.getElementById('detailPerson').textContent = expense.person;
+            document.getElementById('detailDescription').textContent = expense.description || 'No description';
+            document.getElementById('detailDate').textContent = new Date(expense.date).toLocaleDateString('en-US', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            // Update tags
+            const tagsContainer = document.getElementById('detailTags');
+            tagsContainer.innerHTML = '';
+            
+            if (expense.isRecurring) {
+                const recurringTag = document.createElement('span');
+                recurringTag.className = 'recurring-indicator';
+                recurringTag.textContent = '🔁 Recurring';
+                tagsContainer.appendChild(recurringTag);
+            }
+            
+            if (expense.fixed) {
+                const fixedTag = document.createElement('span');
+                fixedTag.className = 'fixed-cost-indicator';
+                fixedTag.textContent = '💰 Fixed Cost';
+                tagsContainer.appendChild(fixedTag);
+            }
+            
+            // Update next payment (for recurring expenses)
+            const nextPaymentDiv = document.getElementById('detailNextPayment');
+            if (expense.isRecurring && expense.recurringFrequency) {
+                const nextDate = calculateNextDueDate(
+                    expense.lastProcessedDate || expense.date,
+                    expense.recurringFrequency
+                );
+                document.getElementById('nextPaymentDate').textContent = nextDate.toLocaleDateString('en-US', {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+                nextPaymentDiv.style.display = 'flex';
+            } else {
+                nextPaymentDiv.style.display = 'none';
+            }
+            
+            // Load payment history
+            loadPaymentHistory(expense);
+            
+            // Load budget impact chart
+            loadBudgetImpactChart(expense);
+            
+            // Setup action buttons
+            document.getElementById('detailEditBtn').onclick = () => {
+                closeExpenseDetailModal();
+                editExpense(expense.id);
+            };
+            
+            document.getElementById('detailDeleteBtn').onclick = () => {
+                if (confirm('Are you sure you want to delete this expense?')) {
+                    deleteExpense(expense.id);
+                    closeExpenseDetailModal();
+                }
+            };
+            
+            // Show modal
+            document.getElementById('expenseDetailModal').style.display = 'block';
+        }
+
+        // Close expense detail modal
+        function closeExpenseDetailModal() {
+            document.getElementById('expenseDetailModal').style.display = 'none';
+            if (budgetImpactChart) {
+                budgetImpactChart.destroy();
+                budgetImpactChart = null;
+            }
+            currentExpenseDetail = null;
+        }
+
+        // Load payment history for the expense
+        function loadPaymentHistory(expense) {
+            const timeline = document.getElementById('paymentHistoryTimeline');
+            timeline.innerHTML = '';
+            
+            // Find all related expenses (same category, person, and description)
+            const relatedExpenses = expenses.filter(e => 
+                e.category === expense.category &&
+                e.person === expense.person &&
+                (e.description === expense.description || 
+                 (expense.parentRecurringId && e.parentRecurringId === expense.parentRecurringId) ||
+                 (expense.isRecurring && e.parentRecurringId === expense.id))
+            ).sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            if (relatedExpenses.length === 0) {
+                timeline.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No payment history available</p>';
+                return;
+            }
+            
+            // Create timeline items
+            relatedExpenses.forEach((payment, index) => {
+                const timelineItem = document.createElement('div');
+                timelineItem.className = 'timeline-item';
+                if (payment.id === expense.id) {
+                    timelineItem.style.background = 'rgba(66, 133, 244, 0.05)';
+                    timelineItem.style.borderRadius = '8px';
+                    timelineItem.style.marginLeft = '-0.5rem';
+                    timelineItem.style.paddingLeft = '2.5rem';
+                }
+                
+                const content = document.createElement('div');
+                content.className = 'timeline-content';
+                
+                const dateSpan = document.createElement('span');
+                dateSpan.className = 'timeline-date';
+                const paymentDate = new Date(payment.date);
+                dateSpan.textContent = paymentDate.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                });
+                if (payment.id === expense.id) {
+                    dateSpan.innerHTML += ' <span style="color: var(--primary-color); font-size: 0.8rem;">(Current)</span>';
+                }
+                
+                const amountSpan = document.createElement('span');
+                amountSpan.className = 'timeline-amount';
+                amountSpan.textContent = `€${payment.amount.toFixed(2)}`;
+                
+                content.appendChild(dateSpan);
+                content.appendChild(amountSpan);
+                timelineItem.appendChild(content);
+                timeline.appendChild(timelineItem);
+            });
+        }
+
+        // Load budget impact chart
+        function loadBudgetImpactChart(expense) {
+            const ctx = document.getElementById('budgetImpactChart').getContext('2d');
+            
+            // Destroy existing chart if any
+            if (budgetImpactChart) {
+                budgetImpactChart.destroy();
+            }
+            
+            // Prepare data for the last 6 months
+            const months = [];
+            const expenseAmounts = [];
+            const budgetAmounts = [];
+            const percentages = [];
+            
+            const today = new Date();
+            for (let i = 5; i >= 0; i--) {
+                const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+                const month = date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+                months.push(month);
+                
+                // Calculate expense amount for this month
+                const monthExpenses = expenses.filter(e => {
+                    const expDate = new Date(e.date);
+                    return expDate.getMonth() === date.getMonth() && 
+                           expDate.getFullYear() === date.getFullYear() &&
+                           e.category === expense.category &&
+                           e.person === expense.person &&
+                           (e.description === expense.description || 
+                            (expense.parentRecurringId && e.parentRecurringId === expense.parentRecurringId));
+                });
+                
+                const monthAmount = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+                expenseAmounts.push(monthAmount);
+                
+                // Get budget for this month (use current budget as estimate)
+                const monthlyBudget = parseFloat(localStorage.getItem('monthlyBudget')) || 0;
+                budgetAmounts.push(monthlyBudget);
+                
+                // Calculate percentage
+                const percentage = monthlyBudget > 0 ? (monthAmount / monthlyBudget) * 100 : 0;
+                percentages.push(percentage.toFixed(1));
+            }
+            
+            // Check if Chart.js is available
+            if (typeof Chart === 'undefined') {
+                // If Chart.js is not loaded, show a simple text visualization
+                const chartContainer = document.querySelector('.chart-container');
+                chartContainer.innerHTML = `
+                    <div style="padding: 2rem; text-align: center; background: var(--hover-bg); border-radius: 8px;">
+                        <h4 style="margin-bottom: 1rem;">Budget Impact (Last 6 Months)</h4>
+                        <div style="display: grid; gap: 0.5rem; text-align: left; max-width: 300px; margin: 0 auto;">
+                            ${months.map((month, i) => `
+                                <div style="display: flex; justify-content: space-between; padding: 0.5rem; background: var(--card-bg); border-radius: 4px;">
+                                    <span>${month}</span>
+                                    <span style="font-weight: 600; color: var(--danger-color);">€${expenseAmounts[i].toFixed(2)}</span>
+                                    <span style="font-size: 0.85rem; color: var(--text-secondary);">${percentages[i]}%</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            } else {
+                // Create chart with Chart.js
+                budgetImpactChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: months,
+                        datasets: [{
+                            label: 'Expense Amount',
+                            data: expenseAmounts,
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            borderWidth: 2,
+                            yAxisID: 'y-amount'
+                        }, {
+                            label: 'Monthly Budget',
+                            data: budgetAmounts,
+                            type: 'line',
+                            backgroundColor: 'rgba(66, 133, 244, 0.2)',
+                            borderColor: 'rgba(66, 133, 244, 1)',
+                            borderWidth: 2,
+                            pointRadius: 4,
+                            pointBackgroundColor: 'rgba(66, 133, 244, 1)',
+                            yAxisID: 'y-amount'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    afterLabel: function(context) {
+                                        if (context.datasetIndex === 0) {
+                                            return `${percentages[context.dataIndex]}% of budget`;
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            'y-amount': {
+                                type: 'linear',
+                                display: true,
+                                position: 'left',
+                                ticks: {
+                                    callback: function(value) {
+                                        return '€' + value.toFixed(0);
+                                    }
+                                }
+                            },
+                            x: {
+                                display: true
+                            }
+                        }
+                    }
+                });
+            }
+            
+            // Update insights
+            updateBudgetInsights(expense, expenseAmounts, percentages);
+        }
+
+        // Update budget insights
+        function updateBudgetInsights(expense, amounts, percentages) {
+            const insightsDiv = document.getElementById('budgetInsights');
+            
+            const avgAmount = amounts.reduce((sum, amt) => sum + amt, 0) / amounts.filter(amt => amt > 0).length || 0;
+            const avgPercentage = percentages.reduce((sum, pct) => sum + parseFloat(pct), 0) / percentages.filter(pct => parseFloat(pct) > 0).length || 0;
+            const maxAmount = Math.max(...amounts);
+            const trend = amounts[5] > amounts[0] ? 'increasing' : amounts[5] < amounts[0] ? 'decreasing' : 'stable';
+            
+            insightsDiv.innerHTML = `
+                <div class="insight-item">
+                    <span class="insight-value">€${avgAmount.toFixed(2)}</span>
+                    <span class="insight-label">Average Monthly</span>
+                </div>
+                <div class="insight-item">
+                    <span class="insight-value">${avgPercentage.toFixed(1)}%</span>
+                    <span class="insight-label">Avg Budget Impact</span>
+                </div>
+                <div class="insight-item">
+                    <span class="insight-value">€${maxAmount.toFixed(2)}</span>
+                    <span class="insight-label">Highest Amount</span>
+                </div>
+                <div class="insight-item">
+                    <span class="insight-value">${trend === 'increasing' ? '📈' : trend === 'decreasing' ? '📉' : '➡️'} ${trend}</span>
+                    <span class="insight-label">Trend</span>
+                </div>
+            `;
+        }
+
         // Show detailed expense breakdown focusing on what expenses are for
         function showExpenseDetailsModal() {
             const currentMonth = new Date().getMonth();
