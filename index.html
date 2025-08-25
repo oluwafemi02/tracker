@@ -4717,6 +4717,249 @@
         </div>
     </div>
 
+    <style>
+        /* Expense Detail Modal Styles */
+        .expense-detail-modal {
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .expense-detail-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--border-color);
+        }
+        
+        .modal-close-btn {
+            background: none;
+            border: none;
+            font-size: 2rem;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: color 0.2s ease;
+            padding: 0;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .modal-close-btn:hover {
+            color: var(--danger-color);
+            background: rgba(239, 68, 68, 0.1);
+        }
+        
+        .expense-detail-body {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+        
+        .detail-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .detail-card h3 {
+            margin: 0 0 1rem 0;
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+        
+        .detail-info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .detail-info-item {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .detail-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .detail-value {
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .detail-value.amount {
+            color: var(--danger-color);
+            font-size: 1.2rem;
+        }
+        
+        .detail-tags {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+        
+        .next-payment-alert {
+            margin-top: 1rem;
+            padding: 1rem;
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1) 0%, rgba(245, 158, 11, 0.1) 100%);
+            border: 2px solid #f59e0b;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .next-payment-icon {
+            font-size: 2rem;
+        }
+        
+        .next-payment-alert strong {
+            display: block;
+            color: #f59e0b;
+            margin-bottom: 0.25rem;
+        }
+        
+        /* Payment Timeline Styles */
+        .payment-timeline {
+            position: relative;
+            padding: 1rem 0;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .timeline-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-left: 2rem;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            background: var(--primary-color);
+            border-radius: 50%;
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.2);
+        }
+        
+        .timeline-item::after {
+            content: '';
+            position: absolute;
+            left: 5px;
+            top: 1.5rem;
+            width: 2px;
+            height: calc(100% + 1rem);
+            background: var(--border-color);
+        }
+        
+        .timeline-item:last-child::after {
+            display: none;
+        }
+        
+        .timeline-content {
+            flex: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: var(--hover-bg);
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+        }
+        
+        .timeline-date {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .timeline-amount {
+            font-weight: 600;
+            color: var(--danger-color);
+        }
+        
+        /* Chart Container */
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-bottom: 1rem;
+        }
+        
+        .budget-insights {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .insight-item {
+            text-align: center;
+            padding: 1rem;
+            background: var(--hover-bg);
+            border-radius: 8px;
+        }
+        
+        .insight-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+        
+        .insight-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+        
+        .expense-detail-footer {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        @media (max-width: 768px) {
+            .expense-detail-modal {
+                width: 95%;
+                max-height: 95vh;
+            }
+            
+            .detail-info-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .expense-detail-footer {
+                flex-direction: column;
+            }
+            
+            .expense-detail-footer button {
+                width: 100%;
+            }
+        }
+    </style>
+
     <!-- Interactive Guide Overlay -->
     <div id="guideOverlay" class="guide-overlay" style="display: none;">
         <div class="guide-content">
@@ -6607,7 +6850,7 @@
                 expenseDiv.title = 'Click to view/edit expense';
                 expenseDiv.addEventListener('click', () => {
                     closeSpentBreakdownModal();
-                    editExpense(expense.id);
+                    showExpenseDetailModal(expense.id);
                 });
                 
                 expenseDiv.innerHTML = `
@@ -7328,7 +7571,7 @@
             detailsDiv.className = 'expense-details';
             detailsDiv.style.cursor = 'pointer';
             detailsDiv.title = 'Click to view/edit expense';
-            detailsDiv.addEventListener('click', () => editExpense(expense.id));
+            detailsDiv.addEventListener('click', () => showExpenseDetailModal(expense.id));
             
             // Create main section
             const mainDiv = document.createElement('div');
