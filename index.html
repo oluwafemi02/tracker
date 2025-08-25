@@ -6929,6 +6929,9 @@
             // Create details section
             const detailsDiv = document.createElement('div');
             detailsDiv.className = 'expense-details';
+            detailsDiv.style.cursor = 'pointer';
+            detailsDiv.title = 'Click to view/edit expense';
+            detailsDiv.addEventListener('click', () => editExpense(expense.id));
             
             // Create main section
             const mainDiv = document.createElement('div');
