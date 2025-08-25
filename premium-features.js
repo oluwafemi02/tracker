@@ -137,6 +137,16 @@ class PremiumManager {
             this.licenseKey = licenseKey;
             this.currentTier = 'PREMIUM';
             localStorage.setItem('premium_license', licenseKey);
+            localStorage.setItem('premium_tier', 'PREMIUM');
+            
+            // Also check if this is a trial activation
+            if (licenseKey.includes('DEMO')) {
+                const trialEndDate = new Date();
+                trialEndDate.setDate(trialEndDate.getDate() + 7);
+                this.trialEndDate = trialEndDate;
+                localStorage.setItem('premium_trial_end', trialEndDate.toISOString());
+            }
+            
             return true;
         }
         
