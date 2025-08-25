@@ -358,6 +358,15 @@ self.addEventListener('message', event => {
   } else if (event.data && event.data.type === 'CACHE_EXPENSE') {
     // Cache expense data for offline use
     cacheExpenseData(event.data.expense);
+  } else if (event.data && event.data.type === 'UPDATE_RECURRING_EXPENSES') {
+    // Update cached recurring expenses for background checks
+    updateCachedRecurringExpenses(event.data.recurringExpenses);
+  } else if (event.data && event.data.type === 'UPDATE_BUDGET') {
+    // Update cached budget for background checks
+    updateCachedBudget(event.data.budget);
+  } else if (event.data && event.data.type === 'CHECK_RECURRING_NOW') {
+    // Manually trigger recurring expense check
+    checkRecurringExpenses();
   }
 });
 
@@ -371,10 +380,42 @@ async function cacheExpenseData(expense) {
   }
 }
 
-// Periodic background sync for budget reminders
+// Update cached recurring expenses
+async function updateCachedRecurringExpenses(recurringExpenses) {
+  try {
+    const cache = await caches.open('expense-data-v1');
+    const response = new Response(JSON.stringify(recurringExpenses), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    await cache.put('/recurring-expenses', response);
+    console.log('✅ Updated cached recurring expenses:', recurringExpenses.length);
+  } catch (error) {
+    console.error('❌ Error caching recurring expenses:', error);
+  }
+}
+
+// Update cached budget
+async function updateCachedBudget(budget) {
+  try {
+    const cache = await caches.open('expense-data-v1');
+    const response = new Response(JSON.stringify({ monthlyBudget: budget }), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+    await cache.put('/budget-data', response);
+    console.log('✅ Updated cached budget:', budget);
+  } catch (error) {
+    console.error('❌ Error caching budget:', error);
+  }
+}
+
+// Periodic background sync for budget reminders and recurring expenses
 self.addEventListener('periodicsync', event => {
+  console.log('⏰ Periodic sync event:', event.tag);
+  
   if (event.tag === 'budget-check') {
     event.waitUntil(checkBudgetStatus());
+  } else if (event.tag === 'recurring-expense-check') {
+    event.waitUntil(checkRecurringExpenses());
   }
 });
 
@@ -416,8 +457,128 @@ async function getCurrentMonthSpending() {
 }
 
 async function getMonthlyBudget() {
-  // Implementation would get monthly budget
+  try {
+    // Open IndexedDB or use cache API to get budget
+    const cache = await caches.open('expense-data-v1');
+    const response = await cache.match('/budget-data');
+    if (response) {
+      const data = await response.json();
+      return data.monthlyBudget || 0;
+    }
+  } catch (error) {
+    console.error('Error getting budget:', error);
+  }
   return 0;
+}
+
+// Check recurring expenses in background
+async function checkRecurringExpenses() {
+  console.log('🔔 Checking recurring expenses in background...');
+  
+  try {
+    // Get recurring expenses from cache/storage
+    const cache = await caches.open('expense-data-v1');
+    const response = await cache.match('/recurring-expenses');
+    
+    if (!response) {
+      console.log('No cached recurring expenses found');
+      return;
+    }
+    
+    const recurringExpenses = await response.json();
+    if (!recurringExpenses || recurringExpenses.length === 0) {
+      console.log('No recurring expenses to check');
+      return;
+    }
+    
+    const today = new Date();
+    const todayDay = today.getDate();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    
+    const remindersToSend = [];
+    
+    for (const recurring of recurringExpenses) {
+      if (!recurring.nextDue) continue;
+      
+      const nextDueDate = new Date(recurring.nextDue);
+      const daysUntilDue = Math.ceil((nextDueDate - today) / (1000 * 60 * 60 * 24));
+      
+      // Send reminders 3 days before, 1 day before, and on the day
+      if (daysUntilDue === 3 || daysUntilDue === 1 || daysUntilDue === 0) {
+        const dayText = daysUntilDue === 0 ? 'today' : 
+                       daysUntilDue === 1 ? 'tomorrow' : 
+                       `in ${daysUntilDue} days`;
+        
+        const icon = getCategoryIcon(recurring.category);
+        
+        remindersToSend.push({
+          title: `Recurring Expense Due ${dayText === 'today' ? 'Today' : dayText.charAt(0).toUpperCase() + dayText.slice(1)}`,
+          body: `${icon} ${recurring.description} - €${recurring.amount.toFixed(2)}`,
+          tag: `recurring-${recurring.id}-${daysUntilDue}`,
+          icon: '/icons/icon-192x192.png',
+          badge: '/icons/badge-72x72.png',
+          requireInteraction: daysUntilDue === 0, // Require interaction for due today
+          actions: [
+            {
+              action: 'add-expense',
+              title: 'Add Expense',
+              icon: '/icons/action-add.png'
+            },
+            {
+              action: 'remind-later',
+              title: 'Remind Later',
+              icon: '/icons/action-later.png'
+            }
+          ],
+          data: {
+            type: 'recurring-reminder',
+            recurringId: recurring.id,
+            category: recurring.category,
+            amount: recurring.amount,
+            description: recurring.description,
+            daysUntilDue: daysUntilDue
+          }
+        });
+      }
+    }
+    
+    // Send all reminders
+    for (const reminder of remindersToSend) {
+      try {
+        await self.registration.showNotification(reminder.title, reminder);
+        console.log(`✅ Sent reminder: ${reminder.title}`);
+      } catch (error) {
+        console.error('Error sending notification:', error);
+      }
+    }
+    
+    console.log(`✅ Recurring expense check completed. Sent ${remindersToSend.length} reminders.`);
+    
+  } catch (error) {
+    console.error('❌ Error checking recurring expenses:', error);
+  }
+}
+
+// Helper function to get category icon
+function getCategoryIcon(category) {
+  const iconMap = {
+    'Rent': '🏠',
+    'Mortgage': '🏡',
+    'Utilities': '⚡',
+    'Groceries': '🛒',
+    'Transportation': '🚗',
+    'Car Loan/Lease': '🚙',
+    'Healthcare': '🏥',
+    'Entertainment': '🎬',
+    'Dining': '🍽️',
+    'Shopping': '🛍️',
+    'Education': '📚',
+    'Insurance': '🛡️',
+    'Other Loan': '💳',
+    'Other': '📝'
+  };
+  return iconMap[category] || '💰';
 }
 
 console.log('🚀 Service Worker script loaded');
