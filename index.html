@@ -1778,14 +1778,84 @@
         .recurring-indicator {
             display: inline-flex;
             align-items: center;
-            gap: 0.25rem;
-            background: var(--success-gradient);
+            gap: 0.3rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 0.2rem 0.5rem;
-            border-radius: 12px;
-            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.8rem;
             font-weight: 600;
             margin-left: 0.5rem;
+            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .recurring-indicator:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* Fixed Cost Indicator Styles */
+        .fixed-cost-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.3rem;
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            padding: 0.3rem 0.85rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+            box-shadow: 0 3px 6px rgba(16, 185, 129, 0.3);
+            transition: all 0.2s ease;
+            position: relative;
+            overflow: hidden;
+            letter-spacing: 0.025em;
+        }
+        
+        .fixed-cost-indicator::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.2) 50%, transparent 70%);
+            transform: rotate(45deg) translateX(-100%);
+            transition: transform 0.6s ease;
+        }
+        
+        .fixed-cost-indicator:hover {
+            transform: translateY(-1px) scale(1.02);
+            box-shadow: 0 5px 10px rgba(16, 185, 129, 0.4);
+        }
+        
+        .fixed-cost-indicator:hover::before {
+            transform: rotate(45deg) translateX(100%);
+        }
+        
+        /* Dark mode adjustments */
+        @media (prefers-color-scheme: dark) {
+            .recurring-indicator {
+                background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
+                box-shadow: 0 2px 4px rgba(124, 58, 237, 0.4);
+            }
+            
+            .recurring-indicator:hover {
+                box-shadow: 0 4px 8px rgba(168, 85, 247, 0.5);
+            }
+            
+            .fixed-cost-indicator {
+                background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+                box-shadow: 0 3px 6px rgba(52, 211, 153, 0.4);
+            }
+            
+            .fixed-cost-indicator:hover {
+                box-shadow: 0 5px 10px rgba(52, 211, 153, 0.5);
+            }
         }
 
         /* Recurring Modal Specific Styles */
@@ -6918,7 +6988,6 @@
                 const fixedSpan = document.createElement('span');
                 fixedSpan.className = 'fixed-cost-indicator';
                 fixedSpan.textContent = '💰 Fixed Cost';
-                fixedSpan.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.125rem 0.5rem; background: #10b981; color: white; border-radius: 999px; font-size: 0.75rem; font-weight: 500; margin-left: 0.5rem;';
                 contentDiv.appendChild(fixedSpan);
             }
             
