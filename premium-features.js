@@ -42,10 +42,19 @@ class PremiumManager {
     }
 
     init() {
+        // Check for saved tier first
+        const savedTier = localStorage.getItem('premium_tier');
+        if (savedTier === 'PREMIUM') {
+            this.currentTier = 'PREMIUM';
+        }
+        
         // Check for existing license
         const savedLicense = localStorage.getItem('premium_license');
         if (savedLicense) {
-            this.validateLicense(savedLicense);
+            this.licenseKey = savedLicense;
+            if (savedLicense.startsWith('PREMIUM-')) {
+                this.currentTier = 'PREMIUM';
+            }
         }
 
         // Check for trial
@@ -55,6 +64,17 @@ class PremiumManager {
             if (this.isTrialActive()) {
                 this.currentTier = 'PREMIUM';
                 localStorage.setItem('premium_tier', 'PREMIUM');
+            } else {
+                // Trial expired - clean up
+                localStorage.removeItem('premium_trial_end');
+                localStorage.removeItem('trial_end_date');
+                localStorage.removeItem('premium_tier');
+                if (this.licenseKey && this.licenseKey.includes('DEMO')) {
+                    localStorage.removeItem('premium_license');
+                    this.licenseKey = null;
+                }
+                this.trialEndDate = null;
+                this.currentTier = 'FREE';
             }
         }
     }
@@ -65,8 +85,12 @@ class PremiumManager {
         trialEnd.setDate(trialEnd.getDate() + days);
         
         this.trialEndDate = trialEnd;
-        localStorage.setItem('trial_end_date', trialEnd.toISOString());
         this.currentTier = 'PREMIUM';
+        
+        // Save to localStorage with consistent keys
+        localStorage.setItem('premium_trial_end', trialEnd.toISOString());
+        localStorage.setItem('premium_tier', 'PREMIUM');
+        localStorage.setItem('trial_end_date', trialEnd.toISOString()); // Keep for backward compatibility
         
         // Track trial start
         if (window.analytics) {
