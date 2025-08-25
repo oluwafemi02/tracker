@@ -7824,16 +7824,80 @@
                 return;
             }
 
-            // Premium Excel export implementation
-            showNotification('Excel export coming soon! (Premium feature in development)', 'info');
-            
-            /* Implementation placeholder:
-            // Will use SheetJS library
-            const ws = XLSX.utils.json_to_sheet(filteredExpenses);
-            const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, ws, "Expenses");
-            XLSX.writeFile(wb, `expenses_${new Date().toISOString().split('T')[0]}.xlsx`);
-            */
+            // Check if XLSX library is loaded
+            if (typeof XLSX === 'undefined') {
+                // Load XLSX library dynamically
+                showNotification('Loading Excel export library...', 'info');
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+                script.onload = () => {
+                    performExcelExport();
+                };
+                script.onerror = () => {
+                    showNotification('Failed to load Excel export library', 'error');
+                };
+                document.head.appendChild(script);
+            } else {
+                performExcelExport();
+            }
+        }
+        
+        // Perform the actual Excel export
+        function performExcelExport() {
+            try {
+                // Prepare data for export
+                const exportData = filteredExpenses.map(expense => ({
+                    Date: new Date(expense.date).toLocaleDateString(),
+                    Category: expense.category,
+                    Amount: expense.amount,
+                    Currency: '€',
+                    Person: expense.person,
+                    Description: expense.description || '-',
+                    Type: expense.isRecurring ? 'Recurring' : 'One-time',
+                    'Fixed Cost': expense.fixed ? 'Yes' : 'No'
+                }));
+
+                // Create workbook and worksheet
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                const wb = XLSX.utils.book_new();
+                
+                // Add column widths
+                ws['!cols'] = [
+                    { wch: 12 }, // Date
+                    { wch: 15 }, // Category
+                    { wch: 10 }, // Amount
+                    { wch: 8 },  // Currency
+                    { wch: 15 }, // Person
+                    { wch: 30 }, // Description
+                    { wch: 12 }, // Type
+                    { wch: 10 }  // Fixed Cost
+                ];
+                
+                XLSX.utils.book_append_sheet(wb, ws, "Expenses");
+                
+                // Add summary sheet
+                const totalAmount = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+                const summaryData = [
+                    { Metric: 'Total Expenses', Value: filteredExpenses.length },
+                    { Metric: 'Total Amount', Value: `€${totalAmount.toFixed(2)}` },
+                    { Metric: 'Average Expense', Value: `€${(totalAmount / filteredExpenses.length || 0).toFixed(2)}` },
+                    { Metric: 'Monthly Budget', Value: `€${parseFloat(localStorage.getItem('monthlyBudget') || 0).toFixed(2)}` },
+                    { Metric: 'Export Date', Value: new Date().toLocaleDateString() }
+                ];
+                
+                const summaryWs = XLSX.utils.json_to_sheet(summaryData);
+                summaryWs['!cols'] = [{ wch: 20 }, { wch: 20 }];
+                XLSX.utils.book_append_sheet(wb, summaryWs, "Summary");
+                
+                // Generate filename and download
+                const filename = `expense_tracker_${new Date().toISOString().split('T')[0]}.xlsx`;
+                XLSX.writeFile(wb, filename);
+                
+                showNotification('✅ Expenses exported to Excel successfully!', 'success');
+            } catch (error) {
+                console.error('Excel export error:', error);
+                showNotification('❌ Failed to export to Excel. Please try again.', 'error');
+            }
         }
 
         // Export to PDF (Premium Feature)
@@ -7848,16 +7912,119 @@
                 return;
             }
 
-            // Premium PDF export implementation
-            showNotification('PDF export coming soon! (Premium feature in development)', 'info');
-            
-            /* Implementation placeholder:
-            // Will use jsPDF library
-            const doc = new jsPDF();
-            doc.text('Expense Report', 10, 10);
-            // Add expense data to PDF
-            doc.save(`expenses_${new Date().toISOString().split('T')[0]}.pdf`);
-            */
+            // Check if jsPDF library is loaded
+            if (typeof jspdf === 'undefined' || !window.jspdf) {
+                // Load jsPDF library dynamically
+                showNotification('Loading PDF export library...', 'info');
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                script.onload = () => {
+                    // Load autotable plugin after jsPDF is loaded
+                    const tableScript = document.createElement('script');
+                    tableScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js';
+                    tableScript.onload = () => {
+                        performPDFExport();
+                    };
+                    tableScript.onerror = () => {
+                        showNotification('Failed to load PDF table plugin', 'error');
+                    };
+                    document.head.appendChild(tableScript);
+                };
+                script.onerror = () => {
+                    showNotification('Failed to load PDF export library', 'error');
+                };
+                document.head.appendChild(script);
+            } else {
+                performPDFExport();
+            }
+        }
+        
+        // Perform the actual PDF export
+        function performPDFExport() {
+            try {
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Add title
+                doc.setFontSize(20);
+                doc.text('Expense Report', 14, 20);
+                
+                // Add metadata
+                doc.setFontSize(12);
+                const totalAmount = filteredExpenses.reduce((sum, e) => sum + e.amount, 0);
+                doc.text(`Generated: ${new Date().toLocaleDateString()}`, 14, 30);
+                doc.text(`Total Expenses: ${filteredExpenses.length}`, 14, 37);
+                doc.text(`Total Amount: €${totalAmount.toFixed(2)}`, 14, 44);
+                doc.text(`Monthly Budget: €${parseFloat(localStorage.getItem('monthlyBudget') || 0).toFixed(2)}`, 14, 51);
+                
+                // Prepare table data
+                const tableData = filteredExpenses.map(expense => [
+                    new Date(expense.date).toLocaleDateString(),
+                    expense.category,
+                    `€${expense.amount.toFixed(2)}`,
+                    expense.person,
+                    expense.description || '-',
+                    expense.isRecurring ? '🔁' : '-',
+                    expense.fixed ? '✓' : '-'
+                ]);
+                
+                // Add table with autotable
+                doc.autoTable({
+                    head: [['Date', 'Category', 'Amount', 'Person', 'Description', 'Recurring', 'Fixed']],
+                    body: tableData,
+                    startY: 60,
+                    theme: 'striped',
+                    headStyles: {
+                        fillColor: [66, 133, 244],
+                        textColor: 255,
+                        fontSize: 10,
+                        fontStyle: 'bold'
+                    },
+                    bodyStyles: {
+                        fontSize: 9
+                    },
+                    columnStyles: {
+                        0: { cellWidth: 25 },  // Date
+                        1: { cellWidth: 30 },  // Category
+                        2: { cellWidth: 20 },  // Amount
+                        3: { cellWidth: 25 },  // Person
+                        4: { cellWidth: 50 },  // Description
+                        5: { cellWidth: 20 },  // Recurring
+                        6: { cellWidth: 15 }   // Fixed
+                    }
+                });
+                
+                // Add category summary
+                const categoryTotals = {};
+                filteredExpenses.forEach(expense => {
+                    categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+                });
+                
+                const finalY = doc.lastAutoTable.finalY || 60;
+                doc.setFontSize(14);
+                doc.setFont(undefined, 'bold');
+                doc.text('Summary by Category:', 14, finalY + 15);
+                doc.setFont(undefined, 'normal');
+                doc.setFontSize(10);
+                
+                let yPos = finalY + 25;
+                Object.entries(categoryTotals)
+                    .sort((a, b) => b[1] - a[1])
+                    .forEach(([category, total]) => {
+                        const percentage = ((total / totalAmount) * 100).toFixed(1);
+                        doc.text(`${category}: €${total.toFixed(2)} (${percentage}%)`, 14, yPos);
+                        yPos += 7;
+                    });
+                
+                // Save the PDF
+                const filename = `expense_report_${new Date().toISOString().split('T')[0]}.pdf`;
+                doc.save(filename);
+                
+                showNotification('✅ Expense report exported to PDF successfully!', 'success');
+            } catch (error) {
+                console.error('PDF export error:', error);
+                showNotification('❌ Failed to export to PDF. Please try again.', 'error');
+            }
         }
 
         // Dark mode toggle
