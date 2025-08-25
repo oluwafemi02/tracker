@@ -6516,27 +6516,37 @@
                     `;
                 });
 
-            let expensesHtml = '';
+            const expensesContainer = document.createElement('div');
             sortedExpenses.forEach(expense => {
                 const icon = categoryIcons[expense.category] || '📝';
                 const date = new Date(expense.date).toLocaleDateString();
                 const isRecurring = expense.isRecurring || expense.parentRecurringId;
                 
-                expensesHtml += `
-                    <div class="expense-item ${isRecurring ? 'recurring-expense-item' : ''}">
-                        <div class="expense-info">
-                            <div class="expense-description">
-                                ${icon} ${escapeHtml(expense.description)}
-                                ${isRecurring ? ' <span style="font-size: 0.8em; color: var(--primary-color);">🔄</span>' : ''}
-                            </div>
-                            <div class="expense-details">
-                                ${expense.category} • ${expense.person} • ${date}
-                            </div>
+                const expenseDiv = document.createElement('div');
+                expenseDiv.className = `expense-item ${isRecurring ? 'recurring-expense-item' : ''}`;
+                expenseDiv.style.cursor = 'pointer';
+                expenseDiv.title = 'Click to view/edit expense';
+                expenseDiv.addEventListener('click', () => {
+                    closeSpentBreakdownModal();
+                    editExpense(expense.id);
+                });
+                
+                expenseDiv.innerHTML = `
+                    <div class="expense-info">
+                        <div class="expense-description">
+                            ${icon} ${escapeHtml(expense.description)}
+                            ${isRecurring ? ' <span style="font-size: 0.8em; color: var(--primary-color);">🔄</span>' : ''}
                         </div>
-                        <div class="expense-amount">€${expense.amount.toFixed(2)}</div>
+                        <div class="expense-details">
+                            ${expense.category} • ${expense.person} • ${date}
+                        </div>
                     </div>
+                    <div class="expense-amount">€${expense.amount.toFixed(2)}</div>
                 `;
+                
+                expensesContainer.appendChild(expenseDiv);
             });
+            const expensesHtml = expensesContainer.innerHTML;
 
             content.innerHTML = `
                 <div style="max-height: 70vh; overflow-y: auto;">
@@ -7822,6 +7832,49 @@
             // Create details section
             const detailsDiv = document.createElement('div');
             detailsDiv.className = 'recurring-details';
+            detailsDiv.style.cursor = 'pointer';
+            detailsDiv.title = 'Click to view/edit recurring expense';
+            detailsDiv.addEventListener('click', () => {
+                // Find the most recent expense from this recurring template
+                const recentExpense = expenses.find(e => e.parentRecurringId === recurring.id) || 
+                                    expenses.find(e => e.id === recurring.originalExpenseId);
+                if (recentExpense) {
+                    closeRecurringModal();
+                    editExpense(recentExpense.id);
+                } else {
+                    // Create a temporary expense object for editing
+                    const tempExpense = {
+                        id: recurring.originalExpenseId || recurring.id,
+                        amount: recurring.amount,
+                        category: recurring.category,
+                        person: recurring.person,
+                        description: recurring.description,
+                        date: recurring.lastProcessedDate || new Date().toISOString().split('T')[0],
+                        isRecurring: true,
+                        recurringFrequency: recurring.frequency,
+                        recurringEndDate: recurring.endDate || '',
+                        fixed: recurring.fixed !== undefined ? recurring.fixed : true
+                    };
+                    closeRecurringModal();
+                    // Fill the form manually
+                    document.getElementById('amount').value = tempExpense.amount;
+                    document.getElementById('category').value = tempExpense.category;
+                    document.getElementById('person').value = tempExpense.person;
+                    document.getElementById('description').value = tempExpense.description;
+                    document.getElementById('date').value = tempExpense.date;
+                    document.getElementById('isRecurring').checked = true;
+                    document.getElementById('recurringOptions').style.display = 'block';
+                    document.getElementById('recurringFrequency').value = tempExpense.recurringFrequency;
+                    document.getElementById('recurringEndDate').value = tempExpense.recurringEndDate;
+                    if (document.getElementById('isFixedCost')) {
+                        document.getElementById('isFixedCost').checked = tempExpense.fixed;
+                    }
+                    editingExpenseId = tempExpense.id;
+                    document.getElementById('cancelEdit').style.display = 'inline-flex';
+                    document.querySelector('.expense-form').scrollIntoView({ behavior: 'smooth' });
+                    showNotification('Editing recurring expense template...', 'success');
+                }
+            });
             
             // Create title
             const titleH4 = document.createElement('h4');
