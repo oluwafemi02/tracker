@@ -12316,15 +12316,78 @@
         }
     </style>
     
-    <!-- Premium UI State Update Fix -->
+    <!-- Complete Premium UI State Fix -->
     <script>
     (function() {
-        // Function to update premium UI state
+        // Fix 1: Ensure validateLicense saves state properly
+        function fixPremiumManager() {
+            if (!window.premiumManager) {
+                setTimeout(fixPremiumManager, 100);
+                return;
+            }
+            
+            // Override validateLicense to be synchronous and save all state
+            window.premiumManager.validateLicense = function(licenseKey) {
+                if (licenseKey && licenseKey.startsWith('PREMIUM-')) {
+                    this.licenseKey = licenseKey;
+                    this.currentTier = 'PREMIUM';
+                    localStorage.setItem('premium_license', licenseKey);
+                    localStorage.setItem('premium_tier', 'PREMIUM');
+                    
+                    // Handle demo/trial licenses
+                    if (licenseKey.includes('DEMO')) {
+                        const trialEndDate = new Date();
+                        trialEndDate.setDate(trialEndDate.getDate() + 7);
+                        this.trialEndDate = trialEndDate;
+                        localStorage.setItem('premium_trial_end', trialEndDate.toISOString());
+                    }
+                    
+                    return true;
+                }
+                return false;
+            };
+            
+            // Fix 2: Reload premium state from localStorage
+            const savedTier = localStorage.getItem('premium_tier');
+            const savedLicense = localStorage.getItem('premium_license');
+            
+            if (savedTier === 'PREMIUM' && savedLicense) {
+                window.premiumManager.currentTier = 'PREMIUM';
+                window.premiumManager.licenseKey = savedLicense;
+            }
+            
+            // Check trial status
+            const trialEnd = localStorage.getItem('premium_trial_end');
+            if (trialEnd) {
+                const trialEndDate = new Date(trialEnd);
+                if (new Date() < trialEndDate) {
+                    window.premiumManager.currentTier = 'PREMIUM';
+                    window.premiumManager.trialEndDate = trialEndDate;
+                } else {
+                    // Trial expired
+                    localStorage.removeItem('premium_trial_end');
+                    localStorage.removeItem('premium_tier');
+                    if (savedLicense && savedLicense.includes('DEMO')) {
+                        localStorage.removeItem('premium_license');
+                        window.premiumManager.currentTier = 'FREE';
+                        window.premiumManager.licenseKey = null;
+                    }
+                }
+            }
+        }
+        
+        // Fix 3: Update UI function
         function updatePremiumUIState() {
             if (!window.premiumManager) {
                 setTimeout(updatePremiumUIState, 500);
                 return;
             }
+            
+            console.log('Premium state:', {
+                tier: window.premiumManager.currentTier,
+                canExportExcel: window.premiumManager.canExportExcel(),
+                canExportPDF: window.premiumManager.canExportPDF()
+            });
             
             // Update Export Excel button
             const exportExcelBtn = document.getElementById('exportExcelBtn');
@@ -12333,9 +12396,11 @@
                     exportExcelBtn.classList.remove('btn-warning');
                     exportExcelBtn.classList.add('btn-success');
                     exportExcelBtn.innerHTML = '📊 Export Excel';
-                    // Remove any premium badge
                     const badge = exportExcelBtn.querySelector('.premium-badge');
                     if (badge) badge.remove();
+                } else {
+                    exportExcelBtn.classList.remove('btn-success');
+                    exportExcelBtn.classList.add('btn-warning');
                 }
             }
             
@@ -12346,23 +12411,23 @@
                     exportPDFBtn.classList.remove('btn-warning');
                     exportPDFBtn.classList.add('btn-success');
                     exportPDFBtn.innerHTML = '📄 Export PDF';
-                    // Remove any premium badge
                     const badge = exportPDFBtn.querySelector('.premium-badge');
                     if (badge) badge.remove();
+                } else {
+                    exportPDFBtn.classList.remove('btn-success');
+                    exportPDFBtn.classList.add('btn-warning');
                 }
             }
         }
         
-        // Override the demo activation to update UI immediately
+        // Fix 4: Override the demo activation
         function overrideDemoActivation() {
             if (!window.premiumManager || !window.premiumManager.redirectToCheckout) {
-                setTimeout(overrideDemoActivation, 500);
+                setTimeout(overrideDemoActivation, 100);
                 return;
             }
             
-            const originalRedirect = window.premiumManager.redirectToCheckout;
             window.premiumManager.redirectToCheckout = function() {
-                // Track conversion attempt
                 if (window.analytics) {
                     window.analytics.track('checkout_started', {
                         source: 'paywall',
@@ -12370,17 +12435,18 @@
                     });
                 }
                 
-                // In production, this would redirect to your payment provider
                 alert('Payment integration coming soon! For now, enjoy the free version.');
                 
-                // For development/demo purposes
                 const mockLicense = `PREMIUM-${Date.now()}-DEMO-KEY`;
                 if (confirm('Would you like to activate a demo Premium license for testing?')) {
+                    // Use the fixed validateLicense
                     this.validateLicense(mockLicense);
+                    
+                    // Close modal
                     document.querySelector('.premium-paywall-modal')?.remove();
                     
                     // Update UI immediately
-                    updatePremiumUIState();
+                    setTimeout(updatePremiumUIState, 100);
                     
                     // Show success message
                     if (window.showNotification) {
@@ -12390,16 +12456,18 @@
             };
         }
         
+        // Initialize everything
+        fixPremiumManager();
+        overrideDemoActivation();
+        
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(updatePremiumUIState, 1000);
-            setTimeout(overrideDemoActivation, 500);
         });
         
-        // Also run immediately if DOM is already loaded
+        // Also run immediately if DOM is ready
         if (document.readyState === 'interactive' || document.readyState === 'complete') {
             setTimeout(updatePremiumUIState, 500);
-            setTimeout(overrideDemoActivation, 500);
         }
     })();
     </script>

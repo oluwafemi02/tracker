@@ -49,11 +49,12 @@ class PremiumManager {
         }
 
         // Check for trial
-        const trialEnd = localStorage.getItem('trial_end_date');
+        const trialEnd = localStorage.getItem('premium_trial_end') || localStorage.getItem('trial_end_date');
         if (trialEnd) {
             this.trialEndDate = new Date(trialEnd);
             if (this.isTrialActive()) {
                 this.currentTier = 'PREMIUM';
+                localStorage.setItem('premium_tier', 'PREMIUM');
             }
         }
     }
