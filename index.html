@@ -1299,6 +1299,23 @@
             transform: translateX(22px) !important;
         }
 
+        /* Fixed cost toggle functionality */
+        #isFixedCost:checked + .fixed-cost-toggle-slider {
+            background-color: #4CAF50 !important;
+        }
+
+        #isFixedCost:checked + .fixed-cost-toggle-slider span {
+            transform: translateX(22px) !important;
+        }
+
+        #isFixedCost:not(:checked) + .fixed-cost-toggle-slider {
+            background-color: #ccc !important;
+        }
+
+        #isFixedCost:not(:checked) + .fixed-cost-toggle-slider span {
+            transform: translateX(0) !important;
+        }
+
         /* Dark mode toggle functionality */
         #darkModeToggle:checked + .dark-mode-toggle-slider {
             background-color: #4285f4 !important;
@@ -3719,6 +3736,18 @@
                                                 <input type="date" id="recurringEndDate">
                                             </div>
                                         </div>
+                                        <div style="margin-top: 1rem; display: flex; align-items: center; gap: 0.5rem; padding: 0.75rem; background: #f3f4f6; border-radius: 8px;">
+                                            <span style="font-size: 1.2rem;">💰</span>
+                                            <label for="isFixedCost" style="flex: 1; margin: 0; cursor: pointer; font-weight: 500; color: #333;">
+                                                Mark as Fixed Cost
+                                            </label>
+                                            <label style="position: relative; display: inline-block; width: 50px; height: 28px;">
+                                                <input type="checkbox" id="isFixedCost" checked style="opacity: 0; width: 0; height: 0;">
+                                                <span class="fixed-cost-toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #4CAF50; transition: .4s; border-radius: 28px;">
+                                                    <span style="position: absolute; content: ''; height: 20px; width: 20px; right: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%;"></span>
+                                                </span>
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -3849,6 +3878,13 @@
                     <h2><span class="card-icon">📈</span> Expense Breakdown</h2>
                     <div class="chart-container">
                         <canvas id="expenseChart"></canvas>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h2><span class="card-icon">💰</span> Fixed vs Variable</h2>
+                    <div class="chart-container">
+                        <canvas id="fixedVariableChart"></canvas>
                     </div>
                 </div>
 
@@ -4916,6 +4952,27 @@
         let expenseChart = null;
         let filteredExpenses = [...expenses];
         let customCategories = JSON.parse(localStorage.getItem('customCategories')) || [];
+        
+        // Migrate existing expenses to include fixed field
+        function migrateExpenses() {
+            let migrated = false;
+            expenses = expenses.map(expense => {
+                if (expense.fixed === undefined) {
+                    migrated = true;
+                    // Default: recurring expenses are fixed, others are variable
+                    expense.fixed = expense.isRecurring || false;
+                }
+                return expense;
+            });
+            
+            if (migrated) {
+                localStorage.setItem('familyExpenses', JSON.stringify(expenses));
+                filteredExpenses = [...expenses];
+            }
+        }
+        
+        // Run migration on load
+        migrateExpenses();
         let recurringExpenses = JSON.parse(localStorage.getItem('recurringExpenses')) || [];
         let trackerType = localStorage.getItem('trackerType') || 'personal';
         let savingsGoal = parseFloat(localStorage.getItem('savingsGoal')) || 0;
@@ -5722,6 +5779,8 @@
             const recurringFrequency = document.getElementById('recurringFrequency').value;
             const recurringEndDate = document.getElementById('recurringEndDate').value;
 
+            const isFixedCost = document.getElementById('isFixedCost') ? document.getElementById('isFixedCost').checked : isRecurring;
+            
             const expense = {
                 id: editingExpenseId || Date.now(),
                 amount: amount,
@@ -5733,7 +5792,8 @@
                 isRecurring: isRecurring,
                 recurringFrequency: isRecurring ? recurringFrequency : null,
                 recurringEndDate: isRecurring && recurringEndDate ? recurringEndDate : null,
-                lastProcessedDate: isRecurring ? date : null
+                lastProcessedDate: isRecurring ? date : null,
+                fixed: isFixedCost
             };
             
             if (editingExpenseId) {
@@ -5881,7 +5941,8 @@
                             timestamp: new Date().toISOString(),
                             isRecurring: true,
                             recurringFrequency: recurring.frequency,
-                            parentRecurringId: recurring.id
+                            parentRecurringId: recurring.id,
+                            fixed: recurring.fixed !== undefined ? recurring.fixed : true // Default recurring to fixed
                         };
                         
                         expenses.push(newExpense);
@@ -6028,6 +6089,9 @@
             // Update chart
             updateExpenseChart(monthlyExpenses);
             
+            // Update Fixed vs Variable chart
+            updateFixedVariableChart(monthlyExpenses);
+            
             // Update upcoming recurring expenses
             updateUpcomingRecurringExpenses();
         }
@@ -6077,6 +6141,68 @@
                             labels: {
                                 padding: 20,
                                 usePointStyle: true
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update Fixed vs Variable chart
+        let fixedVariableChart = null;
+        function updateFixedVariableChart(monthlyExpenses) {
+            const ctx = document.getElementById('fixedVariableChart').getContext('2d');
+            
+            // Calculate fixed and variable costs
+            const fixedCosts = monthlyExpenses.filter(e => e.fixed).reduce((total, e) => total + e.amount, 0);
+            const variableCosts = monthlyExpenses.filter(e => !e.fixed).reduce((total, e) => total + e.amount, 0);
+            
+            const labels = ['Fixed Costs', 'Variable Costs'];
+            const data = [fixedCosts, variableCosts];
+            const colors = ['#10b981', '#3b82f6'];
+            
+            if (fixedVariableChart) {
+                fixedVariableChart.destroy();
+            }
+            
+            if (fixedCosts === 0 && variableCosts === 0) {
+                return;
+            }
+            
+            fixedVariableChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.parsed || 0;
+                                    const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${label}: €${value.toFixed(2)} (${percentage}%)`;
+                                }
                             }
                         }
                     }
@@ -6786,6 +6912,15 @@
 
                 contentDiv.appendChild(recurringSpan);
             }
+
+            // Add Fixed Cost badge
+            if (expense.fixed) {
+                const fixedSpan = document.createElement('span');
+                fixedSpan.className = 'fixed-cost-indicator';
+                fixedSpan.textContent = '💰 Fixed Cost';
+                fixedSpan.style.cssText = 'display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.125rem 0.5rem; background: #10b981; color: white; border-radius: 999px; font-size: 0.75rem; font-weight: 500; margin-left: 0.5rem;';
+                contentDiv.appendChild(fixedSpan);
+            }
             
             mainDiv.appendChild(iconDiv);
             mainDiv.appendChild(contentDiv);
@@ -6865,6 +7000,10 @@
                 document.getElementById('recurringOptions').style.display = 'block';
                 document.getElementById('recurringFrequency').value = expense.recurringFrequency || 'monthly';
                 document.getElementById('recurringEndDate').value = expense.recurringEndDate || '';
+                // Handle fixed cost toggle
+                if (document.getElementById('isFixedCost')) {
+                    document.getElementById('isFixedCost').checked = expense.fixed !== undefined ? expense.fixed : true;
+                }
             } else {
                 document.getElementById('isRecurring').checked = false;
                 document.getElementById('recurringOptions').style.display = 'none';
@@ -6884,6 +7023,11 @@
             document.getElementById('cancelEdit').style.display = 'none';
             document.getElementById('expenseForm').reset();
             document.getElementById('date').valueAsDate = new Date();
+            document.getElementById('isRecurring').checked = false;
+            document.getElementById('recurringOptions').style.display = 'none';
+            if (document.getElementById('isFixedCost')) {
+                document.getElementById('isFixedCost').checked = true; // Reset to default
+            }
             showNotification('Edit cancelled', 'success');
         }
 
@@ -7081,6 +7225,21 @@
                 
                 if (topCategory && categoryTotals[topCategory] > monthlyTotal * 0.4) {
                     recommendationText += `<br><br>💰 ${topCategory} represents a large portion of your spending. Look for ways to optimize these expenses.`;
+                }
+                
+                // Fixed vs Variable costs analysis
+                const fixedCosts = monthlyExpenses.filter(e => e.fixed).reduce((total, e) => total + e.amount, 0);
+                const variableCosts = monthlyTotal - fixedCosts;
+                const fixedCostPercentage = monthlyTotal > 0 ? (fixedCosts / monthlyTotal) * 100 : 0;
+                
+                recommendationText += `<br><br>💰 <strong>Fixed vs Variable Costs:</strong><br>`;
+                recommendationText += `Fixed Costs: €${fixedCosts.toFixed(2)} (${fixedCostPercentage.toFixed(1)}%)<br>`;
+                recommendationText += `Variable Costs: €${variableCosts.toFixed(2)} (${(100 - fixedCostPercentage).toFixed(1)}%)`;
+                
+                if (fixedCostPercentage > 70) {
+                    recommendationText += `<br><br>⚠️ Your fixed costs are high (${fixedCostPercentage.toFixed(1)}%). Consider reviewing recurring expenses to increase financial flexibility.`;
+                } else if (fixedCostPercentage < 50) {
+                    recommendationText += `<br><br>✅ Good balance! Your fixed costs are manageable, giving you flexibility in spending.`;
                 }
             }
 
@@ -7418,7 +7577,8 @@
                 endDate: expense.recurringEndDate,
                 lastProcessedDate: expense.date,
                 isActive: true,
-                created: new Date().toISOString()
+                created: new Date().toISOString(),
+                fixed: expense.fixed !== undefined ? expense.fixed : true // Default recurring to fixed
             };
         }
 
@@ -7501,7 +7661,8 @@
                     timestamp: new Date().toISOString(),
                     isRecurring: true,
                     recurringFrequency: recurring.frequency,
-                    parentRecurringId: recurring.id
+                    parentRecurringId: recurring.id,
+                    fixed: recurring.fixed !== undefined ? recurring.fixed : true // Recurring expenses default to fixed
                 };
                 
                 expenses.push(newExpense);
@@ -7655,6 +7816,9 @@
             document.getElementById('isRecurring').checked = false;
             document.getElementById('recurringOptions').style.display = 'none';
             document.getElementById('customCategoryGroup').style.display = 'none';
+            if (document.getElementById('isFixedCost')) {
+                document.getElementById('isFixedCost').checked = true; // Default to checked
+            }
         }
 
 
