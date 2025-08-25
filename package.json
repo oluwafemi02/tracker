@@ -4,11 +4,6 @@
   "description": "A Progressive Web App for tracking personal expenses",
   "author": "ExpenseTracker Team",
   "license": "MIT",
-  "homepage": "https://oluwafemi02.github.io/tracker",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/oluwafemi02/tracker.git"
-  },
   "keywords": [
     "expense-tracker",
     "pwa",
