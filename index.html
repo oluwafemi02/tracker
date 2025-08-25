@@ -4637,6 +4637,85 @@
             </div>
         </div>
     </div>
+    
+    <!-- Expense Detail View Modal -->
+    <div id="expenseDetailModal" class="modal">
+        <div class="modal-content expense-detail-modal">
+            <div class="expense-detail-header">
+                <h2 id="expenseDetailTitle">Expense Details</h2>
+                <button class="modal-close-btn" onclick="closeExpenseDetailModal()">&times;</button>
+            </div>
+            
+            <div class="expense-detail-body">
+                <!-- Basic Information Card -->
+                <div class="detail-card">
+                    <h3>📋 Basic Information</h3>
+                    <div class="detail-info-grid">
+                        <div class="detail-info-item">
+                            <span class="detail-label">Category</span>
+                            <span id="detailCategory" class="detail-value"></span>
+                        </div>
+                        <div class="detail-info-item">
+                            <span class="detail-label">Amount</span>
+                            <span id="detailAmount" class="detail-value amount"></span>
+                        </div>
+                        <div class="detail-info-item">
+                            <span class="detail-label">Person</span>
+                            <span id="detailPerson" class="detail-value"></span>
+                        </div>
+                        <div class="detail-info-item">
+                            <span class="detail-label">Description</span>
+                            <span id="detailDescription" class="detail-value"></span>
+                        </div>
+                        <div class="detail-info-item">
+                            <span class="detail-label">Date</span>
+                            <span id="detailDate" class="detail-value"></span>
+                        </div>
+                        <div class="detail-info-item">
+                            <span class="detail-label">Tags</span>
+                            <div id="detailTags" class="detail-tags"></div>
+                        </div>
+                    </div>
+                    <div id="detailNextPayment" class="next-payment-alert" style="display: none;">
+                        <span class="next-payment-icon">📅</span>
+                        <div>
+                            <strong>Next Payment Due</strong>
+                            <span id="nextPaymentDate"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Payment History -->
+                <div class="detail-card">
+                    <h3>📅 Payment History</h3>
+                    <div id="paymentHistoryTimeline" class="payment-timeline">
+                        <!-- Timeline will be populated dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Budget Impact Chart -->
+                <div class="detail-card">
+                    <h3>📊 Budget Impact Analysis</h3>
+                    <div class="chart-container">
+                        <canvas id="budgetImpactChart"></canvas>
+                    </div>
+                    <div id="budgetInsights" class="budget-insights">
+                        <!-- Insights will be populated dynamically -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="expense-detail-footer">
+                <button class="btn btn-warning" id="detailEditBtn">
+                    <span>✏️</span> Edit Expense
+                </button>
+                <button class="btn btn-danger" id="detailDeleteBtn">
+                    <span>🗑️</span> Delete Expense
+                </button>
+                <button class="btn btn-secondary" onclick="closeExpenseDetailModal()">Close</button>
+            </div>
+        </div>
+    </div>
 
     <!-- Interactive Guide Overlay -->
     <div id="guideOverlay" class="guide-overlay" style="display: none;">
