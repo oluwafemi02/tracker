@@ -1,4 +1,5 @@
-const CACHE_NAME = 'expense-tracker-v2.1.1-all-toggles-fix';
+const APP_VERSION = '0.0.1';
+const CACHE_NAME = `expense-tracker-v${APP_VERSION}`;
 const urlsToCache = [
   '/tracker/',
   '/tracker/index.html',

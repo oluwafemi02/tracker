@@ -11836,6 +11836,323 @@
             
             showNotification('📥 Trip expenses exported!', 'success');
         }
+
+        // Version Management System
+        let currentVersion = '0.0.1';
+        let updateAvailable = false;
+
+        // Check for updates
+        async function checkForUpdates() {
+            try {
+                const response = await fetch('version.json?t=' + Date.now());
+                const latestVersionData = await response.json();
+                const latestVersion = latestVersionData.version;
+                
+                // Get current version from localStorage or default
+                const storedVersion = localStorage.getItem('appVersion') || currentVersion;
+                
+                if (compareVersions(latestVersion, storedVersion) > 0) {
+                    updateAvailable = true;
+                    showUpdateNotification(latestVersion, storedVersion);
+                    
+                    // Update version in localStorage after notification
+                    localStorage.setItem('appVersion', latestVersion);
+                    currentVersion = latestVersion;
+                } else if (storedVersion !== currentVersion) {
+                    // App was updated in background
+                    showUpdateSuccessNotification(latestVersion);
+                    currentVersion = latestVersion;
+                }
+                
+                // Update version display
+                updateVersionDisplay(latestVersion);
+                
+            } catch (error) {
+                console.error('Error checking for updates:', error);
+            }
+        }
+
+        // Compare version strings (returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal)
+        function compareVersions(v1, v2) {
+            const parts1 = v1.split('.').map(Number);
+            const parts2 = v2.split('.').map(Number);
+            
+            for (let i = 0; i < 3; i++) {
+                if (parts1[i] > parts2[i]) return 1;
+                if (parts1[i] < parts2[i]) return -1;
+            }
+            return 0;
+        }
+
+        // Show update notification
+        function showUpdateNotification(newVersion, oldVersion) {
+            const notification = document.createElement('div');
+            notification.className = 'update-notification';
+            notification.innerHTML = `
+                <div class="update-content">
+                    <span class="update-icon">🎉</span>
+                    <div class="update-text">
+                        <strong>New Update Available!</strong>
+                        <span>Version ${newVersion} is ready (current: ${oldVersion})</span>
+                    </div>
+                    <div class="update-actions">
+                        <button class="btn btn-primary btn-sm" onclick="refreshApp()">
+                            <span>🔄</span> Refresh
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="dismissUpdateNotification(this)">
+                            Later
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            // Auto-dismiss after 10 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 10000);
+        }
+
+        // Show update success notification
+        function showUpdateSuccessNotification(version) {
+            const notification = document.createElement('div');
+            notification.className = 'update-notification success';
+            notification.innerHTML = `
+                <div class="update-content">
+                    <span class="update-icon">✅</span>
+                    <div class="update-text">
+                        <strong>Updated Successfully!</strong>
+                        <span>Expense Tracker has been updated to v${version}</span>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(notification);
+            
+            // Auto-dismiss after 5 seconds
+            setTimeout(() => {
+                notification.remove();
+            }, 5000);
+        }
+
+        // Refresh app
+        function refreshApp() {
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    registrations.forEach(function(registration) {
+                        registration.unregister();
+                    });
+                });
+            }
+            // Clear caches and reload
+            if ('caches' in window) {
+                caches.keys().then(names => {
+                    names.forEach(name => {
+                        caches.delete(name);
+                    });
+                });
+            }
+            setTimeout(() => {
+                window.location.reload(true);
+            }, 100);
+        }
+
+        // Dismiss update notification
+        function dismissUpdateNotification(btn) {
+            btn.closest('.update-notification').remove();
+        }
+
+        // Update version display
+        function updateVersionDisplay(version) {
+            const versionElements = document.querySelectorAll('.app-version');
+            versionElements.forEach(el => {
+                el.textContent = `v${version}`;
+            });
+        }
+
+        // Initialize version checking
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check for updates on load
+            checkForUpdates();
+            
+            // Check for updates every 30 minutes
+            setInterval(checkForUpdates, 30 * 60 * 1000);
+            
+            // Listen for service worker updates
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.addEventListener('controllerchange', function() {
+                    showUpdateSuccessNotification(currentVersion);
+                });
+            }
+        });
     </script>
+
+    <!-- App Footer -->
+    <footer class="app-footer">
+        <div class="footer-content">
+            <span class="footer-item">
+                <span>📊</span> Expense Tracker PWA
+            </span>
+            <span class="footer-divider">•</span>
+            <span class="footer-item">
+                <span>🔖</span> Version <span class="app-version">0.0.1</span>
+            </span>
+            <span class="footer-divider">•</span>
+            <span class="footer-item">
+                <a href="https://github.com/oluwafemi02/tracker" target="_blank" rel="noopener">
+                    <span>📦</span> GitHub
+                </a>
+            </span>
+        </div>
+    </footer>
+
+    <style>
+        /* App Footer Styles */
+        .app-footer {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--card-bg);
+            border-top: 1px solid var(--border-color);
+            padding: 0.75rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            z-index: 100;
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .footer-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .footer-item a {
+            color: var(--primary-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .footer-item a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-divider {
+            color: var(--border-color);
+        }
+
+        .app-version {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        /* Update Notification Styles */
+        .update-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--card-bg);
+            border: 2px solid var(--primary-color);
+            border-radius: 12px;
+            padding: 1rem;
+            box-shadow: var(--shadow-lg);
+            z-index: 10000;
+            animation: slideIn 0.3s ease-out;
+            max-width: 400px;
+        }
+
+        .update-notification.success {
+            border-color: var(--success-color);
+        }
+
+        .update-content {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .update-icon {
+            font-size: 2rem;
+            flex-shrink: 0;
+        }
+
+        .update-text {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .update-text strong {
+            color: var(--text-primary);
+            font-size: 1rem;
+        }
+
+        .update-text span {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+        }
+
+        .update-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .btn-sm {
+            padding: 0.25rem 0.75rem;
+            font-size: 0.85rem;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .update-notification {
+                right: 10px;
+                left: 10px;
+                max-width: none;
+            }
+
+            .update-content {
+                flex-wrap: wrap;
+            }
+
+            .update-actions {
+                width: 100%;
+                justify-content: flex-end;
+                margin-top: 0.5rem;
+            }
+
+            .app-footer {
+                padding-bottom: 60px; /* Account for FAB */
+            }
+        }
+
+        /* Adjust main content to account for footer */
+        body {
+            padding-bottom: 50px;
+        }
+    </style>
 </body>
 </html>
