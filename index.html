@@ -7829,7 +7829,7 @@
                 // Load XLSX library dynamically
                 showNotification('Loading Excel export library...', 'info');
                 const script = document.createElement('script');
-                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+                script.src = 'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js';
                 script.onload = () => {
                     performExcelExport();
                 };
@@ -7917,11 +7917,11 @@
                 // Load jsPDF library dynamically
                 showNotification('Loading PDF export library...', 'info');
                 const script = document.createElement('script');
-                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js';
+                script.src = 'https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js';
                 script.onload = () => {
                     // Load autotable plugin after jsPDF is loaded
                     const tableScript = document.createElement('script');
-                    tableScript.src = 'https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js';
+                    tableScript.src = 'https://cdn.jsdelivr.net/npm/jspdf-autotable@3.5.31/dist/jspdf.plugin.autotable.min.js';
                     tableScript.onload = () => {
                         performPDFExport();
                     };
