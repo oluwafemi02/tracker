@@ -7735,12 +7735,21 @@
             
             // Format amount with currency
             const expenseCurrency = expense.currency || mainCurrency;
-            let amountText = formatCurrencyAmount(expense.amount, expenseCurrency);
+            let amountText = '';
             
-            // Add conversion info if different currency
-            if (expenseCurrency !== mainCurrency && expense.exchangeRate) {
-                amountText += ` (≈ ${formatCurrencyAmount(expense.convertedAmount, mainCurrency)})`;
-                amountText += `\n💱 Rate: 1 ${expenseCurrency} = ${expense.exchangeRate} ${mainCurrency}`;
+            // Show amounts based on currency
+            if (expenseCurrency === mainCurrency) {
+                amountText = formatCurrencyAmount(expense.amount, mainCurrency);
+            } else {
+                // Show converted amount as primary
+                const convertedAmount = expense.convertedAmount || expense.amount;
+                amountText = formatCurrencyAmount(convertedAmount, mainCurrency);
+                
+                // Show original amount and exchange rate
+                amountText += `\n(${formatCurrencyAmount(expense.amount, expenseCurrency)})`;
+                if (expense.exchangeRate) {
+                    amountText += `\n💱 Rate: 1 ${expenseCurrency} = ${expense.exchangeRate} ${mainCurrency}`;
+                }
             }
             
             document.getElementById('detailAmount').textContent = amountText;
@@ -8378,14 +8387,20 @@
             
             // Format amount with currency
             const expenseCurrency = expense.currency || mainCurrency;
-            const originalAmount = formatCurrencyAmount(expense.amount, expenseCurrency);
             
-            let amountHtml = highlightSearchTerms(originalAmount, searchTerm);
+            let amountHtml = '';
             
-            // Add converted amount if different currency
-            if (expenseCurrency !== mainCurrency && expense.convertedAmount) {
-                const convertedAmount = formatCurrencyAmount(expense.convertedAmount, mainCurrency);
-                amountHtml += `<br><small style="opacity: 0.7;">(≈ ${highlightSearchTerms(convertedAmount, searchTerm)})</small>`;
+            // If expense is in main currency, just show the amount
+            if (expenseCurrency === mainCurrency) {
+                amountHtml = highlightSearchTerms(formatCurrencyAmount(expense.amount, mainCurrency), searchTerm);
+            } else {
+                // If different currency, show converted amount as main display
+                const convertedAmount = expense.convertedAmount || expense.amount;
+                amountHtml = highlightSearchTerms(formatCurrencyAmount(convertedAmount, mainCurrency), searchTerm);
+                
+                // Show original amount as secondary info
+                const originalAmount = formatCurrencyAmount(expense.amount, expenseCurrency);
+                amountHtml += `<br><small style="opacity: 0.7;">(${highlightSearchTerms(originalAmount, searchTerm)})</small>`;
             }
             
             amountDiv.innerHTML = amountHtml;

@@ -1,5 +1,5 @@
 {
-  "version": "0.0.8",
+  "version": "0.0.9",
   "releaseDate": "2024-01-15",
-  "description": "Fix guide i18n error - made guide steps dynamic to load after translations"
+  "description": "Fix currency conversion display - show converted amount as primary in expenses list"
 }
