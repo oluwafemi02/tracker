@@ -1,4 +1,4 @@
-const APP_VERSION = '0.3.4';
+const APP_VERSION = '0.3.5';
 const CACHE_NAME = `expense-tracker-v${APP_VERSION}`;
 const urlsToCache = [
   '/tracker/',
@@ -145,7 +145,18 @@ self.addEventListener('push', event => {
 
   if (event.data) {
     try {
-      const data = event.data.json();
+      // Try to parse as JSON first
+      let data;
+      try {
+        data = event.data.json();
+      } catch (jsonError) {
+        // If not JSON, treat as plain text
+        data = {
+          body: event.data.text(),
+          title: 'Expense Tracker'
+        };
+      }
+      
       options.title = data.title || 'Expense Tracker';
       options.body = data.body || options.body;
       options.icon = data.icon || options.icon;
@@ -187,12 +198,24 @@ self.addEventListener('push', event => {
         ];
       }
     } catch (error) {
-      console.error('Error parsing push notification data:', error);
+      console.error('Error processing push notification:', error);
+      // Use fallback options if processing fails
     }
   }
 
+  // Check if we have permission to show notifications
   event.waitUntil(
-    self.registration.showNotification(options.title || 'Expense Tracker', options)
+    (async () => {
+      try {
+        // In service workers, we can show notifications without checking permission
+        // as push notifications require permission to be granted already
+        await self.registration.showNotification(options.title || 'Expense Tracker', options);
+      } catch (error) {
+        console.error('Failed to show notification:', error);
+        // If notification fails, we can still handle the push event
+        // Perhaps store it for later or sync data
+      }
+    })()
   );
 });
 

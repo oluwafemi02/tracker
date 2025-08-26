@@ -1,5 +1,5 @@
 {
-  "version": "0.3.4",
+  "version": "0.3.5",
   "releaseDate": "2024-01-15",
-  "description": "Fix dashboard function reference errors - make all dashboard functions globally accessible"
+  "description": "Fix push notification errors - handle non-JSON data and permission failures gracefully"
 }
