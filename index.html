@@ -7800,10 +7800,12 @@
             // Update new enhanced charts only if dashboard tab is active
             const dashboardTab = document.getElementById('dashboardTab');
             if (dashboardTab && dashboardTab.classList.contains('active')) {
-                updateSpendingTrendChart();
-                updateCategoryBudgetChart();
-                updateCashFlowSummary();
-                generateSmartInsights();
+                requestAnimationFrame(() => {
+                    updateSpendingTrendChart();
+                    updateCategoryBudgetChart();
+                    updateCashFlowSummary();
+                    generateSmartInsights();
+                });
             }
         }
 
@@ -10171,7 +10173,9 @@
             
             // Update dashboard if switching to dashboard tab
             if (tabName === 'dashboard') {
-                updateDashboard();
+                setTimeout(() => {
+                    initializeDashboard();
+                }, 100);
             }
             
             // Initialize travel tab if switching to travel tab
@@ -14165,6 +14169,12 @@
 
         // Update all dashboard data
         function updateDashboardData() {
+            // Only update if dashboard is active
+            const dashboardTab = document.getElementById('dashboardTab');
+            if (!dashboardTab || !dashboardTab.classList.contains('active')) {
+                return;
+            }
+            
             const dateRange = getDateRangeFilter();
             
             // Filter expenses for the selected period
@@ -14179,11 +14189,13 @@
             // Update existing dashboard components
             updateDashboard();
             
-            // Update new charts
-            updateSpendingTrendChart();
-            updateCategoryBudgetChart();
-            updateCashFlowSummary();
-            generateSmartInsights();
+            // Update new charts with a slight delay to ensure DOM is ready
+            requestAnimationFrame(() => {
+                updateSpendingTrendChart();
+                updateCategoryBudgetChart();
+                updateCashFlowSummary();
+                generateSmartInsights();
+            });
         }
 
         // Update dashboard metrics
@@ -14345,7 +14357,7 @@
             });
             
             // Group by day/week based on range
-            const groupedData = currentDateRange === 'year' ? 
+            const groupedData = dashboardState.periodType === 'year' ? 
                 groupExpensesByWeek(filteredExpenses) : 
                 groupExpensesByDay(filteredExpenses);
             
@@ -14372,10 +14384,23 @@
                 dashboardState.charts.spending.destroy();
             }
             
+            // Format labels for display
+            const formattedLabels = labels.map(label => {
+                if (dashboardState.periodType === 'year' && label.includes('-W')) {
+                    // Convert week format to readable
+                    const [year, week] = label.split('-W');
+                    return `Week ${parseInt(week)}`;
+                } else {
+                    // Convert date to readable format
+                    const date = new Date(label);
+                    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                }
+            });
+
             dashboardState.charts.spending = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: labels,
+                    labels: formattedLabels,
                     datasets: [{
                         label: t('charts.dailySpending') || 'Daily Spending',
                         data: data,
@@ -14402,6 +14427,12 @@
                         }
                     },
                     scales: {
+                        x: {
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 10
+                            }
+                        },
                         y: {
                             beginAtZero: true,
                             ticks: {
@@ -14435,11 +14466,22 @@
                 categoryTotals[category] = (categoryTotals[category] || 0) + getAmountInMainCurrency(expense);
             });
             
-            // Calculate category budgets (proportional to monthly budget)
+            // Calculate appropriate budget based on period
+            let periodBudget = monthlyBudget;
+            if (dashboardState.periodType === 'year') {
+                periodBudget = monthlyBudget * 12;
+            } else if (dashboardState.periodType === 'quarter') {
+                periodBudget = monthlyBudget * 3;
+            }
+            
+            // Calculate category budgets (proportional to period budget)
             const totalSpent = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
-            Object.keys(categoryTotals).forEach(category => {
-                categoryBudgets[category] = (categoryTotals[category] / totalSpent) * monthlyBudget;
-            });
+            if (totalSpent > 0 && periodBudget > 0) {
+                Object.keys(categoryTotals).forEach(category => {
+                    // Allocate budget proportionally based on spending
+                    categoryBudgets[category] = (categoryTotals[category] / totalSpent) * periodBudget;
+                });
+            }
             
             const categories = Object.keys(categoryTotals);
             const spent = categories.map(cat => categoryTotals[cat]);
@@ -14667,8 +14709,10 @@
         function groupExpensesByDay(expenses) {
             const grouped = {};
             expenses.forEach(expense => {
-                const date = new Date(expense.date).toLocaleDateString();
-                grouped[date] = (grouped[date] || 0) + getAmountInMainCurrency(expense);
+                const expenseDate = new Date(expense.date);
+                // Format date as YYYY-MM-DD for proper sorting
+                const dateKey = expenseDate.toISOString().split('T')[0];
+                grouped[dateKey] = (grouped[dateKey] || 0) + getAmountInMainCurrency(expense);
             });
             return grouped;
         }
@@ -14677,8 +14721,9 @@
             const grouped = {};
             expenses.forEach(expense => {
                 const date = new Date(expense.date);
-                const week = getWeekNumber(date);
-                const key = `Week ${week}`;
+                const weekNum = getWeekNumber(date);
+                const year = date.getFullYear();
+                const key = `${year}-W${weekNum.toString().padStart(2, '0')}`;
                 grouped[key] = (grouped[key] || 0) + getAmountInMainCurrency(expense);
             });
             return grouped;

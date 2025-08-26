@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
+  "version": "0.3.1",
   "releaseDate": "2024-01-15",
-  "description": "Complete dashboard redesign with proper date selection and beautiful UI"
+  "description": "Fix dashboard charts not displaying data - spending trend, category budget, and cash flow"
 }
