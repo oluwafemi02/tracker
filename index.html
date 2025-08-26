@@ -10602,7 +10602,8 @@
          }
 
          // Interactive Guide System
-                 const guideSteps = [
+         function getGuideSteps() {
+             return [
             {
                 title: t('guide.step1.title'),
                 content: `
@@ -10622,17 +10623,17 @@
                 action: null
             },
             {
-                title: "📱 Progressive Web App Features",
+                title: t('guide.step2.title'),
                 content: `
-                    <h3>You're using a cutting-edge PWA!</h3>
-                    <p><strong>🚀 App-like Experience:</strong></p>
+                    <h3>${t('guide.step2.intro')}</h3>
+                    <p><strong>🚀 ${t('guide.step2.appExperience')}</strong></p>
                     <ul>
-                        <li>📱 Works offline once loaded</li>
-                        <li>🔔 Push notifications for reminders</li>
-                        <li>🏠 Add to home screen like a native app</li>
-                        <li>⚡ Lightning-fast performance</li>
-                        <li>🔒 Secure - all data stays on your device</li>
-                        <li>🔄 Automatic updates when online</li>
+                        <li>📱 ${t('guide.step2.offline')}</li>
+                        <li>🔔 ${t('guide.step2.notifications')}</li>
+                        <li>🏠 ${t('guide.step2.homeScreen')}</li>
+                        <li>⚡ ${t('guide.step2.performance')}</li>
+                        <li>🔒 ${t('guide.step2.secure')}</li>
+                        <li>🔄 ${t('guide.step2.updates')}</li>
                     </ul>
                     <p><strong>💡 Pro tip:</strong> Add this to your home screen for the best mobile experience!</p>
                 `,
@@ -10873,6 +10874,7 @@
                 action: null
             }
         ];
+         }
 
          let currentGuideStep = 0;
          let isGuideActive = false;
@@ -10881,19 +10883,20 @@
              if (isQuickTour) {
                  // Quick tour shows only essential steps: Expense tracking, Dashboard, Trip management, Data sync
                  currentGuideStep = 0;
-                 const quickSteps = [
-                     guideSteps[2],  // Smart Expense Tracking
-                     guideSteps[5],  // Interactive Dashboard
-                     guideSteps[7],  // Trip Management
-                     guideSteps[8],  // Data Sync
-                     guideSteps[12]  // Final steps
-                 ];
-                 showGuideStep(quickSteps, 0, true);
-             } else {
-                 // Full guide shows all steps
-                 currentGuideStep = 0;
-                 showGuideStep(guideSteps, 0, false);
-             }
+                                 const allSteps = getGuideSteps();
+                const quickSteps = [
+                    allSteps[2],  // Smart Expense Tracking
+                    allSteps[5],  // Interactive Dashboard
+                    allSteps[7],  // Trip Management
+                    allSteps[8],  // Data Sync
+                    allSteps[12]  // Final steps
+                ];
+                                 showGuideStep(quickSteps, 0, true);
+            } else {
+                // Full guide shows all steps
+                currentGuideStep = 0;
+                showGuideStep(getGuideSteps(), 0, false);
+            }
              
              isGuideActive = true;
              document.getElementById('guideOverlay').style.display = 'flex';

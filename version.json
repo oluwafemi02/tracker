@@ -1,5 +1,5 @@
 {
-  "version": "0.0.7",
+  "version": "0.0.8",
   "releaseDate": "2024-01-15",
-  "description": "Deep dive i18n fix - Settings tab, Insights, and ALL remaining English text eliminated"
+  "description": "Fix guide i18n error - made guide steps dynamic to load after translations"
 }

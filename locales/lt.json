@@ -539,7 +539,14 @@
       "feature1": "Įdiegti bet kuriame įrenginyje (mobiliajame, planšetėje, kompiuteryje)",
       "feature2": "Veikia neprisijungus - sekite išlaidas bet kur",
       "feature3": "Automatiniai atnaujinimai fone",
-      "feature4": "Vietinės programos patirtis su žiniatinklio lankstumu"
+      "feature4": "Vietinės programos patirtis su žiniatinklio lankstumu",
+      "appExperience": "Programos Tipo Patirtis:",
+      "offline": "Veikia neprisijungus, kai pakrauta",
+      "notifications": "Aktyvūs pranešimai priminimai",
+      "homeScreen": "Pridėti į pagrindinį ekraną kaip vietinę programą",
+      "performance": "Žaibiškai greitas veikimas",
+      "secure": "Saugu - visi duomenys lieka jūsų įrenginyje",
+      "updates": "Automatiniai atnaujinimai prisijungus"
     },
     "step3": {
       "title": "Išmanus išlaidų sekimas",

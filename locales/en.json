@@ -311,7 +311,14 @@
       "feature1": "Install on any device (mobile, tablet, desktop)",
       "feature2": "Works offline - track expenses anywhere",
       "feature3": "Automatic updates in the background",
-      "feature4": "Native app experience with web flexibility"
+      "feature4": "Native app experience with web flexibility",
+      "appExperience": "App-like Experience:",
+      "offline": "Works offline once loaded",
+      "notifications": "Push notifications for reminders",
+      "homeScreen": "Add to home screen like a native app",
+      "performance": "Lightning-fast performance",
+      "secure": "Secure - all data stays on your device",
+      "updates": "Automatic updates when online"
     },
     "step3": {
       "title": "Smart Expense Tracking",
