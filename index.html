@@ -4084,8 +4084,16 @@
                                 <div class="form-grid">
                                     <div class="input-group">
                                         <span class="input-icon">💰</span>
-                                        <label for="travelAmount">Amount (€)</label>
+                                        <label for="travelAmount">Amount</label>
                                         <input type="number" id="travelAmount" step="0.01" required placeholder="0.00">
+                                    </div>
+                                    
+                                    <div class="input-group">
+                                        <span class="input-icon">💱</span>
+                                        <label for="travelCurrency">Currency</label>
+                                        <select id="travelCurrency" required>
+                                            <!-- Will be populated dynamically -->
+                                        </select>
                                     </div>
                                     
                                     <div class="input-group">
@@ -4285,6 +4293,14 @@
                                     <label for="newTripBudget">Budget (optional)</label>
                                     <input type="number" id="newTripBudget" step="0.01" placeholder="0.00">
                                 </div>
+                                
+                                <div class="input-group">
+                                    <span class="input-icon">💱</span>
+                                    <label for="newTripCurrency">Trip Currency</label>
+                                    <select id="newTripCurrency">
+                                        <!-- Will be populated dynamically -->
+                                    </select>
+                                </div>
                             </div>
                             
                             <div style="margin-top: 1rem;">
@@ -4423,6 +4439,16 @@
                         </div>
                     </div>
                     <button class="btn" id="setBudgetBtn">💾 Set Budget</button>
+                </div>
+                
+                <div style="margin-top: 2rem;">
+                    <h3>💱 Exchange Rate History</h3>
+                    <div id="exchangeRateHistory" style="margin-bottom: 2rem;">
+                        <div class="exchange-rate-list" style="max-height: 200px; overflow-y: auto;">
+                            <!-- Will be populated dynamically -->
+                        </div>
+                        <button class="btn btn-sm" onclick="clearExchangeHistory()" style="margin-top: 1rem;">🗑️ Clear History</button>
+                    </div>
                 </div>
                 
                 <div style="margin-top: 2rem;">
@@ -5488,6 +5514,9 @@
             // Initialize currency dropdowns
             populateCurrencyDropdowns();
             
+            // Initialize exchange rate history display
+            updateExchangeRateHistoryDisplay();
+            
             // Load dark mode preference
             const isDarkMode = localStorage.getItem('darkMode') === 'true';
             if (isDarkMode) {
@@ -6239,16 +6268,31 @@
         function populateCurrencyDropdowns() {
             const currencySelect = document.getElementById('currency');
             const mainCurrencySelect = document.getElementById('mainCurrencySelect');
+            const tripCurrencySelect = document.getElementById('newTripCurrency');
+            const travelCurrencySelect = document.getElementById('travelCurrency');
             
             Object.keys(CURRENCIES).forEach(code => {
                 const option = new Option(`${code} - ${CURRENCIES[code].name}`, code);
                 currencySelect.appendChild(option.cloneNode(true));
-                mainCurrencySelect.appendChild(option);
+                mainCurrencySelect.appendChild(option.cloneNode(true));
+                if (tripCurrencySelect) {
+                    tripCurrencySelect.appendChild(option.cloneNode(true));
+                }
+                if (travelCurrencySelect) {
+                    travelCurrencySelect.appendChild(option.cloneNode(true));
+                }
             });
             
             // Set default values
             currencySelect.value = mainCurrency;
             mainCurrencySelect.value = mainCurrency;
+            if (tripCurrencySelect) {
+                tripCurrencySelect.value = mainCurrency;
+            }
+            if (travelCurrencySelect) {
+                // Default to current trip currency or main currency
+                travelCurrencySelect.value = (currentTrip && currentTrip.currency) || mainCurrency;
+            }
             updateBudgetCurrencySymbol();
         }
         
@@ -6325,10 +6369,69 @@
             exchangeRates[rateKey] = rate;
             localStorage.setItem('exchangeRates', JSON.stringify(exchangeRates));
             
+            // Track exchange rate history
+            trackExchangeRateHistory(fromCurrency, mainCurrency, rate);
+            
             closeExchangeRateModal();
             
             if (window.exchangeRateCallback) {
                 window.exchangeRateCallback(rate);
+            }
+        }
+        
+        // Exchange rate history tracking
+        let exchangeRateHistory = JSON.parse(localStorage.getItem('exchangeRateHistory')) || [];
+        
+        function trackExchangeRateHistory(fromCurrency, toCurrency, rate) {
+            const entry = {
+                from: fromCurrency,
+                to: toCurrency,
+                rate: rate,
+                date: new Date().toISOString()
+            };
+            
+            // Keep only last 50 entries
+            exchangeRateHistory.unshift(entry);
+            if (exchangeRateHistory.length > 50) {
+                exchangeRateHistory = exchangeRateHistory.slice(0, 50);
+            }
+            
+            localStorage.setItem('exchangeRateHistory', JSON.stringify(exchangeRateHistory));
+            updateExchangeRateHistoryDisplay();
+        }
+        
+        function updateExchangeRateHistoryDisplay() {
+            const historyContainer = document.querySelector('.exchange-rate-list');
+            if (!historyContainer) return;
+            
+            if (exchangeRateHistory.length === 0) {
+                historyContainer.innerHTML = '<p style="color: var(--text-secondary); text-align: center;">No exchange rate history yet</p>';
+                return;
+            }
+            
+            const historyHtml = exchangeRateHistory.slice(0, 10).map(entry => {
+                const date = new Date(entry.date);
+                const dateStr = date.toLocaleDateString();
+                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                
+                return `
+                    <div style="padding: 0.5rem; border-bottom: 1px solid var(--border-color);">
+                        <strong>1 ${entry.from} = ${entry.rate} ${entry.to}</strong>
+                        <br>
+                        <small style="color: var(--text-secondary)">${dateStr} at ${timeStr}</small>
+                    </div>
+                `;
+            }).join('');
+            
+            historyContainer.innerHTML = historyHtml;
+        }
+        
+        function clearExchangeHistory() {
+            if (confirm('Are you sure you want to clear all exchange rate history?')) {
+                exchangeRateHistory = [];
+                localStorage.removeItem('exchangeRateHistory');
+                updateExchangeRateHistoryDisplay();
+                showNotification('Exchange rate history cleared', 'success');
             }
         }
         
@@ -6708,10 +6811,25 @@
         function updateExpenseChart(monthlyExpenses) {
             const ctx = document.getElementById('expenseChart').getContext('2d');
             
-            // Calculate category totals
+            // Calculate category totals with currency tracking
             const categoryTotals = {};
+            const categoryOriginalAmounts = {}; // Track original amounts by currency
+            
             monthlyExpenses.forEach(expense => {
-                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+                const category = expense.category;
+                const convertedAmount = getAmountInMainCurrency(expense);
+                
+                categoryTotals[category] = (categoryTotals[category] || 0) + convertedAmount;
+                
+                // Track original amounts by currency for tooltips
+                if (!categoryOriginalAmounts[category]) {
+                    categoryOriginalAmounts[category] = {};
+                }
+                const currency = expense.currency || mainCurrency;
+                if (!categoryOriginalAmounts[category][currency]) {
+                    categoryOriginalAmounts[category][currency] = 0;
+                }
+                categoryOriginalAmounts[category][currency] += expense.amount;
             });
             
             const labels = Object.keys(categoryTotals);
@@ -6749,6 +6867,38 @@
                             labels: {
                                 padding: 20,
                                 usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const category = labels[context.dataIndex];
+                                    const convertedAmount = context.parsed;
+                                    const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+                                    
+                                    let label = `${category}: ${currencySymbol}${convertedAmount.toFixed(2)}`;
+                                    
+                                    // Add original amounts if different currencies were used
+                                    const originals = categoryOriginalAmounts[category];
+                                    const currencyBreakdown = [];
+                                    
+                                    Object.entries(originals).forEach(([currency, amount]) => {
+                                        if (currency !== mainCurrency) {
+                                            const symbol = CURRENCIES[currency]?.symbol || currency;
+                                            currencyBreakdown.push(`${symbol}${amount.toFixed(2)}`);
+                                        }
+                                    });
+                                    
+                                    if (currencyBreakdown.length > 0) {
+                                        label += ` (includes: ${currencyBreakdown.join(', ')})`;
+                                    }
+                                    
+                                    const total = data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((convertedAmount / total) * 100).toFixed(1);
+                                    label += ` - ${percentage}%`;
+                                    
+                                    return label;
+                                }
                             }
                         }
                     }
@@ -11085,6 +11235,7 @@
                     const formData = {
                         amount: document.getElementById('travelAmount').value,
                         category: document.getElementById('travelCategory').value,
+                        currency: document.getElementById('travelCurrency').value,
                         date: document.getElementById('travelDate').value,
                         location: document.getElementById('travelLocation').value,
                         payer: document.getElementById('travelPayer').value,
@@ -11204,7 +11355,8 @@
                         destination: document.getElementById('newTripDestination').value,
                         startDate: document.getElementById('newTripStartDate').value,
                         endDate: document.getElementById('newTripEndDate').value,
-                        budget: document.getElementById('newTripBudget').value
+                        budget: document.getElementById('newTripBudget').value,
+                        currency: document.getElementById('newTripCurrency').value
                     };
 
                     if (window.editingTripId) {
@@ -11412,6 +11564,7 @@
                 startDate: tripData.startDate,
                 endDate: tripData.endDate,
                 budget: tripData.budget || 0,
+                currency: tripData.currency || mainCurrency,
                 status: 'active',
                 createdAt: new Date().toISOString()
             };
@@ -11648,7 +11801,12 @@
         function addTravelExpenseToMain(travelExpense) {
             const mainExpense = {
                 id: Date.now() + Math.random(), // Ensure unique ID
-                amount: travelExpense.amount,
+                amount: travelExpense.convertedAmount || travelExpense.amount,
+                currency: mainCurrency,
+                originalAmount: travelExpense.amount,
+                originalCurrency: travelExpense.currency,
+                exchangeRate: travelExpense.exchangeRate,
+                convertedAmount: travelExpense.convertedAmount || travelExpense.amount,
                 category: travelExpense.category,
                 person: travelExpense.payer || 'Family',
                 description: `${travelExpense.description} (Trip: ${currentTrip?.name || 'Unknown'})`,
@@ -11681,6 +11839,7 @@
                 id: Date.now(),
                 tripId: currentTrip.id,
                 amount: parseFloat(expenseData.amount),
+                currency: expenseData.currency || currentTrip.currency || mainCurrency,
                 category: expenseData.category,
                 date: expenseData.date,
                 location: expenseData.location || '',
@@ -11689,6 +11848,29 @@
                 deductFromMainBudget: expenseData.deductFromMainBudget || false,
                 createdAt: new Date().toISOString()
             };
+
+            // Check if currency conversion is needed for main budget deduction
+            if (expense.deductFromMainBudget && expense.currency !== mainCurrency) {
+                showExchangeRateModal(expense.currency, (rate) => {
+                    expense.exchangeRate = rate;
+                    expense.convertedAmount = getConvertedAmount(expense.amount, expense.currency, mainCurrency, rate);
+                    
+                    travelExpenses.push(expense);
+                    localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses));
+                    
+                    addTravelExpenseToMain(expense);
+                    
+                    renderTravelExpensesList();
+                    updateTravelCategoryBreakdown();
+                    updateTripStats();
+                    
+                    showNotification('✈️ Travel expense added!', 'success');
+                });
+                return;
+            }
+            
+            // If same currency or not deducting from main budget
+            expense.convertedAmount = expense.amount;
 
             travelExpenses.push(expense);
             localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses));
@@ -11797,7 +11979,8 @@
             
             if (currentTrip && (currentTrip.status === 'ongoing' || currentTrip.status === 'upcoming')) {
                 const statusEmoji = currentTrip.status === 'ongoing' ? '🟢' : '🟡';
-                tripNameElement.textContent = `${statusEmoji} ${currentTrip.name} (${currentTrip.destination})`;
+                const currencyText = currentTrip.currency && currentTrip.currency !== mainCurrency ? ` [${currentTrip.currency}]` : '';
+                tripNameElement.textContent = `${statusEmoji} ${currentTrip.name} (${currentTrip.destination})${currencyText}`;
                 manageTripBtn.textContent = '✈️ New Trip';
                 completeTripBtn.style.display = currentTrip.status === 'ongoing' ? 'block' : 'none';
             } else {
@@ -12091,6 +12274,7 @@
             document.getElementById('newTripStartDate').value = trip.startDate;
             document.getElementById('newTripEndDate').value = trip.endDate || '';
             document.getElementById('newTripBudget').value = trip.budget || '';
+            document.getElementById('newTripCurrency').value = trip.currency || mainCurrency;
             
             // Store the ID for updating
             window.editingTripId = tripId;
