@@ -6205,6 +6205,17 @@
             updateDashboard();
             filterAndRenderExpenses(); // Use new system
             
+            // If dashboard is the active tab on load, update the new charts
+            const dashboardTab = document.getElementById('dashboardTab');
+            if (dashboardTab && dashboardTab.classList.contains('active')) {
+                setTimeout(() => {
+                    updateSpendingTrendChart();
+                    updateCategoryBudgetChart();
+                    updateCashFlowSummary();
+                    generateSmartInsights();
+                }, 500);
+            }
+            
             // Setup keyboard shortcuts
             setupKeyboardShortcuts();
             
@@ -7477,11 +7488,14 @@
             // Update upcoming recurring expenses
             updateUpcomingRecurringExpenses();
             
-            // Update new enhanced charts
-            updateSpendingTrendChart();
-            updateCategoryBudgetChart();
-            updateCashFlowSummary();
-            generateSmartInsights();
+            // Update new enhanced charts only if dashboard tab is active
+            const dashboardTab = document.getElementById('dashboardTab');
+            if (dashboardTab && dashboardTab.classList.contains('active')) {
+                updateSpendingTrendChart();
+                updateCategoryBudgetChart();
+                updateCashFlowSummary();
+                generateSmartInsights();
+            }
         }
 
         // Update expense chart
@@ -13712,18 +13726,27 @@
         // Get date range for filtering
         function getDateRangeFilter() {
             const now = new Date();
+            now.setHours(23, 59, 59, 999); // End of today
             const startDate = new Date();
             
             switch(currentDateRange) {
                 case 'quarter':
-                    startDate.setMonth(now.getMonth() - 3);
+                    // Last 3 months
+                    startDate.setMonth(now.getMonth() - 2);
+                    startDate.setDate(1);
+                    startDate.setHours(0, 0, 0, 0);
                     break;
                 case 'year':
-                    startDate.setFullYear(now.getFullYear() - 1);
+                    // Last 12 months
+                    startDate.setMonth(now.getMonth() - 11);
+                    startDate.setDate(1);
+                    startDate.setHours(0, 0, 0, 0);
                     break;
                 case 'month':
                 default:
-                    startDate.setMonth(now.getMonth() - 1);
+                    // Current month only
+                    startDate.setDate(1);
+                    startDate.setHours(0, 0, 0, 0);
             }
             
             return { start: startDate, end: now };
@@ -13731,7 +13754,10 @@
 
         // Update spending trend chart
         function updateSpendingTrendChart() {
-            const ctx = document.getElementById('spendingTrendChart').getContext('2d');
+            const canvas = document.getElementById('spendingTrendChart');
+            if (!canvas) return; // Element not found, skip update
+            
+            const ctx = canvas.getContext('2d');
             const dateRange = getDateRangeFilter();
             
             // Filter expenses by date range
@@ -13747,6 +13773,22 @@
             
             const labels = Object.keys(groupedData).sort();
             const data = labels.map(date => groupedData[date]);
+            
+            // If no data, show empty state
+            if (labels.length === 0) {
+                if (spendingTrendChart) {
+                    spendingTrendChart.destroy();
+                    spendingTrendChart = null;
+                }
+                // Clear the canvas and show message
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.font = '16px system-ui';
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('No expense data for selected period', canvas.width / 2, canvas.height / 2);
+                return;
+            }
             
             if (spendingTrendChart) {
                 spendingTrendChart.destroy();
@@ -13797,7 +13839,10 @@
 
         // Update category vs budget chart
         function updateCategoryBudgetChart() {
-            const ctx = document.getElementById('categoryBudgetChart').getContext('2d');
+            const canvas = document.getElementById('categoryBudgetChart');
+            if (!canvas) return; // Element not found, skip update
+            
+            const ctx = canvas.getContext('2d');
             const dateRange = getDateRangeFilter();
             
             // Calculate category totals
@@ -13821,6 +13866,22 @@
             const categories = Object.keys(categoryTotals);
             const spent = categories.map(cat => categoryTotals[cat]);
             const budgets = categories.map(cat => categoryBudgets[cat]);
+            
+            // If no data, show empty state
+            if (categories.length === 0) {
+                if (categoryBudgetChart) {
+                    categoryBudgetChart.destroy();
+                    categoryBudgetChart = null;
+                }
+                // Clear the canvas and show message
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.font = '16px system-ui';
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('No category data for selected period', canvas.width / 2, canvas.height / 2);
+                return;
+            }
             
             if (categoryBudgetChart) {
                 categoryBudgetChart.destroy();
@@ -13880,6 +13941,15 @@
 
         // Update cash flow summary
         function updateCashFlowSummary() {
+            // Check if elements exist
+            const inflowAmountEl = document.getElementById('inflowAmount');
+            const outflowAmountEl = document.getElementById('outflowAmount');
+            const cashBalanceAmountEl = document.getElementById('cashBalanceAmount');
+            const inflowBarEl = document.getElementById('inflowBar');
+            const outflowBarEl = document.getElementById('outflowBar');
+            
+            if (!inflowAmountEl || !outflowAmountEl || !cashBalanceAmountEl) return;
+            
             const dateRange = getDateRangeFilter();
             
             // Calculate totals
@@ -13893,29 +13963,32 @@
             const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
             
             // Update displays
-            document.getElementById('inflowAmount').textContent = formatCurrencyAmount(totalBudget, mainCurrency);
-            document.getElementById('outflowAmount').textContent = formatCurrencyAmount(totalSpent, mainCurrency);
-            document.getElementById('cashBalanceAmount').textContent = formatCurrencyAmount(balance, mainCurrency);
+            inflowAmountEl.textContent = formatCurrencyAmount(totalBudget, mainCurrency);
+            outflowAmountEl.textContent = formatCurrencyAmount(totalSpent, mainCurrency);
+            cashBalanceAmountEl.textContent = formatCurrencyAmount(balance, mainCurrency);
             
             // Update bar widths
-            const maxAmount = Math.max(totalBudget, totalSpent);
-            document.getElementById('inflowBar').style.width = `${(totalBudget / maxAmount) * 100}%`;
-            document.getElementById('outflowBar').style.width = `${(totalSpent / maxAmount) * 100}%`;
+            const maxAmount = Math.max(totalBudget, totalSpent, 1); // Avoid division by zero
+            if (inflowBarEl) inflowBarEl.style.width = `${maxAmount > 0 ? (totalBudget / maxAmount) * 100 : 0}%`;
+            if (outflowBarEl) outflowBarEl.style.width = `${maxAmount > 0 ? (totalSpent / maxAmount) * 100 : 0}%`;
             
             // Update balance color
-            const balanceElement = document.getElementById('cashBalanceAmount');
-            if (balance < 0) {
-                balanceElement.style.color = '#f44336';
-            } else if (balance < totalBudget * 0.1) {
-                balanceElement.style.color = '#ff9800';
-            } else {
-                balanceElement.style.color = '#4caf50';
+            if (cashBalanceAmountEl) {
+                if (balance < 0) {
+                    cashBalanceAmountEl.style.color = '#f44336';
+                } else if (balance < totalBudget * 0.1) {
+                    cashBalanceAmountEl.style.color = '#ff9800';
+                } else {
+                    cashBalanceAmountEl.style.color = '#4caf50';
+                }
             }
         }
 
         // Generate smart insights
         function generateSmartInsights() {
             const insightsGrid = document.getElementById('smartInsightsGrid');
+            if (!insightsGrid) return; // Element not found, skip update
+            
             const insights = [];
             const dateRange = getDateRangeFilter();
             
@@ -14064,6 +14137,46 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(updatePremiumUIState, 1000);
+            
+            // Setup navigation tab click handlers
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', function(event) {
+                    const tabName = this.dataset.tab;
+                    
+                    // Hide all tab contents
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Remove active class from all nav tabs
+                    document.querySelectorAll('.nav-tab').forEach(navTab => {
+                        navTab.classList.remove('active');
+                    });
+                    
+                    // Show selected tab content
+                    document.getElementById(tabName + 'Tab').classList.add('active');
+                    
+                    // Add active class to clicked nav tab
+                    this.classList.add('active');
+                    
+                    // Update dashboard if switching to dashboard tab
+                    if (tabName === 'dashboard') {
+                        updateDashboard();
+                        // Force update of new charts
+                        setTimeout(() => {
+                            updateSpendingTrendChart();
+                            updateCategoryBudgetChart();
+                            updateCashFlowSummary();
+                            generateSmartInsights();
+                        }, 100);
+                    }
+                    
+                    // Initialize travel tab if switching to travel tab
+                    if (tabName === 'travel') {
+                        initializeTravelTab();
+                    }
+                });
+            });
         });
         
         // Also run immediately if DOM is ready

@@ -1,5 +1,5 @@
 {
-  "version": "0.2.0",
+  "version": "0.2.1",
   "releaseDate": "2024-01-15",
-  "description": "Enhanced dashboard with spending trends, category budgets, cash flow, and smart insights"
+  "description": "Fix dashboard charts not displaying - added proper error handling and tab navigation"
 }
