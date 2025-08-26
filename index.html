@@ -3713,7 +3713,7 @@
                                 <div class="input-group">
                                     <span class="input-icon">💰</span>
                                     <label for="amount">Amount</label>
-                                    <input type="number" id="amount" step="0.01" required placeholder="0.00">
+                                    <input type="number" id="amount" step="0.01" required placeholder="0.00" data-i18n-placeholder="placeholders.amount">
                                 </div>
                                 
                                 <div class="input-group">
@@ -5528,6 +5528,30 @@
                 }
             });
             
+            // Update placeholders
+            document.querySelectorAll('[data-i18n-placeholder]').forEach(element => {
+                const key = element.getAttribute('data-i18n-placeholder');
+                if (key) {
+                    element.placeholder = t(key);
+                }
+            });
+            
+            // Update titles
+            document.querySelectorAll('[data-i18n-title]').forEach(element => {
+                const key = element.getAttribute('data-i18n-title');
+                if (key) {
+                    element.title = t(key);
+                }
+            });
+            
+            // Update text content
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                const key = element.getAttribute('data-i18n');
+                if (key) {
+                    element.textContent = t(key);
+                }
+            });
+            
             // Update other UI elements - we'll do this section by section
             updateMainTabLanguage();
             updateTravelTabLanguage();
@@ -6521,14 +6545,14 @@
             const budget = parseFloat(budgetInput.value) || 0;
             
             if (budget < 0) {
-                showNotification('Budget cannot be negative', 'error');
+                showNotification(t('notifications.budgetNegative'), 'error');
                 return;
             }
             
             monthlyBudget = budget;
             localStorage.setItem('monthlyBudget', monthlyBudget);
             updateDashboard();
-            showNotification('Budget updated successfully!', 'success');
+            showNotification(t('notifications.budgetUpdated'), 'success');
         }
         // Currency Functions
         function populateCurrencyDropdowns() {
@@ -6792,7 +6816,7 @@
                 
                 editingExpenseId = null;
                 document.getElementById('cancelEdit').style.display = 'none';
-                showNotification('Expense updated successfully!', 'success');
+                showNotification(t('notifications.expenseUpdated'), 'success');
             } else {
                 expenses.push(expense);
                 
@@ -6801,9 +6825,9 @@
                     const recurringTemplate = createRecurringTemplate(expense);
                     recurringExpenses.push(recurringTemplate);
                     localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses));
-                    showNotification('Recurring expense created successfully!', 'success');
+                    showNotification(t('notifications.recurringCreated'), 'success');
                 } else {
-                    showNotification('Expense added successfully!', 'success');
+                    showNotification(t('notifications.expenseAdded'), 'success');
                 }
             }
             
@@ -8411,7 +8435,7 @@
             localStorage.setItem('familyExpenses', JSON.stringify(expenses));
             updateDashboard();
             filterAndRenderExpenses(); // Use new pagination system
-            showNotification('Expense deleted successfully!', 'success');
+            showNotification(t('notifications.expenseDeleted'), 'success');
             }
         }
 

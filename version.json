@@ -1,5 +1,5 @@
 {
-  "version": "0.0.3",
+  "version": "0.0.4",
   "releaseDate": "2024-01-15",
-  "description": "Added multi-language support (i18n) with 5 languages"
+  "description": "Complete i18n implementation with all missing translations"
 }
