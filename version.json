@@ -1,5 +1,5 @@
 {
-  "version": "0.3.3",
+  "version": "0.3.4",
   "releaseDate": "2024-01-15",
-  "description": "Fix subscription status errors - add getCurrentState method and global function access"
+  "description": "Fix dashboard function reference errors - make all dashboard functions globally accessible"
 }
