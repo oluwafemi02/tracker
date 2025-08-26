@@ -1,9 +1,14 @@
-const APP_VERSION = '0.0.2';
+const APP_VERSION = '0.0.3';
 const CACHE_NAME = `expense-tracker-v${APP_VERSION}`;
 const urlsToCache = [
   '/tracker/',
   '/tracker/index.html',
   '/tracker/manifest.json',
+  '/tracker/locales/en.json',
+  '/tracker/locales/lt.json',
+  '/tracker/locales/es.json',
+  '/tracker/locales/fr.json',
+  '/tracker/locales/de.json',
   // Only cache files that exist
 ];
 

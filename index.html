@@ -4424,6 +4424,14 @@
                 <h2><span class="card-icon">⚙️</span> Settings & Configuration</h2>
                 <div class="settings-grid">
                     <div class="form-group">
+                        <label for="languageSelect">Language</label>
+                        <select id="languageSelect">
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+                    <button class="btn" id="setLanguageBtn" onclick="changeLanguage()">🌐 Change Language</button>
+                    
+                    <div class="form-group">
                         <label for="mainCurrencySelect">Main Currency</label>
                         <select id="mainCurrencySelect">
                             <!-- Will be populated dynamically -->
@@ -5394,6 +5402,19 @@
         let mainCurrency = localStorage.getItem('mainCurrency') || detectDefaultCurrency();
         let exchangeRates = JSON.parse(localStorage.getItem('exchangeRates')) || {};
         
+        // i18n settings
+        let currentLanguage = localStorage.getItem('appLanguage') || detectDefaultLanguage();
+        let translations = {};
+        
+        // Supported languages
+        const LANGUAGES = {
+            'en': { name: 'English', flag: '🇬🇧' },
+            'lt': { name: 'Lietuvių', flag: '🇱🇹' },
+            'es': { name: 'Español', flag: '🇪🇸' },
+            'fr': { name: 'Français', flag: '🇫🇷' },
+            'de': { name: 'Deutsch', flag: '🇩🇪' }
+        };
+        
         // Supported currencies with symbols
         const CURRENCIES = {
             'USD': { symbol: '$', name: 'US Dollar' },
@@ -5441,6 +5462,245 @@
                 'en-ZA': 'ZAR'
             };
             return currencyMap[locale] || 'USD';
+        }
+        
+        // Detect default language based on browser settings
+        function detectDefaultLanguage() {
+            const locale = navigator.language || 'en-US';
+            const lang = locale.split('-')[0];
+            return LANGUAGES[lang] ? lang : 'en';
+        }
+        
+        // i18n translation functions
+        async function loadTranslations(lang) {
+            try {
+                const response = await fetch(`locales/${lang}.json`);
+                if (!response.ok) {
+                    throw new Error(`Failed to load ${lang} translations`);
+                }
+                translations = await response.json();
+                currentLanguage = lang;
+                localStorage.setItem('appLanguage', lang);
+                updateUILanguage();
+            } catch (error) {
+                console.error('Error loading translations:', error);
+                // Fallback to English
+                if (lang !== 'en') {
+                    await loadTranslations('en');
+                }
+            }
+        }
+        
+        // Get translated text
+        function t(key, params = {}) {
+            const keys = key.split('.');
+            let value = translations;
+            
+            for (const k of keys) {
+                value = value?.[k];
+                if (!value) break;
+            }
+            
+            if (!value) {
+                console.warn(`Translation missing for key: ${key}`);
+                return key;
+            }
+            
+            // Replace parameters like {{version}}
+            let result = value;
+            for (const [param, val] of Object.entries(params)) {
+                result = result.replace(new RegExp(`{{${param}}}`, 'g'), val);
+            }
+            
+            return result;
+        }
+        
+        // Update all UI elements with translations
+        function updateUILanguage() {
+            // Update page title
+            document.title = t('app.title');
+            
+            // Update navigation tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                const tabName = tab.getAttribute('onclick')?.match(/switchTab\('(\w+)'\)/)?.[1];
+                if (tabName && t(`nav.${tabName}`)) {
+                    tab.textContent = t(`nav.${tabName}`);
+                }
+            });
+            
+            // Update other UI elements - we'll do this section by section
+            updateMainTabLanguage();
+            updateTravelTabLanguage();
+            updateRecurringTabLanguage();
+            updateReportsTabLanguage();
+            updateSettingsTabLanguage();
+            
+            // Update categories and people dropdowns
+            updateDropdownsLanguage();
+        }
+        
+        // Update main tab language
+        function updateMainTabLanguage() {
+            // Budget overview
+            const budgetTitle = document.querySelector('#mainTab h2');
+            if (budgetTitle) budgetTitle.textContent = t('budget.title');
+            
+            // Budget labels
+            const budgetLabel = document.querySelector('label[for="monthlyBudget"]');
+            if (budgetLabel) budgetLabel.textContent = t('budget.monthly');
+            
+            // Set budget button
+            const setBudgetBtn = document.querySelector('#setBudgetBtn');
+            if (setBudgetBtn) setBudgetBtn.textContent = t('budget.set');
+            
+            // Expense form title
+            const expenseTitle = document.querySelector('#mainTab h3');
+            if (expenseTitle && expenseTitle.textContent.includes('Expense')) {
+                expenseTitle.textContent = editingExpenseId ? t('expense.edit') : t('expense.add');
+            }
+            
+            // Form labels
+            const amountLabel = document.querySelector('label[for="amount"]');
+            if (amountLabel) amountLabel.textContent = t('expense.amount');
+            
+            const categoryLabel = document.querySelector('label[for="category"]');
+            if (categoryLabel) categoryLabel.textContent = t('expense.category');
+            
+            const currencyLabel = document.querySelector('label[for="currency"]');
+            if (currencyLabel) currencyLabel.textContent = t('expense.currency');
+            
+            const personLabel = document.querySelector('label[for="person"]');
+            if (personLabel) personLabel.textContent = t('expense.person');
+            
+            const descriptionLabel = document.querySelector('label[for="description"]');
+            if (descriptionLabel) descriptionLabel.textContent = t('expense.description');
+            
+            const dateLabel = document.querySelector('label[for="date"]');
+            if (dateLabel) dateLabel.textContent = t('expense.date');
+            
+            // Submit button
+            const submitBtn = document.querySelector('#expenseForm button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.textContent = editingExpenseId ? t('expense.update') : t('expense.save');
+            }
+            
+            // Recent expenses title
+            const recentTitle = document.querySelector('.recent-expenses-header h3');
+            if (recentTitle) recentTitle.textContent = t('expense.recent');
+        }
+        
+        // Update travel tab language
+        function updateTravelTabLanguage() {
+            const travelTitle = document.querySelector('#travelTab h2');
+            if (travelTitle) travelTitle.textContent = t('travel.title');
+            
+            const travelDesc = document.querySelector('#travelTab p');
+            if (travelDesc) travelDesc.textContent = t('travel.description');
+            
+            // Update trip buttons
+            const newTripBtn = document.querySelector('#manageTripBtn');
+            if (newTripBtn) newTripBtn.textContent = t('travel.newTrip');
+            
+            const completeTripBtn = document.querySelector('#completeTripBtn');
+            if (completeTripBtn) completeTripBtn.textContent = t('travel.completeTrip');
+        }
+        
+        // Update recurring tab language
+        function updateRecurringTabLanguage() {
+            const recurringTitle = document.querySelector('#recurringTab h2');
+            if (recurringTitle) recurringTitle.textContent = t('recurring.title');
+            
+            const addRecurringBtn = document.querySelector('#addRecurringBtn');
+            if (addRecurringBtn) addRecurringBtn.textContent = t('recurring.add');
+        }
+        
+        // Update reports tab language
+        function updateReportsTabLanguage() {
+            const reportsTitle = document.querySelector('#reportsTab h2');
+            if (reportsTitle) reportsTitle.textContent = t('reports.title');
+            
+            // Export buttons
+            const exportExcelBtn = document.querySelector('.btn-excel');
+            if (exportExcelBtn) exportExcelBtn.innerHTML = exportExcelBtn.innerHTML.replace(/Export Excel/i, t('reports.exportExcel'));
+            
+            const exportPdfBtn = document.querySelector('.btn-pdf');
+            if (exportPdfBtn) exportPdfBtn.innerHTML = exportPdfBtn.innerHTML.replace(/Export PDF/i, t('reports.exportPDF'));
+        }
+        
+        // Update settings tab language
+        function updateSettingsTabLanguage() {
+            const settingsTitle = document.querySelector('#settingsTab h2');
+            if (settingsTitle) settingsTitle.textContent = t('settings.title');
+            
+            // Language label
+            const languageLabel = document.querySelector('label[for="languageSelect"]');
+            if (languageLabel) languageLabel.textContent = t('settings.language');
+            
+            // Currency settings
+            const currencyLabel = document.querySelector('label[for="mainCurrencySelect"]');
+            if (currencyLabel) currencyLabel.textContent = t('settings.mainCurrency');
+            
+            const setCurrencyBtn = document.querySelector('#setCurrencyBtn');
+            if (setCurrencyBtn) setCurrencyBtn.textContent = t('settings.setCurrency');
+            
+            // Other settings labels will be updated similarly
+        }
+        
+        // Update dropdowns language
+        function updateDropdownsLanguage() {
+            // Update category options
+            const categorySelects = document.querySelectorAll('select[id*="category"]');
+            categorySelects.forEach(select => {
+                select.querySelectorAll('option').forEach(option => {
+                    const value = option.value;
+                    if (value && t(`categories.${value.toLowerCase()}`)) {
+                        option.textContent = t(`categories.${value.toLowerCase()}`);
+                    }
+                });
+            });
+            
+            // Update person options
+            const personSelects = document.querySelectorAll('select[id*="person"]');
+            personSelects.forEach(select => {
+                select.querySelectorAll('option').forEach(option => {
+                    const value = option.value;
+                    if (value && t(`person.${value.toLowerCase()}`)) {
+                        option.textContent = t(`person.${value.toLowerCase()}`);
+                    }
+                });
+            });
+        }
+        
+        // Populate language dropdown
+        function populateLanguageDropdown() {
+            const languageSelect = document.getElementById('languageSelect');
+            if (!languageSelect) return;
+            
+            languageSelect.innerHTML = '';
+            
+            for (const [code, lang] of Object.entries(LANGUAGES)) {
+                const option = document.createElement('option');
+                option.value = code;
+                option.textContent = `${lang.flag} ${lang.name}`;
+                if (code === currentLanguage) {
+                    option.selected = true;
+                }
+                languageSelect.appendChild(option);
+            }
+        }
+        
+        // Change language
+        async function changeLanguage() {
+            const languageSelect = document.getElementById('languageSelect');
+            if (!languageSelect) return;
+            
+            const newLang = languageSelect.value;
+            if (newLang !== currentLanguage) {
+                await loadTranslations(newLang);
+                populateCurrencyDropdowns(); // Re-populate dropdowns with new language
+                populateLanguageDropdown(); // Update language dropdown
+                showNotification(t('common.success'), 'success');
+            }
         }
         
         // Migrate existing expenses to include fixed field
@@ -5507,9 +5767,15 @@
         let travelEditingId = null;
 
         // Initialize app
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             document.getElementById('date').valueAsDate = new Date();
             document.getElementById('monthlyBudget').value = monthlyBudget;
+            
+            // Load translations first
+            await loadTranslations(currentLanguage);
+            
+            // Initialize language dropdown
+            populateLanguageDropdown();
             
             // Initialize currency dropdowns
             populateCurrencyDropdowns();
