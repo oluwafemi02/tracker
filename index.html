@@ -3619,7 +3619,7 @@
             <!-- Budget Summary -->
             <div class="budget-summary" id="budgetSummaryMain">
                 <h2 style="margin: 0 0 1rem 0; font-size: 1.5rem;">💰 <span data-i18n="dashboard.monthlyOverview">Monthly Budget Overview</span></h2>
-                <div class="budget-amount" id="budgetAmountMain">€0</div>
+                <div class="budget-amount" id="budgetAmountMain">0</div>
                 <div class="budget-status" id="budgetStatusMain" data-i18n="budget.setToStart">Set your monthly budget to get started</div>
                 <div class="budget-progress-main">
                     <div class="budget-fill-main" id="budgetFillMain">
@@ -3628,10 +3628,10 @@
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 1rem;">
                     <div>
-                        <strong>Spent: </strong><span id="spentAmountMain">€0</span>
+                        <strong>Spent: </strong><span id="spentAmountMain">0</span>
                     </div>
                     <div>
-                        <strong>Remaining: </strong><span id="remainingAmountMain">€0</span>
+                        <strong>Remaining: </strong><span id="remainingAmountMain">0</span>
                     </div>
                 </div>
             </div>
@@ -9528,20 +9528,22 @@
                 return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
             });
             
-            const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
+            // Calculate total using converted amounts for foreign currencies
+            const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + getAmountInMainCurrency(expense), 0);
             const remaining = monthlyBudget - monthlyTotal;
             
             // Update main page elements with clickable amounts
-            document.getElementById('budgetAmountMain').textContent = `€${monthlyBudget.toFixed(2)}`;
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            document.getElementById('budgetAmountMain').textContent = `${currencySymbol}${monthlyBudget.toFixed(2)}`;
             
             // Make spent amount clickable
             const spentElement = document.getElementById('spentAmountMain');
-            spentElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">€${monthlyTotal.toFixed(2)}</span>`;
+            spentElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">${currencySymbol}${monthlyTotal.toFixed(2)}</span>`;
             spentElement.title = "Click to see detailed breakdown of spent amount";
             
             // Make remaining amount clickable
             const remainingElement = document.getElementById('remainingAmountMain');
-            remainingElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">€${remaining.toFixed(2)}</span>`;
+            remainingElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">${currencySymbol}${remaining.toFixed(2)}</span>`;
             remainingElement.title = "Click to see remaining budget breakdown and upcoming recurring expenses";
             
             // Make monthly total clickable too
@@ -9566,11 +9568,11 @@
                 budgetTextMain.textContent = `${Math.round(percentage)}%`;
                 
                 if (remaining >= 0) {
-                    budgetStatusMain.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">€${remaining.toFixed(2)} remaining this month</span>`;
+                    budgetStatusMain.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">${currencySymbol}${remaining.toFixed(2)} remaining this month</span>`;
                     budgetStatusMain.title = "Click to see remaining budget breakdown and upcoming recurring expenses";
                     budgetSummary.classList.remove('warning-budget');
                 } else {
-                    budgetStatusMain.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">€${Math.abs(remaining).toFixed(2)} over budget this month</span>`;
+                    budgetStatusMain.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">${currencySymbol}${Math.abs(remaining).toFixed(2)} over budget this month</span>`;
                     budgetStatusMain.title = "Click to see budget analysis and upcoming expenses";
                     budgetSummary.classList.add('warning-budget');
                 }
@@ -9583,12 +9585,12 @@
             
             // Update quick stats
             const avgDaily = monthlyExpenses.length > 0 ? monthlyTotal / new Date().getDate() : 0;
-            document.getElementById('avgDailyMain').textContent = `€${avgDaily.toFixed(2)}`;
+            document.getElementById('avgDailyMain').textContent = `${currencySymbol}${avgDaily.toFixed(2)}`;
             
             // Calculate top category for main page
             const categoryTotals = {};
             monthlyExpenses.forEach(expense => {
-                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + getAmountInMainCurrency(expense);
             });
             
             let topCategory = '-';
