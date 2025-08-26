@@ -5398,15 +5398,7 @@
         let filteredExpenses = [...expenses];
         let customCategories = JSON.parse(localStorage.getItem('customCategories')) || [];
         
-        // Currency settings
-        let mainCurrency = localStorage.getItem('mainCurrency') || detectDefaultCurrency();
-        let exchangeRates = JSON.parse(localStorage.getItem('exchangeRates')) || {};
-        
-        // i18n settings
-        let currentLanguage = localStorage.getItem('appLanguage') || detectDefaultLanguage();
-        let translations = {};
-        
-        // Supported languages
+        // Supported languages - Define first before using
         const LANGUAGES = {
             'en': { name: 'English', flag: '🇬🇧' },
             'lt': { name: 'Lietuvių', flag: '🇱🇹' },
@@ -5414,6 +5406,14 @@
             'fr': { name: 'Français', flag: '🇫🇷' },
             'de': { name: 'Deutsch', flag: '🇩🇪' }
         };
+        
+        // Currency settings
+        let mainCurrency = localStorage.getItem('mainCurrency') || detectDefaultCurrency();
+        let exchangeRates = JSON.parse(localStorage.getItem('exchangeRates')) || {};
+        
+        // i18n settings - Now LANGUAGES is available
+        let currentLanguage = localStorage.getItem('appLanguage') || detectDefaultLanguage();
+        let translations = {};
         
         // Supported currencies with symbols
         const CURRENCIES = {
