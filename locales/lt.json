@@ -1,7 +1,8 @@
 {
   "app": {
     "title": "Išlaidų Sekiklis",
-    "version": "Versija"
+    "version": "Versija",
+    "subtitle": "Sekite, valdykite ir optimizuokite savo išlaidas su išmaniomis įžvalgomis"
   },
   "nav": {
     "main": "Pagrindinis",
@@ -48,7 +49,9 @@
     "remaining": "Likutis",
     "of": "iš",
     "set": "Nustatyti Biudžetą",
-    "placeholder": "Įveskite mėnesio biudžetą"
+    "placeholder": "Įveskite mėnesio biudžetą",
+    "setToStart": "Nustatykite savo mėnesio biudžetą, kad pradėtumėte",
+    "setMonthly": "Nustatykite savo mėnesio biudžetą"
   },
   "expense": {
     "add": "Pridėti Išlaidas",
@@ -84,7 +87,8 @@
     "impact": "Budget Impact",
     "percentage": "{{percent}}% of monthly budget",
     "remaining": "{{amount}} remaining",
-    "overspent": "Overspent by {{amount}}"
+    "overspent": "Overspent by {{amount}}",
+    "descriptionOptional": "Aprašymas (neprivalomas)"
   },
   "categories": {
     "food": "Maistas",
@@ -150,7 +154,8 @@
     "pause": "Pristabdyti",
     "resume": "Tęsti",
     "total": "Iš viso pasikartojančių",
-    "addedSuccess": "Pasikartojanti išlaida sėkmingai sukurta!"
+    "addedSuccess": "Pasikartojanti išlaida sėkmingai sukurta!",
+    "endDateOptional": "Pabaigos Data (neprivaloma)"
   },
   "travel": {
     "title": "Kelionės Išlaidų Sekiklis",
@@ -176,7 +181,16 @@
     "noExpenses": "Šiai kelionei dar nepridėta išlaidų. Pradėkite sekti savo kelionės išlaidas!",
     "addExpense": "Pridėti prie Kelionės",
     "updateExpense": "Atnaujinti Išlaidas",
-    "categoryBreakdown": "Kategorijų Pasiskirstymas"
+    "categoryBreakdown": "Kategorijų Pasiskirstymas",
+    "noActiveTrip": "Nėra aktyvios kelionės",
+    "locationVendor": "Vieta/Tiekėjas",
+    "createNewTrip": "Sukurti Naują Kelionę",
+    "startNewTrip": "Pradėti Naują Kelionę",
+    "budgetOptional": "Biudžetas (neprivalomas)",
+    "startTrip": "Pradėti Kelionę",
+    "yourTrips": "Jūsų Kelionės",
+    "noBreakdown": "Pridėkite išlaidų, kad pamatytumėte kategorijų pasiskirstymą",
+    "createProjectFirst": "Sukurkite projektą ir pradėkite sekti savo išlaidas!"
   },
   "reports": {
     "title": "Ataskaitos ir Analizė",
@@ -235,7 +249,12 @@
     "manualInput": "Manual Link Input",
     "cameraReady": "Camera ready! Use manual link paste option below for now",
     "setupSync": "Set Up Sync",
-    "localSyncEnabled": "Local sync mode enabled - Use Export/Import to transfer data"
+    "localSyncEnabled": "Local sync mode enabled - Use Export/Import to transfer data",
+    "dataIsSynchronized": "Jūsų duomenys sinchronizuojami visuose įrenginiuose"
+  },
+  "pagination": {
+    "pageInfo": "Puslapis {{current}} iš {{total}}",
+    "showingExpenses": "Rodoma {{start}}-{{end}} iš {{total}} išlaidų"
   },
   "exchangeRate": {
     "title": "Valiutos Kursas",
@@ -273,9 +292,21 @@
     "totalExpenses": "Visos Išlaidos",
     "avgDaily": "Dienos Vidurkis",
     "biggestExpense": "Didžiausia Išlaida",
-    "expenseCount": "Išlaidų Skaičius"
+    "expenseCount": "Išlaidų Skaičius",
+    "topCategory": "Populiariausia Kategorija",
+    "daysLeft": "Liko Dienų",
+    "weeklyAvg": "Savaitės Vidurkis",
+    "projectedTotal": "Prognozuojama Suma"
   },
   "dashboard": "Skydelis",
+  "quickActions": {
+    "title": "Greiti Veiksmai",
+    "groceries": "Greiti Maisto Produktai",
+    "utilities": "Greitos Komunalinės",
+    "transport": "Greitas Transportas",
+    "mortgage": "Greita Hipoteka",
+    "carLoan": "Greita Auto Paskola"
+  },
   "insights": {
     "title": "Budget Insights",
     "topSpendingCategories": "Top Spending Categories",
@@ -444,7 +475,8 @@
     "learnMore": "Learn More",
     "getStarted": "Get Started",
     "continue": "Continue",
-    "done": "Done"
+    "done": "Done",
+    "exportJSON": "Eksportuoti JSON"
   },
   "expenses": "Išlaidos",
   "trips": "Kelionės"

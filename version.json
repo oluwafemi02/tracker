@@ -1,5 +1,5 @@
 {
-  "version": "0.0.4",
+  "version": "0.0.5",
   "releaseDate": "2024-01-15",
-  "description": "Complete i18n implementation with all missing translations"
+  "description": "Comprehensive i18n overhaul - ALL hardcoded strings replaced with translations"
 }

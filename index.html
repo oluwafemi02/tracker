@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Expense Tracker</title>
+    <title data-i18n="app.title">Expense Tracker</title>
     
     <!-- Security Headers -->
     <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https:;">
@@ -3580,12 +3580,12 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>💰 Expense Tracker</h1>
-            <p class="subtitle" id="appSubtitle">Track, manage, and optimize your expenses with smart insights</p>
+            <h1>💰 <span data-i18n="app.title">Expense Tracker</span></h1>
+            <p class="subtitle" id="appSubtitle" data-i18n="app.subtitle">Track, manage, and optimize your expenses with smart insights</p>
             
             <!-- Tracker Type Selector -->
             <div class="tracker-type-selector">
-                <label for="trackerType">Tracker Mode:</label>
+                <label for="trackerType" data-i18n="tracker.mode">Tracker Mode:</label>
                 <select id="trackerType" onchange="changeTrackerType()">
                     <option value="personal">👤 Personal</option>
                     <option value="family">👨‍👩‍👧‍👦 Family</option>
@@ -3595,16 +3595,16 @@
             
             <!-- Navigation Tabs -->
             <div class="nav-tabs">
-                <button class="nav-tab active" data-tab="main">📋 Expenses</button>
-                <button class="nav-tab" data-tab="travel">🧳 Trips</button>
-                <button class="nav-tab" data-tab="dashboard">📊 Dashboard</button>
-                <button class="nav-tab" data-tab="settings">⚙️ Settings</button>
+                <button class="nav-tab active" data-tab="main">📋 <span data-i18n="nav.expenses">Expenses</span></button>
+                <button class="nav-tab" data-tab="travel">🧳 <span data-i18n="nav.trips">Trips</span></button>
+                <button class="nav-tab" data-tab="dashboard">📊 <span data-i18n="nav.dashboard">Dashboard</span></button>
+                <button class="nav-tab" data-tab="settings">⚙️ <span data-i18n="nav.settings">Settings</span></button>
                 <button class="help-btn" id="helpBtn" title="Need help? Start the interactive guide!">❓</button>
             </div>
             
             <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 0.75rem; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px;">
                 <span style="font-size: 1rem;">🌙</span>
-                <span style="font-size: 0.9rem; color: #333; font-weight: 500;">Dark Mode</span>
+                <span style="font-size: 0.9rem; color: #333; font-weight: 500;" data-i18n="theme.dark">Dark Mode</span>
                 <label style="position: relative; display: inline-block; width: 50px; height: 28px;">
                     <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()" style="opacity: 0; width: 0; height: 0;">
                     <span class="dark-mode-toggle-slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 28px;">
@@ -3618,9 +3618,9 @@
         <div id="mainTab" class="tab-content active">
             <!-- Budget Summary -->
             <div class="budget-summary" id="budgetSummaryMain">
-                <h2 style="margin: 0 0 1rem 0; font-size: 1.5rem;">💰 Monthly Budget Overview</h2>
+                <h2 style="margin: 0 0 1rem 0; font-size: 1.5rem;">💰 <span data-i18n="dashboard.monthlyOverview">Monthly Budget Overview</span></h2>
                 <div class="budget-amount" id="budgetAmountMain">€0</div>
-                <div class="budget-status" id="budgetStatusMain">Set your monthly budget to get started</div>
+                <div class="budget-status" id="budgetStatusMain" data-i18n="budget.setToStart">Set your monthly budget to get started</div>
                 <div class="budget-progress-main">
                     <div class="budget-fill-main" id="budgetFillMain">
                         <span class="budget-text-main" id="budgetTextMain">0%</span>
@@ -3641,22 +3641,22 @@
                 <div class="quick-stat-card">
                     <span class="quick-stat-icon">📊</span>
                     <div class="quick-stat-value" id="monthlyTotalMain">€0</div>
-                    <div class="quick-stat-label">This Month</div>
+                    <div class="quick-stat-label" data-i18n="filters.thisMonth">This Month</div>
                 </div>
                 <div class="quick-stat-card">
                     <span class="quick-stat-icon">📅</span>
                     <div class="quick-stat-value" id="avgDailyMain">€0</div>
-                    <div class="quick-stat-label">Daily Average</div>
+                    <div class="quick-stat-label" data-i18n="stats.avgDaily">Daily Average</div>
                 </div>
                 <div class="quick-stat-card">
                     <span class="quick-stat-icon">📝</span>
                     <div class="quick-stat-value" id="expenseCountMain">0</div>
-                    <div class="quick-stat-label">Expenses</div>
+                    <div class="quick-stat-label" data-i18n="nav.expenses">Expenses</div>
                 </div>
                 <div class="quick-stat-card">
                     <span class="quick-stat-icon">🏆</span>
                     <div class="quick-stat-value" id="topCategoryMain">-</div>
-                    <div class="quick-stat-label">Top Category</div>
+                    <div class="quick-stat-label" data-i18n="stats.topCategory">Top Category</div>
                 </div>
             </div>
 
@@ -3664,10 +3664,10 @@
             <div class="smart-suggestions" id="smartSuggestions">
                 <div class="suggestions-header">
                     <span class="suggestions-icon">💡</span>
-                    <span class="suggestions-title">Smart Money Suggestions</span>
+                    <span class="suggestions-title" data-i18n="dashboard.smartSuggestions">Smart Money Suggestions</span>
                 </div>
                 <div id="suggestionsContent">
-                    <div class="no-suggestions">Add some expenses and set a budget to see personalized suggestions!</div>
+                    <div class="no-suggestions" data-i18n="dashboard.noSuggestions">Add some expenses and set a budget to see personalized suggestions!</div>
                 </div>
             </div>
 
@@ -3675,31 +3675,31 @@
             <div class="quick-actions">
                 <div class="quick-action" data-action="quick-form" data-category="Groceries">
                     <span>🛒</span>
-                    <span>Quick Groceries</span>
+                    <span data-i18n="quickActions.groceries">Quick Groceries</span>
                 </div>
                 <div class="quick-action" data-action="quick-form" data-category="Utilities">
                     <span>⚡</span>
-                    <span>Quick Utilities</span>
+                    <span data-i18n="quickActions.utilities">Quick Utilities</span>
                 </div>
                 <div class="quick-action" data-action="quick-form" data-category="Transportation">
                     <span>🚗</span>
-                    <span>Quick Transport</span>
+                    <span data-i18n="quickActions.transport">Quick Transport</span>
                 </div>
                 <div class="quick-action" data-action="quick-form" data-category="Mortgage">
                     <span>🏡</span>
-                    <span>Quick Mortgage</span>
+                    <span data-i18n="quickActions.mortgage">Quick Mortgage</span>
                 </div>
                 <div class="quick-action" data-action="quick-form" data-category="Car Loan/Lease">
                     <span>🚙</span>
-                    <span>Quick Car Loan</span>
+                    <span data-i18n="quickActions.carLoan">Quick Car Loan</span>
                 </div>
                 <div class="quick-action" data-action="show-insights">
                     <span>💡</span>
-                    <span>Insights</span>
+                    <span data-i18n="dashboard.insights">Insights</span>
                 </div>
                 <div class="quick-action" data-action="show-recurring">
                     <span>🔄</span>
-                    <span>Recurring</span>
+                    <span data-i18n="nav.recurring">Recurring</span>
                 </div>
             </div>
 
@@ -3712,13 +3712,13 @@
                             <div class="form-grid">
                                 <div class="input-group">
                                     <span class="input-icon">💰</span>
-                                    <label for="amount">Amount</label>
+                                    <label for="amount" data-i18n="expense.amount">Amount</label>
                                     <input type="number" id="amount" step="0.01" required placeholder="0.00" data-i18n-placeholder="placeholders.amount">
                                 </div>
                                 
                                 <div class="input-group">
                                     <span class="input-icon">💱</span>
-                                    <label for="currency">Currency</label>
+                                    <label for="currency" data-i18n="expense.currency">Currency</label>
                                     <select id="currency" required>
                                         <!-- Will be populated dynamically -->
                                     </select>
@@ -3726,7 +3726,7 @@
                                 
                                 <div class="input-group">
                                     <span class="input-icon">📋</span>
-                                    <label for="category">Category</label>
+                                    <label for="category" data-i18n="expense.category">Category</label>
                                     <select id="category" required onchange="handleCategoryChange()">
                                         <option value="">Select category</option>
                                         <option value="Rent">🏠 Rent</option>
@@ -3754,14 +3754,14 @@
                                     <div style="display: flex; gap: 0.5rem; align-items: center;">
                                         <input type="text" id="customCategory" placeholder="Enter new category name">
                                         <input type="text" id="customCategoryIcon" placeholder="🏷️" maxlength="2" style="width: 60px; text-align: center;">
-                                        <button type="button" id="addCustomCategoryBtn" class="btn btn-success" style="min-width: auto; padding: 0.5rem 1rem;">Add</button>
-                                        <button type="button" id="cancelCustomCategoryBtn" class="btn btn-secondary" style="min-width: auto; padding: 0.5rem 1rem;">Cancel</button>
+                                        <button type="button" id="addCustomCategoryBtn" class="btn btn-success" style="min-width: auto; padding: 0.5rem 1rem;" data-i18n="common.add">Add</button>
+                                        <button type="button" id="cancelCustomCategoryBtn" class="btn btn-secondary" style="min-width: auto; padding: 0.5rem 1rem;" data-i18n="common.cancel">Cancel</button>
                                     </div>
                                 </div>
                                 
                                 <div class="input-group" id="personGroup">
                                     <span class="input-icon">👥</span>
-                                    <label for="person" id="personLabel">Person</label>
+                                    <label for="person" id="personLabel" data-i18n="expense.person">Person</label>
                                     <select id="person" required>
                                         <option value="">Select person</option>
                                         <option value="You">👤 You</option>
@@ -3772,13 +3772,13 @@
                                 
                                 <div class="input-group">
                                     <span class="input-icon">📅</span>
-                                    <label for="date">Date</label>
+                                    <label for="date" data-i18n="expense.date">Date</label>
                                     <input type="date" id="date" required>
                                 </div>
                                 
                                 <div class="input-group" style="grid-column: 1 / -1;">
                                     <span class="input-icon">📝</span>
-                                    <label for="description">Description (optional)</label>
+                                    <label for="description" data-i18n="expense.descriptionOptional">Description (optional)</label>
                                     <input type="text" id="description" placeholder="e.g., Weekly grocery shopping">
                                 </div>
                                 
@@ -3800,7 +3800,7 @@
                                     <div id="recurringOptions" style="display: none;">
                                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
                                             <div>
-                                                <label for="recurringFrequency">Frequency</label>
+                                                <label for="recurringFrequency" data-i18n="recurring.frequency">Frequency</label>
                                                 <select id="recurringFrequency">
                                                     <option value="weekly">📅 Weekly</option>
                                                     <option value="biweekly">📅 Bi-weekly</option>
@@ -3810,7 +3810,7 @@
                                                 </select>
                                             </div>
                                             <div>
-                                                <label for="recurringEndDate">End Date (optional)</label>
+                                                <label for="recurringEndDate" data-i18n="recurring.endDateOptional">End Date (optional)</label>
                                                 <input type="date" id="recurringEndDate">
                                             </div>
                                         </div>
@@ -3831,8 +3831,8 @@
                             </div>
                             
                             <div class="btn-actions">
-                                <button type="button" id="cancelEdit" style="display: none;" class="btn btn-secondary">✖️ Cancel</button>
-                                <button type="submit" class="btn bounce-in">💾 Save Expense</button>
+                                <button type="button" id="cancelEdit" style="display: none;" class="btn btn-secondary">✖️ <span data-i18n="common.cancel">Cancel</span></button>
+                                <button type="submit" class="btn bounce-in">💾 <span data-i18n="buttons.saveExpense">Save Expense</span></button>
                             </div>
                         </form>
                     </div>
@@ -3896,10 +3896,10 @@
                                         <option value="Both">💏 Both</option>
                                     </select>
                                 </div>
-                                <button class="btn btn-success" id="exportCSVBtn">📥 Export CSV</button>
-                                <button class="btn btn-success" id="exportJSONBtn">📥 Export JSON</button>
-                                <button class="btn btn-warning" id="exportExcelBtn" data-premium-feature="excel_export">📊 Export Excel</button>
-                                <button class="btn btn-warning" id="exportPDFBtn" data-premium-feature="pdf_export">📄 Export PDF</button>
+                                <button class="btn btn-success" id="exportCSVBtn">📥 <span data-i18n="buttons.exportCSV">Export CSV</span></button>
+                                <button class="btn btn-success" id="exportJSONBtn">📥 <span data-i18n="buttons.exportJSON">Export JSON</span></button>
+                                <button class="btn btn-warning" id="exportExcelBtn" data-premium-feature="excel_export">📊 <span data-i18n="buttons.exportExcel">Export Excel</span></button>
+                                <button class="btn btn-warning" id="exportPDFBtn" data-premium-feature="pdf_export">📄 <span data-i18n="buttons.exportPDF">Export PDF</span></button>
                             </div>
                         </div>
                         
@@ -3909,22 +3909,22 @@
                                 <span id="paginationInfo">Showing 0 expenses</span>
                             </div>
                             <div class="pagination-controls">
-                                <button id="prevPageBtn" disabled>← Previous</button>
+                                <button id="prevPageBtn" disabled>← <span data-i18n="common.previous">Previous</span></button>
                                 <span id="pageInfo">Page 1 of 1</span>
-                                <button id="nextPageBtn" disabled>Next →</button>
+                                <button id="nextPageBtn" disabled><span data-i18n="common.next">Next</span> →</button>
                             </div>
                         </div>
                         
                         <div id="expensesList">
-                            <div class="no-expenses">No expenses added yet. Add your first expense above!</div>
+                            <div class="no-expenses" data-i18n="expense.noExpenses">No expenses added yet. Add your first expense above!</div>
                         </div>
                         
                         <!-- Bottom Pagination -->
                         <div id="paginationBottom" class="pagination-container" style="display: none;">
                             <div class="pagination-controls">
-                                <button id="prevPageBtnBottom">← Previous</button>
+                                <button id="prevPageBtnBottom">← <span data-i18n="common.previous">Previous</span></button>
                                 <span id="pageInfoBottom">Page 1 of 1</span>
-                                <button id="nextPageBtnBottom">Next →</button>
+                                <button id="nextPageBtnBottom"><span data-i18n="common.next">Next</span> →</button>
                             </div>
                         </div>
                     </div>
@@ -3943,7 +3943,7 @@
                             <span class="progress-text" id="progressText">0%</span>
                         </div>
                     </div>
-                    <div id="budgetStatus">Set your monthly budget</div>
+                    <div id="budgetStatus" data-i18n="budget.setMonthly">Set your monthly budget</div>
                 </div>
 
                 <div class="card">
@@ -3979,27 +3979,27 @@
                 <div class="stat-card-enhanced">
                     <span class="stat-icon">📊</span>
                     <div class="stat-value" id="avgDaily">€0</div>
-                    <div class="stat-label">Avg Daily</div>
+                    <div class="stat-label" data-i18n="stats.avgDaily">Avg Daily</div>
                 </div>
                 <div class="stat-card-enhanced">
                     <span class="stat-icon">🏆</span>
                     <div class="stat-value" id="topCategory">-</div>
-                    <div class="stat-label">Top Category</div>
+                    <div class="stat-label" data-i18n="stats.topCategory">Top Category</div>
                 </div>
                 <div class="stat-card-enhanced">
                     <span class="stat-icon">⏰</span>
                     <div class="stat-value" id="daysLeft">0</div>
-                    <div class="stat-label">Days Left</div>
+                    <div class="stat-label" data-i18n="stats.daysLeft">Days Left</div>
                 </div>
                 <div class="stat-card-enhanced">
                     <span class="stat-icon">📈</span>
                     <div class="stat-value" id="weeklyAvg">€0</div>
-                    <div class="stat-label">Weekly Avg</div>
+                    <div class="stat-label" data-i18n="stats.weeklyAvg">Weekly Avg</div>
                 </div>
                 <div class="stat-card-enhanced" id="projectionCard" style="cursor: pointer;" onclick="showProjectionModal()">
                     <span class="stat-icon">🔮</span>
                     <div class="stat-value" id="projectedSpend">€0</div>
-                    <div class="stat-label">Projected Total</div>
+                    <div class="stat-label" data-i18n="stats.projectedTotal">Projected Total</div>
                 </div>
             </div>
         </div>
@@ -4013,10 +4013,10 @@
                         <p class="project-subtitle">Track expenses for trips, events, business travel, or any specific travel spending goal</p>
                         <div class="trip-controls">
                             <div class="current-trip" id="currentTripDisplay">
-                                <span id="tripName">No active trip</span>
+                                <span id="tripName" data-i18n="travel.noActiveTrip">No active trip</span>
                                 <div class="trip-action-buttons">
-                                    <button class="btn btn-secondary" id="manageTripBtn">✈️ New Trip</button>
-                                    <button class="btn btn-success" id="completeTripBtn" style="display: none;">✅ Complete Trip</button>
+                                    <button class="btn btn-secondary" id="manageTripBtn">✈️ <span data-i18n="travel.newTrip">New Trip</span></button>
+                                    <button class="btn btn-success" id="completeTripBtn" style="display: none;">✅ <span data-i18n="travel.completeTrip">Complete Trip</span></button>
                                 </div>
                             </div>
                         </div>
@@ -4027,22 +4027,22 @@
                         <div class="trip-stat-card">
                             <span class="trip-stat-icon">💰</span>
                             <div class="trip-stat-value" id="tripTotal">€0</div>
-                            <div class="trip-stat-label">Total Spent</div>
+                            <div class="trip-stat-label" data-i18n="travel.totalSpent">Total Spent</div>
                         </div>
                         <div class="trip-stat-card">
                             <span class="trip-stat-icon">📅</span>
                             <div class="trip-stat-value" id="tripDays">0</div>
-                            <div class="trip-stat-label">Days</div>
+                            <div class="trip-stat-label" data-i18n="travel.days">Days</div>
                         </div>
                         <div class="trip-stat-card">
                             <span class="trip-stat-icon">📝</span>
                             <div class="trip-stat-value" id="tripExpenseCount">0</div>
-                            <div class="trip-stat-label">Expenses</div>
+                            <div class="trip-stat-label" data-i18n="travel.expenses">Expenses</div>
                         </div>
                         <div class="trip-stat-card">
                             <span class="trip-stat-icon">📊</span>
                             <div class="trip-stat-value" id="tripAvgDaily">€0</div>
-                            <div class="trip-stat-label">Daily Avg</div>
+                            <div class="trip-stat-label" data-i18n="travel.dailyAvg">Daily Avg</div>
                         </div>
                     </div>
                 </div>
@@ -4084,13 +4084,13 @@
                                 <div class="form-grid">
                                     <div class="input-group">
                                         <span class="input-icon">💰</span>
-                                        <label for="travelAmount">Amount</label>
+                                        <label for="travelAmount" data-i18n="expense.amount">Amount</label>
                                         <input type="number" id="travelAmount" step="0.01" required placeholder="0.00">
                                     </div>
                                     
                                     <div class="input-group">
                                         <span class="input-icon">💱</span>
-                                        <label for="travelCurrency">Currency</label>
+                                        <label for="travelCurrency" data-i18n="expense.currency">Currency</label>
                                         <select id="travelCurrency" required>
                                             <!-- Will be populated dynamically -->
                                         </select>
@@ -4098,7 +4098,7 @@
                                     
                                     <div class="input-group">
                                         <span class="input-icon">📋</span>
-                                        <label for="travelCategory">Category</label>
+                                        <label for="travelCategory" data-i18n="expense.category">Category</label>
                                         <select id="travelCategory" required>
                                             <option value="">Select category</option>
                                             <option value="🍽️ Food & Dining">🍽️ Food & Dining</option>
@@ -4122,19 +4122,19 @@
                                     
                                     <div class="input-group">
                                         <span class="input-icon">📅</span>
-                                        <label for="travelDate">Date</label>
+                                        <label for="travelDate" data-i18n="expense.date">Date</label>
                                         <input type="date" id="travelDate" required autocomplete="off">
                                     </div>
                                     
                                     <div class="input-group">
                                         <span class="input-icon">📍</span>
-                                        <label for="travelLocation">Location/Vendor</label>
+                                        <label for="travelLocation" data-i18n="travel.locationVendor">Location/Vendor</label>
                                         <input type="text" id="travelLocation" placeholder="e.g., Office Depot, Local Restaurant">
                                     </div>
                                     
                                     <div class="input-group">
                                         <span class="input-icon">👤</span>
-                                        <label for="travelPayer">Payer</label>
+                                        <label for="travelPayer" data-i18n="travel.payer">Payer</label>
                                         <input type="text" id="travelPayer" placeholder="Enter payer name (e.g., Me, John, Sarah)" required list="payerSuggestions">
                                         <datalist id="payerSuggestions">
                                             <option value="Me">
@@ -4170,7 +4170,7 @@
                                     
                                     <div class="input-group" style="grid-column: 1 / -1;">
                                         <span class="input-icon">📝</span>
-                                        <label for="travelDescription">Description (optional)</label>
+                                        <label for="travelDescription" data-i18n="expense.descriptionOptional">Description (optional)</label>
                                         <input type="text" id="travelDescription" placeholder="e.g., Office supplies for event">
                                     </div>
                                 </div>
@@ -4186,7 +4186,7 @@
                         <div class="travel-breakdown card-enhanced">
                             <h3><span class="card-icon">📊</span> Category Breakdown</h3>
                             <div id="travelCategoryBreakdown" class="category-breakdown">
-                                <div class="no-breakdown">Add expenses to see category breakdown</div>
+                                <div class="no-breakdown" data-i18n="travel.noBreakdown">Add expenses to see category breakdown</div>
                             </div>
                         </div>
                     </div>
@@ -4235,7 +4235,7 @@
                             </div>
                             
                             <div id="travelExpensesList">
-                                <div class="no-expenses">Create a project and start tracking your expenses!</div>
+                                <div class="no-expenses" data-i18n="travel.createProjectFirst">Create a project and start tracking your expenses!</div>
                             </div>
                         </div>
 
@@ -4257,46 +4257,46 @@
         <!-- Trip Management Modal -->
         <div id="tripModal" class="modal">
             <div class="modal-content">
-                <h2>✈️ Create New Trip</h2>
+                <h2>✈️ <span data-i18n="travel.createNewTrip">Create New Trip</span></h2>
                 <div id="tripModalContent">
                     <!-- Create New Trip -->
                     <div class="trip-form-section">
-                        <h3>✈️ Start New Trip</h3>
+                        <h3>✈️ <span data-i18n="travel.startNewTrip">Start New Trip</span></h3>
                         <form id="newTripForm">
                             <div class="form-grid">
                                 <div class="input-group">
                                     <span class="input-icon">🏷️</span>
-                                    <label for="newTripName">Trip Name</label>
+                                    <label for="newTripName" data-i18n="travel.tripName">Trip Name</label>
                                     <input type="text" id="newTripName" required placeholder="e.g., Paris Vacation 2024">
                                 </div>
                                 
                                 <div class="input-group">
                                     <span class="input-icon">📍</span>
-                                    <label for="newTripDestination">Destination</label>
+                                    <label for="newTripDestination" data-i18n="travel.destination">Destination</label>
                                     <input type="text" id="newTripDestination" placeholder="e.g., Paris, France">
                                 </div>
                                 
                                 <div class="input-group">
                                     <span class="input-icon">📅</span>
-                                    <label for="newTripStartDate">Start Date</label>
+                                    <label for="newTripStartDate" data-i18n="travel.startDate">Start Date</label>
                                     <input type="date" id="newTripStartDate" required autocomplete="off">
                                 </div>
                                 
                                 <div class="input-group">
                                     <span class="input-icon">📅</span>
-                                    <label for="newTripEndDate">End Date</label>
+                                    <label for="newTripEndDate" data-i18n="travel.endDate">End Date</label>
                                     <input type="date" id="newTripEndDate" autocomplete="off">
                                 </div>
                                 
                                 <div class="input-group">
                                     <span class="input-icon">💰</span>
-                                    <label for="newTripBudget">Budget (optional)</label>
+                                    <label for="newTripBudget" data-i18n="travel.budgetOptional">Budget (optional)</label>
                                     <input type="number" id="newTripBudget" step="0.01" placeholder="0.00">
                                 </div>
                                 
                                 <div class="input-group">
                                     <span class="input-icon">💱</span>
-                                    <label for="newTripCurrency">Trip Currency</label>
+                                    <label for="newTripCurrency" data-i18n="travel.currency">Trip Currency</label>
                                     <select id="newTripCurrency">
                                         <!-- Will be populated dynamically -->
                                     </select>
@@ -4304,16 +4304,16 @@
                             </div>
                             
                             <div style="margin-top: 1rem;">
-                                <button type="submit" class="btn btn-primary">🚀 Start Trip</button>
+                                <button type="submit" class="btn btn-primary">🚀 <span data-i18n="travel.startTrip">Start Trip</span></button>
                             </div>
                         </form>
                     </div>
                     
                     <!-- Existing Trips -->
                     <div class="existing-trips-section">
-                        <h3>📋 Your Trips</h3>
+                        <h3>📋 <span data-i18n="travel.yourTrips">Your Trips</span></h3>
                         <div id="tripsList">
-                            <div class="no-trips">No trips created yet. Start your first trip above!</div>
+                            <div class="no-trips" data-i18n="travel.noTrips">No trips created yet. Start your first trip above!</div>
                         </div>
                     </div>
                 </div>
@@ -5474,6 +5474,14 @@
         // i18n translation functions
         async function loadTranslations(lang) {
             try {
+                // Always load English as fallback
+                if (!window.enTranslations) {
+                    const enResponse = await fetch(`locales/en.json`);
+                    if (enResponse.ok) {
+                        window.enTranslations = await enResponse.json();
+                    }
+                }
+                
                 const response = await fetch(`locales/${lang}.json`);
                 if (!response.ok) {
                     throw new Error(`Failed to load ${lang} translations`);
@@ -5502,8 +5510,28 @@
             }
             
             if (!value) {
-                console.warn(`Translation missing for key: ${key}`);
-                return key;
+                // In development, log missing translations
+                if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+                    console.warn(`[i18n] Missing key: ${key} in ${currentLanguage}`);
+                }
+                
+                // Try to get from English as fallback
+                if (currentLanguage !== 'en') {
+                    const enTranslations = window.enTranslations || {};
+                    let enValue = enTranslations;
+                    for (const k of keys) {
+                        enValue = enValue?.[k];
+                        if (!enValue) break;
+                    }
+                    if (enValue) {
+                        value = enValue;
+                    }
+                }
+                
+                // If still no value, return the key
+                if (!value) {
+                    return key;
+                }
             }
             
             // Replace parameters like {{version}}
@@ -6234,7 +6262,7 @@
                 if (this.syncEnabled) {
                     statusCard.classList.add('sync-connected');
                     statusTitle.textContent = '✅ Cloud Sync Active';
-                    statusText.textContent = 'Your data is synchronized across devices';
+                    statusText.textContent = t('sync.dataIsSynchronized');
                     statusDetails.textContent = this.lastSync ? 
                         `Last sync: ${new Date(this.lastSync).toLocaleString()}` : 
                         'Last sync: Just now';
@@ -9721,13 +9749,13 @@
             const paginationInfo = document.getElementById('paginationInfo');
             
             // Update page info
-            pageInfo.textContent = `Page ${currentPage} of ${totalPages || 1}`;
-            pageInfoBottom.textContent = `Page ${currentPage} of ${totalPages || 1}`;
+            pageInfo.textContent = t('pagination.pageInfo', { current: currentPage, total: totalPages || 1 });
+            pageInfoBottom.textContent = t('pagination.pageInfo', { current: currentPage, total: totalPages || 1 });
             
             // Update pagination info
             const startItem = totalFilteredExpenses === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
             const endItem = Math.min(currentPage * itemsPerPage, totalFilteredExpenses);
-            paginationInfo.textContent = `Showing ${startItem}-${endItem} of ${totalFilteredExpenses} expenses`;
+            paginationInfo.textContent = t('pagination.showingExpenses', { start: startItem, end: endItem, total: totalFilteredExpenses });
             
             // Update button states
             prevBtn.disabled = currentPage <= 1;

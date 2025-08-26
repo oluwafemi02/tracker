@@ -1,7 +1,8 @@
 {
   "app": {
     "title": "Expense Tracker",
-    "version": "Version"
+    "version": "Version",
+    "subtitle": "Track, manage, and optimize your expenses with smart insights"
   },
   "nav": {
     "main": "Main",
@@ -48,7 +49,9 @@
     "remaining": "Remaining",
     "of": "of",
     "set": "Set Budget",
-    "placeholder": "Enter monthly budget"
+    "placeholder": "Enter monthly budget",
+    "setToStart": "Set your monthly budget to get started",
+    "setMonthly": "Set your monthly budget"
   },
   "expense": {
     "add": "Add Expense",
@@ -135,7 +138,8 @@
     "pause": "Pause",
     "resume": "Resume",
     "total": "Total Recurring",
-    "addedSuccess": "Recurring expense created successfully!"
+    "addedSuccess": "Recurring expense created successfully!",
+    "endDateOptional": "End Date (optional)"
   },
   "travel": {
     "title": "Trip Expense Tracker",
@@ -161,7 +165,16 @@
     "noExpenses": "No expenses added for this trip yet. Start tracking your travel spending!",
     "addExpense": "Add to Trip",
     "updateExpense": "Update Expense",
-    "categoryBreakdown": "Category Breakdown"
+    "categoryBreakdown": "Category Breakdown",
+    "noActiveTrip": "No active trip",
+    "locationVendor": "Location/Vendor",
+    "createNewTrip": "Create New Trip",
+    "startNewTrip": "Start New Trip",
+    "budgetOptional": "Budget (optional)",
+    "startTrip": "Start Trip",
+    "yourTrips": "Your Trips",
+    "noBreakdown": "Add expenses to see category breakdown",
+    "createProjectFirst": "Create a project and start tracking your expenses!"
   },
   "reports": {
     "title": "Reports & Analytics",
@@ -220,7 +233,12 @@
     "manualInput": "Manual Link Input",
     "cameraReady": "Camera ready! Use manual link paste option below for now",
     "setupSync": "Set Up Sync",
-    "localSyncEnabled": "Local sync mode enabled - Use Export/Import to transfer data"
+    "localSyncEnabled": "Local sync mode enabled - Use Export/Import to transfer data",
+    "dataIsSynchronized": "Your data is synchronized across devices"
+  },
+  "pagination": {
+    "pageInfo": "Page {{current}} of {{total}}",
+    "showingExpenses": "Showing {{start}}-{{end}} of {{total}} expenses"
   },
   "exchangeRate": {
     "title": "Exchange Rate",
@@ -258,12 +276,16 @@
     "totalExpenses": "Total Expenses",
     "avgDaily": "Avg Daily",
     "biggestExpense": "Biggest Expense",
-    "expenseCount": "Expense Count"
+    "expenseCount": "Expense Count",
+    "topCategory": "Top Category",
+    "daysLeft": "Days Left",
+    "weeklyAvg": "Weekly Avg",
+    "projectedTotal": "Projected Total"
   },
   "dashboard": {
     "title": "Dashboard",
     "overview": "Budget Overview",
-    "monthlyOverview": "Monthly Overview",
+    "monthlyOverview": "Monthly Budget Overview",
     "spendingPatterns": "Spending Patterns",
     "insights": "Smart Insights",
     "trends": "Trends",
@@ -280,7 +302,17 @@
     "underBudget": "Under budget",
     "noDataYet": "No data yet for this month",
     "viewDetails": "View Details",
-    "hideDetails": "Hide Details"
+    "hideDetails": "Hide Details",
+    "smartSuggestions": "Smart Money Suggestions",
+    "noSuggestions": "Add some expenses and set a budget to see personalized suggestions!"
+  },
+  "quickActions": {
+    "title": "Quick Actions",
+    "groceries": "Quick Groceries",
+    "utilities": "Quick Utilities",
+    "transport": "Quick Transport",
+    "mortgage": "Quick Mortgage",
+    "carLoan": "Quick Car Loan"
   },
   "insights": {
     "title": "Budget Insights",
@@ -450,7 +482,8 @@
     "learnMore": "Learn More",
     "getStarted": "Get Started",
     "continue": "Continue",
-    "done": "Done"
+    "done": "Done",
+    "exportJSON": "Export JSON"
   },
   "expense": {
     "add": "Add Expense",
@@ -486,6 +519,7 @@
     "impact": "Budget Impact",
     "percentage": "{{percent}}% of monthly budget",
     "remaining": "{{amount}} remaining",
-    "overspent": "Overspent by {{amount}}"
+    "overspent": "Overspent by {{amount}}",
+    "descriptionOptional": "Description (optional)"
   }
 }

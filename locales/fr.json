@@ -1,7 +1,8 @@
 {
   "app": {
     "title": "Suivi des Dépenses",
-    "version": "Version"
+    "version": "Version",
+    "subtitle": "Suivez, gérez et optimisez vos dépenses avec des informations intelligentes"
   },
   "nav": {
     "main": "Principal",
@@ -48,7 +49,9 @@
     "remaining": "Restant",
     "of": "sur",
     "set": "Définir le Budget",
-    "placeholder": "Entrez le budget mensuel"
+    "placeholder": "Entrez le budget mensuel",
+    "setToStart": "Définissez votre budget mensuel pour commencer",
+    "setMonthly": "Définissez votre budget mensuel"
   },
   "expense": {
     "add": "Ajouter une Dépense",
@@ -84,7 +87,8 @@
     "impact": "Budget Impact",
     "percentage": "{{percent}}% of monthly budget",
     "remaining": "{{amount}} remaining",
-    "overspent": "Overspent by {{amount}}"
+    "overspent": "Overspent by {{amount}}",
+    "descriptionOptional": "Description (optionnel)"
   },
   "categories": {
     "food": "Alimentation",
@@ -150,7 +154,8 @@
     "pause": "Pause",
     "resume": "Reprendre",
     "total": "Total Récurrent",
-    "addedSuccess": "Dépense récurrente créée avec succès!"
+    "addedSuccess": "Dépense récurrente créée avec succès!",
+    "endDateOptional": "Date de Fin (optionnel)"
   },
   "travel": {
     "title": "Suivi des Dépenses de Voyage",
@@ -176,7 +181,16 @@
     "noExpenses": "Aucune dépense ajoutée pour ce voyage. Commencez à suivre vos dépenses de voyage!",
     "addExpense": "Ajouter au Voyage",
     "updateExpense": "Mettre à jour la Dépense",
-    "categoryBreakdown": "Répartition par Catégorie"
+    "categoryBreakdown": "Répartition par Catégorie",
+    "noActiveTrip": "Aucun voyage actif",
+    "locationVendor": "Lieu/Fournisseur",
+    "createNewTrip": "Créer un Nouveau Voyage",
+    "startNewTrip": "Commencer un Nouveau Voyage",
+    "budgetOptional": "Budget (optionnel)",
+    "startTrip": "Commencer le Voyage",
+    "yourTrips": "Vos Voyages",
+    "noBreakdown": "Ajoutez des dépenses pour voir la répartition par catégorie",
+    "createProjectFirst": "Créez un projet et commencez à suivre vos dépenses!"
   },
   "reports": {
     "title": "Rapports et Analyses",
@@ -235,7 +249,12 @@
     "manualInput": "Manual Link Input",
     "cameraReady": "Camera ready! Use manual link paste option below for now",
     "setupSync": "Set Up Sync",
-    "localSyncEnabled": "Local sync mode enabled - Use Export/Import to transfer data"
+    "localSyncEnabled": "Local sync mode enabled - Use Export/Import to transfer data",
+    "dataIsSynchronized": "Vos données sont synchronisées sur tous les appareils"
+  },
+  "pagination": {
+    "pageInfo": "Page {{current}} sur {{total}}",
+    "showingExpenses": "Affichage {{start}}-{{end}} sur {{total}} dépenses"
   },
   "exchangeRate": {
     "title": "Taux de Change",
@@ -273,9 +292,21 @@
     "totalExpenses": "Dépenses Totales",
     "avgDaily": "Moyenne Quotidienne",
     "biggestExpense": "Plus Grande Dépense",
-    "expenseCount": "Nombre de Dépenses"
+    "expenseCount": "Nombre de Dépenses",
+    "topCategory": "Catégorie Principale",
+    "daysLeft": "Jours Restants",
+    "weeklyAvg": "Moyenne Hebdomadaire",
+    "projectedTotal": "Total Projeté"
   },
   "dashboard": "Tableau de bord",
+  "quickActions": {
+    "title": "Actions Rapides",
+    "groceries": "Épicerie Rapide",
+    "utilities": "Services Rapides",
+    "transport": "Transport Rapide",
+    "mortgage": "Hypothèque Rapide",
+    "carLoan": "Prêt Auto Rapide"
+  },
   "insights": {
     "title": "Budget Insights",
     "topSpendingCategories": "Top Spending Categories",
@@ -444,7 +475,8 @@
     "learnMore": "Learn More",
     "getStarted": "Get Started",
     "continue": "Continue",
-    "done": "Done"
+    "done": "Done",
+    "exportJSON": "Exporter JSON"
   },
   "expenses": "Dépenses",
   "trips": "Voyages"

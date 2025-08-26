@@ -1,7 +1,8 @@
 {
   "app": {
     "title": "Rastreador de Gastos",
-    "version": "Versión"
+    "version": "Versión",
+    "subtitle": "Rastrea, gestiona y optimiza tus gastos con información inteligente"
   },
   "nav": {
     "main": "Principal",
@@ -48,7 +49,9 @@
     "remaining": "Restante",
     "of": "de",
     "set": "Establecer Presupuesto",
-    "placeholder": "Ingrese el presupuesto mensual"
+    "placeholder": "Ingrese el presupuesto mensual",
+    "setToStart": "Establece tu presupuesto mensual para comenzar",
+    "setMonthly": "Establece tu presupuesto mensual"
   },
   "expense": {
     "add": "Agregar Gasto",
@@ -84,7 +87,8 @@
     "impact": "Budget Impact",
     "percentage": "{{percent}}% of monthly budget",
     "remaining": "{{amount}} remaining",
-    "overspent": "Overspent by {{amount}}"
+    "overspent": "Overspent by {{amount}}",
+    "descriptionOptional": "Descripción (opcional)"
   },
   "categories": {
     "food": "Comida",
@@ -150,7 +154,8 @@
     "pause": "Pausar",
     "resume": "Reanudar",
     "total": "Total Recurrente",
-    "addedSuccess": "¡Gasto recurrente creado exitosamente!"
+    "addedSuccess": "¡Gasto recurrente creado exitosamente!",
+    "endDateOptional": "Fecha de Fin (opcional)"
   },
   "travel": {
     "title": "Rastreador de Gastos de Viaje",
@@ -176,7 +181,16 @@
     "noExpenses": "No hay gastos agregados para este viaje aún. ¡Comience a rastrear sus gastos de viaje!",
     "addExpense": "Agregar al Viaje",
     "updateExpense": "Actualizar Gasto",
-    "categoryBreakdown": "Desglose por Categoría"
+    "categoryBreakdown": "Desglose por Categoría",
+    "noActiveTrip": "Sin viaje activo",
+    "locationVendor": "Ubicación/Proveedor",
+    "createNewTrip": "Crear Nuevo Viaje",
+    "startNewTrip": "Iniciar Nuevo Viaje",
+    "budgetOptional": "Presupuesto (opcional)",
+    "startTrip": "Iniciar Viaje",
+    "yourTrips": "Tus Viajes",
+    "noBreakdown": "Agrega gastos para ver el desglose por categoría",
+    "createProjectFirst": "¡Crea un proyecto y comienza a rastrear tus gastos!"
   },
   "reports": {
     "title": "Informes y Análisis",
@@ -235,7 +249,12 @@
     "manualInput": "Manual Link Input",
     "cameraReady": "Camera ready! Use manual link paste option below for now",
     "setupSync": "Set Up Sync",
-    "localSyncEnabled": "Local sync mode enabled - Use Export/Import to transfer data"
+    "localSyncEnabled": "Local sync mode enabled - Use Export/Import to transfer data",
+    "dataIsSynchronized": "Tus datos están sincronizados en todos los dispositivos"
+  },
+  "pagination": {
+    "pageInfo": "Página {{current}} de {{total}}",
+    "showingExpenses": "Mostrando {{start}}-{{end}} de {{total}} gastos"
   },
   "exchangeRate": {
     "title": "Tasa de Cambio",
@@ -273,9 +292,21 @@
     "totalExpenses": "Gastos Totales",
     "avgDaily": "Promedio Diario",
     "biggestExpense": "Mayor Gasto",
-    "expenseCount": "Cantidad de Gastos"
+    "expenseCount": "Cantidad de Gastos",
+    "topCategory": "Categoría Principal",
+    "daysLeft": "Días Restantes",
+    "weeklyAvg": "Promedio Semanal",
+    "projectedTotal": "Total Proyectado"
   },
   "dashboard": "Panel",
+  "quickActions": {
+    "title": "Acciones Rápidas",
+    "groceries": "Comestibles Rápidos",
+    "utilities": "Servicios Rápidos",
+    "transport": "Transporte Rápido",
+    "mortgage": "Hipoteca Rápida",
+    "carLoan": "Préstamo Auto Rápido"
+  },
   "insights": {
     "title": "Budget Insights",
     "topSpendingCategories": "Top Spending Categories",
@@ -444,7 +475,8 @@
     "learnMore": "Learn More",
     "getStarted": "Get Started",
     "continue": "Continue",
-    "done": "Done"
+    "done": "Done",
+    "exportJSON": "Exportar JSON"
   },
   "expenses": "Gastos",
   "trips": "Viajes"

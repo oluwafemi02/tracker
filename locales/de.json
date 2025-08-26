@@ -1,7 +1,8 @@
 {
   "app": {
     "title": "Ausgaben-Tracker",
-    "version": "Version"
+    "version": "Version",
+    "subtitle": "Verfolgen, verwalten und optimieren Sie Ihre Ausgaben mit intelligenten Einblicken"
   },
   "nav": {
     "main": "Hauptseite",
@@ -48,7 +49,9 @@
     "remaining": "Verbleibend",
     "of": "von",
     "set": "Budget festlegen",
-    "placeholder": "Monatliches Budget eingeben"
+    "placeholder": "Monatliches Budget eingeben",
+    "setToStart": "Legen Sie Ihr monatliches Budget fest, um zu beginnen",
+    "setMonthly": "Legen Sie Ihr monatliches Budget fest"
   },
   "expense": {
     "add": "Ausgabe hinzufügen",
@@ -84,7 +87,8 @@
     "impact": "Budget Impact",
     "percentage": "{{percent}}% of monthly budget",
     "remaining": "{{amount}} remaining",
-    "overspent": "Overspent by {{amount}}"
+    "overspent": "Overspent by {{amount}}",
+    "descriptionOptional": "Beschreibung (optional)"
   },
   "categories": {
     "food": "Essen",
@@ -150,7 +154,8 @@
     "pause": "Pausieren",
     "resume": "Fortsetzen",
     "total": "Gesamt wiederkehrend",
-    "addedSuccess": "Wiederkehrende Ausgabe erfolgreich erstellt!"
+    "addedSuccess": "Wiederkehrende Ausgabe erfolgreich erstellt!",
+    "endDateOptional": "Enddatum (optional)"
   },
   "travel": {
     "title": "Reisekosten-Tracker",
@@ -176,7 +181,16 @@
     "noExpenses": "Noch keine Ausgaben für diese Reise hinzugefügt. Beginnen Sie mit der Verfolgung Ihrer Reiseausgaben!",
     "addExpense": "Zur Reise hinzufügen",
     "updateExpense": "Ausgabe aktualisieren",
-    "categoryBreakdown": "Kategorieaufschlüsselung"
+    "categoryBreakdown": "Kategorieaufschlüsselung",
+    "noActiveTrip": "Keine aktive Reise",
+    "locationVendor": "Ort/Anbieter",
+    "createNewTrip": "Neue Reise Erstellen",
+    "startNewTrip": "Neue Reise Beginnen",
+    "budgetOptional": "Budget (optional)",
+    "startTrip": "Reise Beginnen",
+    "yourTrips": "Ihre Reisen",
+    "noBreakdown": "Fügen Sie Ausgaben hinzu, um die Kategorieaufschlüsselung zu sehen",
+    "createProjectFirst": "Erstellen Sie ein Projekt und beginnen Sie, Ihre Ausgaben zu verfolgen!"
   },
   "reports": {
     "title": "Berichte & Analysen",
@@ -235,7 +249,12 @@
     "manualInput": "Manual Link Input",
     "cameraReady": "Camera ready! Use manual link paste option below for now",
     "setupSync": "Set Up Sync",
-    "localSyncEnabled": "Local sync mode enabled - Use Export/Import to transfer data"
+    "localSyncEnabled": "Local sync mode enabled - Use Export/Import to transfer data",
+    "dataIsSynchronized": "Ihre Daten werden auf allen Geräten synchronisiert"
+  },
+  "pagination": {
+    "pageInfo": "Seite {{current}} von {{total}}",
+    "showingExpenses": "Zeige {{start}}-{{end}} von {{total}} Ausgaben"
   },
   "exchangeRate": {
     "title": "Wechselkurs",
@@ -273,9 +292,21 @@
     "totalExpenses": "Gesamtausgaben",
     "avgDaily": "Tagesdurchschnitt",
     "biggestExpense": "Größte Ausgabe",
-    "expenseCount": "Anzahl Ausgaben"
+    "expenseCount": "Anzahl Ausgaben",
+    "topCategory": "Top-Kategorie",
+    "daysLeft": "Verbleibende Tage",
+    "weeklyAvg": "Wochendurchschnitt",
+    "projectedTotal": "Projizierte Summe"
   },
   "dashboard": "Dashboard",
+  "quickActions": {
+    "title": "Schnellaktionen",
+    "groceries": "Schnelle Lebensmittel",
+    "utilities": "Schnelle Nebenkosten",
+    "transport": "Schneller Transport",
+    "mortgage": "Schnelle Hypothek",
+    "carLoan": "Schneller Autokredit"
+  },
   "insights": {
     "title": "Budget Insights",
     "topSpendingCategories": "Top Spending Categories",
@@ -444,7 +475,8 @@
     "learnMore": "Learn More",
     "getStarted": "Get Started",
     "continue": "Continue",
-    "done": "Done"
+    "done": "Done",
+    "exportJSON": "JSON Exportieren"
   },
   "expenses": "Ausgaben",
   "trips": "Reisen"
