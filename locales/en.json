@@ -26,7 +26,7 @@
     "auto": "Auto"
   },
   "help": {
-    "title": "Help & Guide",
+    "title": "User Guide",
     "needHelp": "Need help? Start the interactive guide!",
     "welcome": "Welcome new user!",
     "startGuide": "Starting interactive guide...",
@@ -74,7 +74,7 @@
     "updatedSuccess": "Expense updated successfully!",
     "deletedSuccess": "Expense deleted successfully!",
     "quickActions": "Quick Actions",
-    "isRecurring": "Set as recurring expense",
+    "isRecurring": "Make this a recurring expense",
     "frequency": "Frequency",
     "customCategory": "New Category Name",
     "addNewCategory": "Add New Category",
@@ -283,7 +283,13 @@
     "highSpending": "High spending on {{category}} - {{percentage}}% of budget",
     "considerReducing": "Consider reducing {{category}} expenses",
     "recurringHigh": "Your recurring expenses are {{percentage}}% of your budget",
-    "reviewSubscriptions": "Review subscriptions and fixed costs"
+    "reviewSubscriptions": "Review subscriptions and fixed costs",
+    "recommendedSavings": "Recommended monthly savings from remaining budget",
+    "optimizeCategory": "Look for ways to optimize this category",
+    "considerAlternatives": "Consider alternatives or negotiate better rates",
+    "dailyBudget": "With {{remaining}} left for {{days}} days, aim to spend no more than {{daily}} per day.",
+    "trackDaily": "Track daily to stay on target",
+    "categoryHigh": "{{category}} accounts for {{percentage}}% of your spending ({{amount}}). Look for ways to optimize this category."
   },
   "guide": {
     "welcome": "Welcome to Expense Tracker! 🎉",
@@ -321,7 +327,9 @@
     "previous": "Previous",
     "next": "Next",
     "finish": "Start Using!",
-    "progressText": "Step {{current}} of {{total}}"
+    "progressText": "Step {{current}} of {{total}}",
+    "startInteractive": "Start Interactive Guide",
+    "quickTour": "Quick Feature Tour"
   },
   "exchangeRate": {
     "title": "Exchange Rate",
@@ -417,7 +425,10 @@
     "spendingIncreased": "Your spending has increased in the last week. Consider reviewing recent purchases.",
     "spendingDecreased": "Your spending has decreased in the last week. Great job on controlling expenses!",
     "spendingConsistent": "Your spending pattern is consistent with your monthly average.",
-    "addMoreExpenses": "Add more expenses to see detailed spending trends and patterns."
+    "addMoreExpenses": "Add more expenses to see detailed spending trends and patterns.",
+    "budgetAnalysis": "Budget Analysis",
+    "monthlyBudget": "Monthly Budget",
+    "categoryHighSpending": "{{category}} represents a large portion of your spending. Look for ways to optimize these expenses."
   },
   "update": {
     "available": "Update Available",
@@ -519,7 +530,9 @@
     "categoryExists": "Category already exists!",
     "personAdded": "Person added successfully!",
     "featureComingSoon": "This feature is coming soon!",
-    "premiumRequired": "Premium feature - Subscribe to unlock!"
+    "premiumRequired": "Premium feature - Subscribe to unlock!",
+    "budgetAlert": "Budget Alert",
+    "budgetUsedPercent": "You've used {{percentage}}% of your monthly budget."
   },
   "placeholders": {
     "amount": "0.00",
@@ -575,6 +588,7 @@
     "getStarted": "Get Started",
     "continue": "Continue",
     "done": "Done",
-    "exportJSON": "Export JSON"
+    "exportJSON": "Export JSON",
+    "exportData": "Export All Data"
   }
 }

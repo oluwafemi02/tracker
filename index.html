@@ -3707,7 +3707,7 @@
                 <div class="left-panel">
                     <!-- Add Expense Form -->
                     <div class="expense-form card-enhanced">
-                        <h2><span class="card-icon">➕</span> Add New Expense</h2>
+                        <h2><span class="card-icon">➕</span> <span data-i18n="expense.add">Add New Expense</span></h2>
                         <form id="expenseForm">
                             <div class="form-grid">
                                 <div class="input-group">
@@ -3787,7 +3787,7 @@
                                     <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; padding: 0.75rem; background: #f0f8ff; border: 2px solid #4285f4; border-radius: 8px;">
                                         <span style="font-size: 1.2rem;">🔄</span>
                                         <label for="isRecurring" style="flex: 1; margin: 0; cursor: pointer; font-weight: 500; color: #333;">
-                                            Make this a recurring expense
+                                            <span data-i18n="expense.isRecurring">Make this a recurring expense</span>
                                         </label>
                                         <label style="position: relative; display: inline-block; width: 50px; height: 28px;">
                                             <input type="checkbox" id="isRecurring" onchange="toggleRecurringOptions()" style="opacity: 0; width: 0; height: 0;">
@@ -3936,7 +3936,7 @@
         <div id="dashboardTab" class="tab-content">
             <div class="dashboard">
                 <div class="card budget-card" id="budgetCard">
-                    <h2><span class="card-icon">🎯</span> Monthly Budget</h2>
+                    <h2><span class="card-icon">🎯</span> <span data-i18n="budget.monthly">Monthly Budget</span></h2>
                     <div class="total-display" id="budgetAmount">€0</div>
                     <div class="progress-container">
                         <div class="progress-fill" id="budgetFill">
@@ -4421,26 +4421,26 @@
         <!-- Settings Tab Content -->
         <div id="settingsTab" class="tab-content">
             <div class="settings-panel">
-                <h2><span class="card-icon">⚙️</span> Settings & Configuration</h2>
+                <h2><span class="card-icon">⚙️</span> <span data-i18n="settings.title">Settings & Configuration</span></h2>
                 <div class="settings-grid">
                     <div class="form-group">
-                        <label for="languageSelect">Language</label>
+                        <label for="languageSelect" data-i18n="settings.language">Language</label>
                         <select id="languageSelect">
                             <!-- Will be populated dynamically -->
                         </select>
                     </div>
-                    <button class="btn" id="setLanguageBtn" onclick="changeLanguage()">🌐 Change Language</button>
+                    <button class="btn" id="setLanguageBtn" onclick="changeLanguage()">🌐 <span data-i18n="buttons.changeLanguage">Change Language</span></button>
                     
                     <div class="form-group">
-                        <label for="mainCurrencySelect">Main Currency</label>
+                        <label for="mainCurrencySelect" data-i18n="settings.mainCurrency">Main Currency</label>
                         <select id="mainCurrencySelect">
                             <!-- Will be populated dynamically -->
                         </select>
                     </div>
-                    <button class="btn" id="setCurrencyBtn">💱 Set Currency</button>
+                    <button class="btn" id="setCurrencyBtn">💱 <span data-i18n="buttons.setCurrency">Set Currency</span></button>
                     
                     <div class="form-group">
-                        <label for="monthlyBudget">Monthly Budget</label>
+                        <label for="monthlyBudget" data-i18n="budget.monthly">Monthly Budget</label>
                         <div style="display: flex; gap: 0.5rem;">
                             <span id="budgetCurrencySymbol" style="align-self: center; font-size: 1.2rem;"></span>
                             <input type="number" id="monthlyBudget" placeholder="1500" min="0" style="flex: 1;">
@@ -4450,7 +4450,7 @@
                 </div>
                 
                 <div style="margin-top: 2rem;">
-                    <h3>💱 Exchange Rate History</h3>
+                    <h3>💱 <span data-i18n="settings.exchangeRateHistory">Exchange Rate History</span></h3>
                     <div id="exchangeRateHistory" style="margin-bottom: 2rem;">
                         <div class="exchange-rate-list" style="max-height: 200px; overflow-y: auto;">
                             <!-- Will be populated dynamically -->
@@ -4460,23 +4460,23 @@
                 </div>
                 
                 <div style="margin-top: 2rem;">
-                    <h3>⌨️ Keyboard Shortcuts</h3>
+                    <h3>⌨️ <span data-i18n="help.keyboardShortcuts">Keyboard Shortcuts</span></h3>
                     <div class="keyboard-shortcuts">
                         <div class="shortcut-item">
                             <span class="shortcut-key">Ctrl + N</span>
-                            <span class="shortcut-desc">New Expense (scroll to form)</span>
+                            <span class="shortcut-desc" data-i18n="help.newExpense">New Expense (scroll to form)</span>
                         </div>
                         <div class="shortcut-item">
                             <span class="shortcut-key">Ctrl + I</span>
-                            <span class="shortcut-desc">Show Insights</span>
+                            <span class="shortcut-desc" data-i18n="help.showInsights">Show Insights</span>
                         </div>
                         <div class="shortcut-item">
                             <span class="shortcut-key">Ctrl + R</span>
-                            <span class="shortcut-desc">Recurring Expenses</span>
+                            <span class="shortcut-desc" data-i18n="help.recurringExpenses">Recurring Expenses</span>
                         </div>
                         <div class="shortcut-item">
                             <span class="shortcut-key">Ctrl + E</span>
-                            <span class="shortcut-desc">Export CSV</span>
+                            <span class="shortcut-desc" data-i18n="help.exportCSV">Export CSV</span>
                         </div>
                         <div class="shortcut-item">
                             <span class="shortcut-key">Ctrl + D</span>
@@ -4529,7 +4529,7 @@
                 </div>
 
                 <div style="margin-top: 2rem;">
-                    <h3>📚 User Guide</h3>
+                    <h3>📚 <span data-i18n="help.title">User Guide</span></h3>
                     <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
                         <button class="btn btn-info" id="startGuideBtn">
                             🎯 <span data-i18n="guide.startInteractive">Start Interactive Guide</span>
@@ -4541,7 +4541,7 @@
                 </div>
 
                 <div style="margin-top: 2rem;">
-                    <h3>📱 Data Synchronization</h3>
+                    <h3>📱 <span data-i18n="sync.title">Data Synchronization</span></h3>
                     
                     <div class="sync-status-card">
                         <div class="sync-status-info">
@@ -4577,10 +4577,10 @@
                 </div>
 
                 <div style="margin-top: 2rem;">
-                    <h3>🗑️ Data Management</h3>
+                    <h3>🗑️ <span data-i18n="settings.dataManagement">Data Management</span></h3>
                     <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
-                        <button class="btn btn-warning" id="exportAllDataBtn">📥 Export All Data</button>
-                        <button class="btn btn-danger" id="clearAllDataBtn">🗑️ Clear All Data</button>
+                        <button class="btn btn-warning" id="exportAllDataBtn">📥 <span data-i18n="buttons.exportData">Export All Data</span></button>
+                        <button class="btn btn-danger" id="clearAllDataBtn">🗑️ <span data-i18n="buttons.clearData">Clear All Data</span></button>
                         <button class="btn btn-warning" id="clearCacheBtn">🔄 Clear Cache & Reload</button>
                     </div>
                 </div>
@@ -7667,9 +7667,9 @@
             content.innerHTML = `
                 <div style="max-height: 70vh; overflow-y: auto;">
                     <div class="budget-breakdown">
-                        <h3>💰 Budget Analysis</h3>
+                        <h3>💰 <span data-i18n="insights.budgetAnalysis">Budget Analysis</span></h3>
                         <div class="projection-row">
-                            <span>📊 Monthly Budget:</span>
+                            <span data-i18n="insights.monthlyBudget">📊 Monthly Budget:</span>
                             <strong>€${monthlyBudget.toFixed(2)}</strong>
                         </div>
                         <div class="projection-row">
@@ -8803,7 +8803,7 @@
             // Generate recommendations
             let recommendationText = '';
             if (monthlyExpenses.length === 0) {
-                recommendationText = '💡 Start tracking your expenses to get personalized insights!';
+                recommendationText = '💡 ' + t('insights.startTracking');
             } else {
                 const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
                 const avgDaily = monthlyTotal / new Date().getDate();
@@ -8811,14 +8811,14 @@
                 if (monthlyBudget > 0) {
                     const budgetUsed = (monthlyTotal / monthlyBudget) * 100;
                     if (budgetUsed > 80) {
-                        recommendationText = '⚠️ You\'ve used over 80% of your budget. Consider reducing non-essential expenses.';
+                        recommendationText = '⚠️ ' + t('insights.over80Budget');
                     } else if (budgetUsed < 50) {
-                        recommendationText = '✅ Great job! You\'re well within your budget. Consider saving the extra amount.';
+                        recommendationText = '✅ ' + t('insights.wellWithinBudget');
                     } else {
-                        recommendationText = '📊 You\'re on track with your budget. Keep monitoring your spending.';
+                        recommendationText = '📊 ' + t('insights.onTrackBudget');
                     }
                 } else {
-                    recommendationText = '🎯 Set a monthly budget to get better insights and recommendations.';
+                    recommendationText = '🎯 ' + t('insights.setBudgetForInsights');
                 }
 
                 // Category-based recommendations
@@ -8831,7 +8831,7 @@
                     categoryTotals[a] > categoryTotals[b] ? a : b, '');
                 
                 if (topCategory && categoryTotals[topCategory] > monthlyTotal * 0.4) {
-                    recommendationText += `<br><br>💰 ${topCategory} represents a large portion of your spending. Look for ways to optimize these expenses.`;
+                    recommendationText += `<br><br>💰 ${t('insights.categoryHighSpending', { category: topCategory })}`;
                 }
                 
                 // Fixed vs Variable costs analysis
@@ -8868,11 +8868,11 @@
                 const monthlyAvg = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0) / new Date().getDate();
 
                 if (recentAvg > monthlyAvg * 1.2) {
-                    trendsText = '📈 Your spending has increased in the last week. Consider reviewing recent purchases.';
+                    trendsText = '📈 ' + t('insights.spendingIncreased');
                 } else if (recentAvg < monthlyAvg * 0.8) {
-                    trendsText = '📉 Your spending has decreased in the last week. Great job on controlling expenses!';
+                    trendsText = '📉 ' + t('insights.spendingDecreased');
                 } else {
-                    trendsText = '📊 Your spending pattern is consistent with your monthly average.';
+                    trendsText = '📊 ' + t('insights.spendingConsistent');
                 }
 
                 // Most active day
@@ -8889,7 +8889,7 @@
                     trendsText += `<br><br>📅 ${mostActiveDay} is your most expensive day of the week.`;
                 }
             } else {
-                trendsText = '📊 Add more expenses to see detailed spending trends and patterns.';
+                trendsText = '📊 ' + t('insights.addMoreExpenses');
             }
 
             trends.innerHTML = trendsText;
@@ -10001,9 +10001,13 @@
                     suggestions.push({
                         type: 'daily',
                         icon: '📅',
-                        text: `With €${remaining.toFixed(2)} left for ${daysLeft} days, aim to spend no more than €${dailyBudgetLeft.toFixed(2)} per day.`,
-                        amount: `€${dailyBudgetLeft.toFixed(2)}/day`,
-                        action: 'Track daily to stay on target',
+                        text: t('suggestions.dailyBudget', {
+                            remaining: formatCurrencyAmount(remaining, mainCurrency),
+                            days: daysLeft,
+                            daily: formatCurrencyAmount(dailyBudgetLeft, mainCurrency)
+                        }),
+                        amount: `${formatCurrencyAmount(dailyBudgetLeft, mainCurrency)}/day`,
+                        action: t('suggestions.trackDaily'),
                         priority: 'normal'
                     });
                 }
@@ -10033,8 +10037,12 @@
                     suggestions.push({
                         type: 'category',
                         icon: '📊',
-                        text: `${topCategory[0]} accounts for ${topCategoryPercentage.toFixed(1)}% of your spending (€${topCategory[1].toFixed(2)}). Look for ways to optimize this category.`,
-                        action: 'Consider alternatives or negotiate better rates',
+                        text: t('suggestions.categoryHigh', {
+                            category: topCategory[0],
+                            percentage: topCategoryPercentage.toFixed(1),
+                            amount: formatCurrencyAmount(topCategory[1], mainCurrency)
+                        }),
+                        action: t('suggestions.considerAlternatives'),
                         priority: 'normal'
                     });
                 }
@@ -10118,7 +10126,7 @@
                     suggestionsContent.innerHTML += `
                         <div class="savings-goal">
                             <div class="savings-amount">💰 €${recommendedSavings.toFixed(2)}</div>
-                            <div>Recommended monthly savings from remaining budget</div>
+                            <div data-i18n="suggestions.recommendedSavings">Recommended monthly savings from remaining budget</div>
                         </div>
                     `;
                 }
@@ -10336,8 +10344,8 @@
             const budgetUsedPercentage = monthlyBudget > 0 ? (monthlyTotal / monthlyBudget) * 100 : 0;
 
             if (budgetUsedPercentage >= 80 && budgetUsedPercentage < 100) {
-                new Notification('Budget Alert', {
-                    body: `You've used ${Math.round(budgetUsedPercentage)}% of your monthly budget.`,
+                new Notification(t('notifications.budgetAlert'), {
+                    body: t('notifications.budgetUsedPercent', { percentage: Math.round(budgetUsedPercentage) }),
                     icon: '/icons/icon-192x192.png',
                     tag: 'budget-warning'
                 });

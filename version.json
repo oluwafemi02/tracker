@@ -1,5 +1,5 @@
 {
-  "version": "0.0.6",
+  "version": "0.0.7",
   "releaseDate": "2024-01-15",
-  "description": "Complete i18n coverage - Smart Suggestions, Guide, Account Types, and ALL UI elements"
+  "description": "Deep dive i18n fix - Settings tab, Insights, and ALL remaining English text eliminated"
 }

@@ -26,7 +26,7 @@
     "auto": "Automatinis"
   },
   "help": {
-    "title": "Help & Guide",
+    "title": "Naudotojo Vadovas",
     "needHelp": "Need help? Start the interactive guide!",
     "welcome": "Welcome new user!",
     "startGuide": "Starting interactive guide...",
@@ -36,15 +36,15 @@
     "finishGuide": "Finish Guide",
     "step1Title": "Welcome to Expense Tracker!",
     "step1Text": "Let's take a quick tour to help you get started.",
-    "keyboardShortcuts": "Keyboard Shortcuts",
-    "newExpense": "New Expense (scroll to form)",
-    "showInsights": "Show Insights",
-    "recurringExpenses": "Recurring Expenses",
-    "exportCSV": "Export CSV"
+    "keyboardShortcuts": "Klaviatūros Spartieji Klavišai",
+    "newExpense": "Nauja Išlaida (slinkti į formą)",
+    "showInsights": "Rodyti Įžvalgas",
+    "recurringExpenses": "Pasikartojančios Išlaidos",
+    "exportCSV": "Eksportuoti CSV"
   },
   "budget": {
     "title": "Biudžeto Apžvalga",
-    "monthly": "Mėnesio Biudžetas",
+    "monthly": "Mėnesinis Biudžetas",
     "spent": "Išleista",
     "remaining": "Likutis",
     "of": "iš",
@@ -74,7 +74,7 @@
     "updatedSuccess": "Išlaidos sėkmingai atnaujintos!",
     "deletedSuccess": "Išlaidos sėkmingai ištrintos!",
     "quickActions": "Quick Actions",
-    "isRecurring": "Set as recurring expense",
+    "isRecurring": "Padaryti tai pasikartojančia išlaida",
     "frequency": "Frequency",
     "customCategory": "New Category Name",
     "addNewCategory": "Add New Category",
@@ -207,29 +207,29 @@
     "pie": "Skritulinė"
   },
   "settings": {
-    "title": "Nustatymai",
+    "title": "Nustatymai ir Konfigūracija",
     "language": "Kalba",
     "mainCurrency": "Pagrindinė Valiuta",
     "setCurrency": "Nustatyti Valiutą",
-    "exchangeRateHistory": "Valiutos Keitimo Istorija",
+    "exchangeRateHistory": "Valiutos Kursų Istorija",
     "clearHistory": "Išvalyti Istoriją",
     "export": "Eksportuoti Duomenis",
     "import": "Importuoti Duomenis",
-    "reset": "Atstatyti Visus Duomenis",
-    "confirmReset": "Ar tikrai norite atstatyti visus duomenis? Šio veiksmo negalima atšaukti!",
-    "confirmClearHistory": "Are you sure you want to clear all exchange rate history?",
-    "dataReset": "Visi duomenys buvo atstatyti",
+    "reset": "Iš Naujo Nustatyti Visus Duomenis",
+    "confirmReset": "Ar tikrai norite iš naujo nustatyti visus duomenis? Šio veiksmo negalima atšaukti!",
+    "confirmClearHistory": "Ar tikrai norite išvalyti visą valiutos kursų istoriją?",
+    "dataReset": "Visi duomenys buvo iš naujo nustatyti",
     "categories": "Kategorijos",
     "addCategory": "Pridėti Kategoriją",
     "people": "Žmonės",
     "addPerson": "Pridėti Asmenį",
-    "dataManagement": "Data Management",
-    "backup": "Backup & Restore",
-    "sync": "Sync & Share",
-    "privacy": "Privacy",
-    "notifications": "Notifications",
-    "appearance": "Appearance",
-    "advanced": "Advanced"
+    "dataManagement": "Duomenų Valdymas",
+    "backup": "Atsarginės Kopijos ir Atkūrimas",
+    "sync": "Sinchronizavimas ir Dalijimasis",
+    "privacy": "Privatumas",
+    "notifications": "Pranešimai",
+    "appearance": "Išvaizda",
+    "advanced": "Išplėstiniai"
   },
   "sync": {
     "title": "Sync & Share",
@@ -316,7 +316,10 @@
     "spendingIncreased": "Jūsų išlaidos padidėjo per pastarąją savaitę. Apsvarstykite naujausių pirkimų peržiūrą.",
     "spendingDecreased": "Jūsų išlaidos sumažėjo per pastarąją savaitę. Puikiai kontroliuojate išlaidas!",
     "spendingConsistent": "Jūsų išlaidų modelis atitinka jūsų mėnesio vidurkį.",
-    "addMoreExpenses": "Pridėkite daugiau išlaidų, kad pamatytumėte išsamias išlaidų tendencijas ir modelius."
+    "addMoreExpenses": "Pridėkite daugiau išlaidų, kad pamatytumėte išsamias išlaidų tendencijas ir modelius.",
+    "budgetAnalysis": "Biudžeto Analizė",
+    "monthlyBudget": "Mėnesio Biudžetas",
+    "categoryHighSpending": "{{category}} sudaro didelę jūsų išlaidų dalį. Ieškokite būdų optimizuoti šias išlaidas."
   },
   "update": {
     "available": "Yra Atnaujinimas",
@@ -418,7 +421,9 @@
     "categoryExists": "Category already exists!",
     "personAdded": "Person added successfully!",
     "featureComingSoon": "This feature is coming soon!",
-    "premiumRequired": "Premium feature - Subscribe to unlock!"
+    "premiumRequired": "Premium feature - Subscribe to unlock!",
+    "budgetAlert": "Biudžeto Įspėjimas",
+    "budgetUsedPercent": "Išnaudojote {{percentage}}% savo mėnesio biudžeto."
   },
   "placeholders": {
     "amount": "0.00",
@@ -453,8 +458,8 @@
     "exportExcel": "Export Excel",
     "exportPDF": "Export PDF",
     "exportCSV": "Export CSV",
-    "importData": "Import Data",
-    "clearData": "Clear All Data",
+    "importData": "Importuoti Duomenis",
+    "clearData": "Išvalyti Visus Duomenis",
     "setBudget": "Set Budget",
     "setCurrency": "Set Currency",
     "changeLanguage": "Change Language",
@@ -474,7 +479,8 @@
     "getStarted": "Get Started",
     "continue": "Continue",
     "done": "Done",
-    "exportJSON": "Eksportuoti JSON"
+    "exportJSON": "Eksportuoti JSON",
+    "exportData": "Eksportuoti Visus Duomenis"
   },
   "expenses": "Išlaidos",
   "trips": "Kelionės",
@@ -505,7 +511,13 @@
     "highSpending": "Didelės išlaidos {{category}} - {{percentage}}% biudžeto",
     "considerReducing": "Apsvarstykite {{category}} išlaidų mažinimą",
     "recurringHigh": "Jūsų pasikartojančios išlaidos sudaro {{percentage}}% jūsų biudžeto",
-    "reviewSubscriptions": "Peržiūrėkite prenumeratas ir fiksuotas išlaidas"
+    "reviewSubscriptions": "Peržiūrėkite prenumeratas ir fiksuotas išlaidas",
+    "recommendedSavings": "Rekomenduojamos mėnesinės santaupos iš likusio biudžeto",
+    "optimizeCategory": "Ieškokite būdų optimizuoti šią kategoriją",
+    "considerAlternatives": "Apsvarstykite alternatyvas arba derėkitės dėl geresnių tarifų",
+    "dailyBudget": "Su {{remaining}} likusiais {{days}} dienoms, stenkitės išleisti ne daugiau nei {{daily}} per dieną.",
+    "trackDaily": "Sekite kasdien, kad liktumėte tiksle",
+    "categoryHigh": "{{category}} sudaro {{percentage}}% jūsų išlaidų ({{amount}}). Ieškokite būdų optimizuoti šią kategoriją."
   },
   "guide": {
     "welcome": "Sveiki atvykę į Išlaidų Sekiklį! 🎉",
@@ -543,6 +555,8 @@
     "previous": "Ankstesnis",
     "next": "Kitas",
     "finish": "Pradėti Naudoti!",
-    "progressText": "Žingsnis {{current}} iš {{total}}"
+    "progressText": "Žingsnis {{current}} iš {{total}}",
+    "startInteractive": "Pradėti Interaktyvų Vadovą",
+    "quickTour": "Greitas Funkcijų Turas"
   }
 }
