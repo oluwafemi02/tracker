@@ -6610,7 +6610,7 @@
                 expenseCountElement.innerHTML = `
                     <span style="cursor: pointer; text-decoration: underline;" onclick="showExpenseDetailsModal()">${monthlyExpenses.length} expense${monthlyExpenses.length !== 1 ? 's' : ''}</span><br>
                     <span style="font-size: 0.8em; color: var(--text-secondary);">
-                        Regular: €${expenseTotal.toFixed(2)} | Recurring: €${recurringTotal.toFixed(2)}
+                        Regular: ${currencySymbol}${expenseTotal.toFixed(2)} | Recurring: ${currencySymbol}${recurringTotal.toFixed(2)}
                     </span>
                 `;
             } else {
@@ -7032,10 +7032,10 @@
             // Calculate category totals
             const categoryTotals = {};
             monthlyExpenses.forEach(expense => {
-                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + getAmountInMainCurrency(expense);
             });
 
-            const total = monthlyExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const total = monthlyExpenses.reduce((sum, expense) => sum + getAmountInMainCurrency(expense), 0);
             
             // Sort expenses by date (newest first)
             const sortedExpenses = [...monthlyExpenses].sort((a, b) => new Date(b.date) - new Date(a.date));
