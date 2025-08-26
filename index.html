@@ -6365,17 +6365,22 @@
             }
             
             const fromCurrency = document.getElementById('fromCurrency').textContent;
-            const rateKey = `${fromCurrency}_${mainCurrency}`;
+            const toCurrency = document.getElementById('toCurrency').textContent;
+            const rateKey = `${fromCurrency}_${toCurrency}`;
             exchangeRates[rateKey] = rate;
             localStorage.setItem('exchangeRates', JSON.stringify(exchangeRates));
             
             // Track exchange rate history
-            trackExchangeRateHistory(fromCurrency, mainCurrency, rate);
+            trackExchangeRateHistory(fromCurrency, toCurrency, rate);
+            
+            // Get callback before closing modal
+            const callback = window.exchangeRateCallback;
             
             closeExchangeRateModal();
             
-            if (window.exchangeRateCallback) {
-                window.exchangeRateCallback(rate);
+            if (callback) {
+                // Execute callback after modal is closed
+                setTimeout(() => callback(rate), 100);
             }
         }
         
@@ -11291,10 +11296,18 @@
                         }
                     } else {
                         // Add new expense
+                        const needsCurrencyConversion = formData.deductFromMainBudget && 
+                            formData.currency !== mainCurrency;
+                        
                         addTravelExpense(formData);
-                        this.reset();
-                        document.getElementById('travelDate').valueAsDate = new Date();
-                        document.getElementById('mainBudgetToggle').checked = false;
+                        
+                        // Only reset form if no currency conversion is needed
+                        // (if conversion is needed, form will be reset in the callback)
+                        if (!needsCurrencyConversion) {
+                            this.reset();
+                            document.getElementById('travelDate').valueAsDate = new Date();
+                            document.getElementById('mainBudgetToggle').checked = false;
+                        }
                     }
                 });
             }
@@ -11863,6 +11876,17 @@
                     renderTravelExpensesList();
                     updateTravelCategoryBreakdown();
                     updateTripStats();
+                    
+                    // Reset the travel expense form
+                    document.getElementById('travelExpenseForm').reset();
+                    document.getElementById('travelDate').valueAsDate = new Date();
+                    document.getElementById('mainBudgetToggle').checked = false;
+                    
+                    // Reset currency to trip default
+                    const travelCurrencySelect = document.getElementById('travelCurrency');
+                    if (travelCurrencySelect) {
+                        travelCurrencySelect.value = (currentTrip && currentTrip.currency) || mainCurrency;
+                    }
                     
                     showNotification('✈️ Travel expense added!', 'success');
                 });
