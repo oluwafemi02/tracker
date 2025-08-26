@@ -1,5 +1,5 @@
 {
-  "version": "0.3.1",
+  "version": "0.3.2",
   "releaseDate": "2024-01-15",
-  "description": "Fix dashboard charts not displaying data - spending trend, category budget, and cash flow"
+  "description": "Add subscription plan display in settings with tier information and days remaining"
 }

@@ -363,6 +363,15 @@
     "cloudSync": "Cloud Sync",
     "activateTrial": "Would you like to activate a demo premium license for testing?"
   },
+  "subscription": {
+    "title": "Subscription Plan",
+    "validUntil": "Valid until",
+    "daysRemaining": "Days Remaining",
+    "status": "Status",
+    "upgrade": "Upgrade to Premium",
+    "manage": "Manage Subscription",
+    "manageInfo": "Subscription management coming soon!"
+  },
   "filters": {
     "all": "All",
     "thisMonth": "This Month",

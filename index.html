@@ -1067,6 +1067,202 @@
             align-items: end;
         }
 
+        /* Subscription Section Styles */
+        .subscription-section {
+            margin-bottom: 2rem;
+        }
+
+        .subscription-section h3 {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.25rem;
+            color: var(--text-primary);
+        }
+
+        .section-icon {
+            font-size: 1.5rem;
+        }
+
+        .plan-status-card {
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            border: 2px solid var(--border-color);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .plan-status-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color) 0%, var(--accent-color) 100%);
+        }
+
+        .plan-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .plan-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--bg-primary);
+            border-radius: 50px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border-color);
+        }
+
+        .plan-badge.premium {
+            background: linear-gradient(135deg, #ffd700 0%, #ffed4e 100%);
+            border: none;
+            color: #333;
+        }
+
+        .plan-badge.trial {
+            background: linear-gradient(135deg, #4caf50 0%, #8bc34a 100%);
+            border: none;
+            color: white;
+        }
+
+        .plan-icon {
+            font-size: 1.25rem;
+        }
+
+        .plan-name {
+            font-weight: 600;
+            font-size: 1.1rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .plan-validity {
+            text-align: right;
+        }
+
+        .validity-label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .validity-date {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .plan-details {
+            margin-bottom: 1.5rem;
+        }
+
+        .plan-feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .plan-feature {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+        }
+
+        .feature-icon {
+            color: #4caf50;
+        }
+
+        .feature-icon.disabled {
+            color: #999;
+        }
+
+        .plan-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .plan-actions {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .plan-actions .btn {
+            flex: 1;
+            min-width: 150px;
+        }
+
+        .section-divider {
+            margin: 2rem 0;
+            border: none;
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Subscription section responsive */
+        @media (max-width: 768px) {
+            .plan-header {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .plan-validity {
+                text-align: center;
+            }
+            
+            .plan-feature-list {
+                grid-template-columns: 1fr;
+            }
+            
+            .plan-stats {
+                grid-template-columns: 1fr;
+            }
+            
+            .plan-actions {
+                flex-direction: column;
+            }
+            
+            .plan-actions .btn {
+                width: 100%;
+            }
+        }
+
         .no-expenses {
             text-align: center;
             color: var(--text-secondary);
@@ -5066,6 +5262,53 @@
         <div id="settingsTab" class="tab-content">
             <div class="settings-panel">
                 <h2><span class="card-icon">⚙️</span> <span data-i18n="settings.title">Settings & Configuration</span></h2>
+                
+                <!-- Subscription Plan Section -->
+                <div class="subscription-section">
+                    <h3><span class="section-icon">👑</span> <span data-i18n="subscription.title">Subscription Plan</span></h3>
+                    <div class="plan-status-card">
+                        <div class="plan-header">
+                            <div class="plan-badge" id="planBadge">
+                                <span class="plan-icon">🆓</span>
+                                <span class="plan-name" id="planName">Free</span>
+                            </div>
+                            <div class="plan-validity" id="planValidity">
+                                <span class="validity-label" data-i18n="subscription.validUntil">Valid until</span>
+                                <span class="validity-date" id="validityDate">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="plan-details">
+                            <div class="plan-feature-list" id="planFeatures">
+                                <!-- Features will be populated dynamically -->
+                            </div>
+                            
+                            <div class="plan-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label" data-i18n="subscription.daysRemaining">Days Remaining</span>
+                                    <span class="stat-value" id="daysRemaining">∞</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label" data-i18n="subscription.status">Status</span>
+                                    <span class="stat-value" id="subscriptionStatus">Active</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="plan-actions">
+                            <button class="btn btn-primary" id="upgradePlanBtn" onclick="showUpgradeModal()">
+                                <span>🚀</span>
+                                <span data-i18n="subscription.upgrade">Upgrade to Premium</span>
+                            </button>
+                            <button class="btn btn-secondary" id="managePlanBtn" onclick="showSubscriptionDetails()" style="display: none;">
+                                <span>📋</span>
+                                <span data-i18n="subscription.manage">Manage Subscription</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <hr class="section-divider">
                 <div class="settings-grid">
                     <div class="form-group">
                         <label for="languageSelect" data-i18n="settings.language">Language</label>
@@ -10182,6 +10425,11 @@
             if (tabName === 'travel') {
                 initializeTravelTab();
             }
+            
+            // Update subscription status if switching to settings tab
+            if (tabName === 'settings') {
+                updateSubscriptionStatus();
+            }
         }
 
         // Update main page budget summary
@@ -14763,6 +15011,149 @@
             }).reduce((sum, e) => sum + getAmountInMainCurrency(e), 0);
         }
 
+        // Update subscription status display
+        function updateSubscriptionStatus() {
+            const planBadge = document.getElementById('planBadge');
+            const planName = document.getElementById('planName');
+            const planIcon = planBadge?.querySelector('.plan-icon');
+            const validityDate = document.getElementById('validityDate');
+            const daysRemaining = document.getElementById('daysRemaining');
+            const subscriptionStatus = document.getElementById('subscriptionStatus');
+            const planFeatures = document.getElementById('planFeatures');
+            const upgradePlanBtn = document.getElementById('upgradePlanBtn');
+            const managePlanBtn = document.getElementById('managePlanBtn');
+            
+            // Get current premium status
+            const premiumState = window.premiumManager?.getCurrentState() || { tier: 'FREE' };
+            const licenseInfo = JSON.parse(localStorage.getItem('premiumLicense') || '{}');
+            
+            // Define features for each plan
+            const planFeaturesList = {
+                FREE: [
+                    { icon: '✅', text: 'Basic expense tracking', enabled: true },
+                    { icon: '✅', text: 'Up to 100 expenses/month', enabled: true },
+                    { icon: '✅', text: 'Basic categories', enabled: true },
+                    { icon: '❌', text: 'Excel/PDF export', enabled: false },
+                    { icon: '❌', text: 'Advanced analytics', enabled: false },
+                    { icon: '❌', text: 'Priority support', enabled: false }
+                ],
+                TRIAL: [
+                    { icon: '✅', text: 'All Premium features', enabled: true },
+                    { icon: '✅', text: 'Unlimited expenses', enabled: true },
+                    { icon: '✅', text: 'Excel/PDF export', enabled: true },
+                    { icon: '✅', text: 'Advanced analytics', enabled: true },
+                    { icon: '⏰', text: '7-day trial period', enabled: true },
+                    { icon: '❌', text: 'Priority support', enabled: false }
+                ],
+                PREMIUM: [
+                    { icon: '✅', text: 'Unlimited expenses', enabled: true },
+                    { icon: '✅', text: 'Excel/PDF export', enabled: true },
+                    { icon: '✅', text: 'Advanced analytics', enabled: true },
+                    { icon: '✅', text: 'Custom categories', enabled: true },
+                    { icon: '✅', text: 'Multi-device sync', enabled: true },
+                    { icon: '✅', text: 'Priority support', enabled: true }
+                ]
+            };
+            
+            // Update plan display based on tier
+            if (premiumState.tier === 'PREMIUM' || (licenseInfo.type === 'trial' && new Date(licenseInfo.expiresAt) > new Date())) {
+                const isTrial = licenseInfo.type === 'trial';
+                
+                if (planBadge) {
+                    planBadge.className = `plan-badge ${isTrial ? 'trial' : 'premium'}`;
+                }
+                if (planIcon) {
+                    planIcon.textContent = isTrial ? '🎁' : '👑';
+                }
+                if (planName) {
+                    planName.textContent = isTrial ? 'Premium Trial' : 'Premium';
+                }
+                
+                // Calculate days remaining
+                if (licenseInfo.expiresAt) {
+                    const expiryDate = new Date(licenseInfo.expiresAt);
+                    const today = new Date();
+                    const msPerDay = 24 * 60 * 60 * 1000;
+                    const daysLeft = Math.ceil((expiryDate - today) / msPerDay);
+                    
+                    if (validityDate) {
+                        validityDate.textContent = expiryDate.toLocaleDateString();
+                    }
+                    if (daysRemaining) {
+                        daysRemaining.textContent = daysLeft > 0 ? daysLeft : '0';
+                        daysRemaining.style.color = daysLeft <= 3 ? '#f44336' : 'var(--primary-color)';
+                    }
+                    if (subscriptionStatus) {
+                        subscriptionStatus.textContent = daysLeft > 0 ? 'Active' : 'Expired';
+                        subscriptionStatus.style.color = daysLeft > 0 ? '#4caf50' : '#f44336';
+                    }
+                } else {
+                    if (validityDate) validityDate.textContent = 'Lifetime';
+                    if (daysRemaining) daysRemaining.textContent = '∞';
+                    if (subscriptionStatus) subscriptionStatus.textContent = 'Active';
+                }
+                
+                // Show appropriate buttons
+                if (upgradePlanBtn) upgradePlanBtn.style.display = isTrial ? 'flex' : 'none';
+                if (managePlanBtn) managePlanBtn.style.display = isTrial ? 'none' : 'flex';
+                
+                // Display features
+                const features = isTrial ? planFeaturesList.TRIAL : planFeaturesList.PREMIUM;
+                if (planFeatures) {
+                    planFeatures.innerHTML = features.map(feature => `
+                        <div class="plan-feature">
+                            <span class="feature-icon ${!feature.enabled ? 'disabled' : ''}">${feature.icon}</span>
+                            <span>${feature.text}</span>
+                        </div>
+                    `).join('');
+                }
+            } else {
+                // Free plan
+                if (planBadge) {
+                    planBadge.className = 'plan-badge';
+                }
+                if (planIcon) {
+                    planIcon.textContent = '🆓';
+                }
+                if (planName) {
+                    planName.textContent = 'Free';
+                }
+                if (validityDate) validityDate.textContent = '-';
+                if (daysRemaining) daysRemaining.textContent = '∞';
+                if (subscriptionStatus) {
+                    subscriptionStatus.textContent = 'Active';
+                    subscriptionStatus.style.color = '#4caf50';
+                }
+                
+                if (upgradePlanBtn) upgradePlanBtn.style.display = 'flex';
+                if (managePlanBtn) managePlanBtn.style.display = 'none';
+                
+                // Display free features
+                if (planFeatures) {
+                    planFeatures.innerHTML = planFeaturesList.FREE.map(feature => `
+                        <div class="plan-feature">
+                            <span class="feature-icon ${!feature.enabled ? 'disabled' : ''}">${feature.icon}</span>
+                            <span>${feature.text}</span>
+                        </div>
+                    `).join('');
+                }
+            }
+        }
+
+        // Show upgrade modal
+        function showUpgradeModal() {
+            // This would typically show a more detailed upgrade modal
+            // For now, we'll use the existing premium activation
+            if (window.premiumManager) {
+                window.premiumManager.showPaywall('subscription_upgrade');
+            }
+        }
+
+        // Show subscription details modal
+        function showSubscriptionDetails() {
+            showNotification(t('subscription.manageInfo') || 'Subscription management coming soon!', 'info');
+        }
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(updatePremiumUIState, 1000);
@@ -14796,6 +15187,11 @@
                     // Initialize travel tab if switching to travel tab
                     if (tabName === 'travel') {
                         initializeTravelTab();
+                    }
+                    
+                    // Update subscription status if switching to settings tab
+                    if (tabName === 'settings') {
+                        updateSubscriptionStatus();
                     }
                 });
             });
