@@ -9942,7 +9942,7 @@
                 return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
             });
 
-            const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
+            const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + getAmountInMainCurrency(expense), 0);
             const remaining = monthlyBudget - monthlyTotal;
             const daysLeft = new Date(currentYear, currentMonth + 1, 0).getDate() - new Date().getDate();
             const dailyBudgetLeft = daysLeft > 0 ? remaining / daysLeft : 0;
@@ -10032,8 +10032,10 @@
                 suggestions.push({
                     type: 'overspent',
                     icon: '🚨',
-                    text: `You're €${Math.abs(remaining).toFixed(2)} over budget this month. Focus on essential expenses and plan better for next month.`,
-                    action: 'Review your expenses and adjust next month\'s budget',
+                    text: t('suggestions.overBudget', {
+                        amount: formatCurrencyAmount(Math.abs(remaining), mainCurrency)
+                    }),
+                    action: t('suggestions.reviewExpenses'),
                     priority: 'urgent'
                 });
             }
@@ -10041,7 +10043,7 @@
             // Category-based suggestions
             const categoryTotals = {};
             monthlyExpenses.forEach(expense => {
-                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + getAmountInMainCurrency(expense);
             });
 
             const sortedCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
@@ -10070,8 +10072,11 @@
                 suggestions.push({
                     type: 'goal',
                     icon: '🎯',
-                    text: 'Consider setting a savings goal! Even saving €50-100 per month can build a substantial emergency fund.',
-                    action: 'Set a monthly savings target',
+                    text: t('suggestions.setSavingsGoal', {
+                        min: formatCurrencyAmount(50, mainCurrency),
+                        max: formatCurrencyAmount(100, mainCurrency)
+                    }),
+                    action: t('suggestions.setMonthlyTarget'),
                     priority: 'normal'
                 });
             }
@@ -10083,8 +10088,8 @@
                     suggestions.push({
                         type: 'family',
                         icon: '👨‍👩‍👧‍👦',
-                        text: `Track spending by family member to identify patterns and teach financial responsibility to everyone.`,
-                        action: 'Review individual spending habits',
+                        text: t('suggestions.trackFamilySpending'),
+                        action: t('suggestions.reviewIndividual'),
                         priority: 'normal'
                     });
                 }
@@ -10092,8 +10097,8 @@
                 suggestions.push({
                     type: 'group',
                     icon: '👥',
-                    text: 'Consider setting up group savings goals or shared expenses to make financial planning easier for everyone.',
-                    action: 'Discuss group financial goals',
+                    text: t('suggestions.groupSavingsGoals'),
+                    action: t('suggestions.discussGroupGoals'),
                     priority: 'normal'
                 });
             }

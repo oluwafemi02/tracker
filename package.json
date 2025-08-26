@@ -1,6 +1,6 @@
 {
   "name": "expense-tracker-pwa",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "A Progressive Web App for tracking personal expenses",
   "author": "ExpenseTracker Team",
   "license": "MIT",

@@ -483,7 +483,13 @@
   "suggestions": {
     "title": "Suggestions d'Argent Intelligentes",
     "setBudget": "Définissez un budget mensuel pour obtenir des suggestions d'économie personnalisées.",
-    "goToSettings": "Allez dans Paramètres pour définir votre budget"
+    "goToSettings": "Allez dans Paramètres pour définir votre budget",
+    "setSavingsGoal": "Envisagez de définir un objectif d'épargne ! Même économiser {{min}}-{{max}} par mois peut créer un fonds d'urgence solide.",
+    "setMonthlyTarget": "Définir un objectif d'épargne mensuel",
+    "trackFamilySpending": "Suivez les dépenses par membre de la famille pour identifier les tendances et enseigner la responsabilité financière à tous.",
+    "reviewIndividual": "Examiner les habitudes de dépenses individuelles",
+    "groupSavingsGoals": "Envisagez de définir des objectifs d'épargne de groupe ou des dépenses partagées pour faciliter la planification financière.",
+    "discussGroupGoals": "Discuter des objectifs financiers du groupe"
   },
   "guide": {
     "welcome": "Bienvenue dans le Suivi des Dépenses! 🎉"

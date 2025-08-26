@@ -289,7 +289,13 @@
     "considerAlternatives": "Consider alternatives or negotiate better rates",
     "dailyBudget": "With {{remaining}} left for {{days}} days, aim to spend no more than {{daily}} per day.",
     "trackDaily": "Track daily to stay on target",
-    "categoryHigh": "{{category}} accounts for {{percentage}}% of your spending ({{amount}}). Look for ways to optimize this category."
+    "categoryHigh": "{{category}} accounts for {{percentage}}% of your spending ({{amount}}). Look for ways to optimize this category.",
+    "setSavingsGoal": "Consider setting a savings goal! Even saving {{min}}-{{max}} per month can build a substantial emergency fund.",
+    "setMonthlyTarget": "Set a monthly savings target",
+    "trackFamilySpending": "Track spending by family member to identify patterns and teach financial responsibility to everyone.",
+    "reviewIndividual": "Review individual spending habits",
+    "groupSavingsGoals": "Consider setting up group savings goals or shared expenses to make financial planning easier for everyone.",
+    "discussGroupGoals": "Discuss group financial goals"
   },
   "guide": {
     "welcome": "Welcome to Expense Tracker! 🎉",

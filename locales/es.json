@@ -483,7 +483,13 @@
   "suggestions": {
     "title": "Sugerencias Inteligentes de Dinero",
     "setBudget": "Establece un presupuesto mensual para obtener sugerencias personalizadas de ahorro.",
-    "goToSettings": "Ve a Configuración para establecer tu presupuesto"
+    "goToSettings": "Ve a Configuración para establecer tu presupuesto",
+    "setSavingsGoal": "¡Considera establecer una meta de ahorro! Incluso ahorrando {{min}}-{{max}} al mes puedes crear un fondo de emergencia sólido.",
+    "setMonthlyTarget": "Establece una meta de ahorro mensual",
+    "trackFamilySpending": "Rastrea los gastos por miembro de la familia para identificar patrones y enseñar responsabilidad financiera a todos.",
+    "reviewIndividual": "Revisar hábitos de gasto individuales",
+    "groupSavingsGoals": "Considera establecer metas de ahorro grupales o gastos compartidos para facilitar la planificación financiera para todos.",
+    "discussGroupGoals": "Discutir objetivos financieros del grupo"
   },
   "guide": {
     "welcome": "¡Bienvenido al Rastreador de Gastos! 🎉"

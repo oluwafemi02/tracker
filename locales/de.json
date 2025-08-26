@@ -483,7 +483,13 @@
   "suggestions": {
     "title": "Intelligente Geldvorschläge",
     "setBudget": "Legen Sie ein monatliches Budget fest, um personalisierte Sparvorschläge zu erhalten.",
-    "goToSettings": "Gehen Sie zu Einstellungen, um Ihr Budget festzulegen"
+    "goToSettings": "Gehen Sie zu Einstellungen, um Ihr Budget festzulegen",
+    "setSavingsGoal": "Erwägen Sie ein Sparziel! Selbst {{min}}-{{max}} pro Monat können einen soliden Notfallfonds aufbauen.",
+    "setMonthlyTarget": "Monatliches Sparziel festlegen",
+    "trackFamilySpending": "Verfolgen Sie Ausgaben nach Familienmitglied, um Muster zu erkennen und allen finanzielle Verantwortung beizubringen.",
+    "reviewIndividual": "Individuelle Ausgabegewohnheiten überprüfen",
+    "groupSavingsGoals": "Erwägen Sie Gruppen-Sparziele oder gemeinsame Ausgaben, um die Finanzplanung für alle zu erleichtern.",
+    "discussGroupGoals": "Gruppenziele besprechen"
   },
   "guide": {
     "welcome": "Willkommen beim Ausgaben-Tracker! 🎉"

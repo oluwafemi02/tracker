@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "0.1.1",
   "releaseDate": "2024-01-15",
-  "description": "Fix budget overview calculations with foreign currency expenses"
+  "description": "Fix Smart Money Suggestions calculations with foreign currency expenses"
 }

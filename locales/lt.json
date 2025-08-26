@@ -517,7 +517,13 @@
     "considerAlternatives": "Apsvarstykite alternatyvas arba derėkitės dėl geresnių tarifų",
     "dailyBudget": "Su {{remaining}} likusiais {{days}} dienoms, stenkitės išleisti ne daugiau nei {{daily}} per dieną.",
     "trackDaily": "Sekite kasdien, kad liktumėte tiksle",
-    "categoryHigh": "{{category}} sudaro {{percentage}}% jūsų išlaidų ({{amount}}). Ieškokite būdų optimizuoti šią kategoriją."
+    "categoryHigh": "{{category}} sudaro {{percentage}}% jūsų išlaidų ({{amount}}). Ieškokite būdų optimizuoti šią kategoriją.",
+    "setSavingsGoal": "Apsvarstykite taupymo tikslą! Net taupant {{min}}-{{max}} per mėnesį galima sukurti solidų avarinį fondą.",
+    "setMonthlyTarget": "Nustatykite mėnesinį taupymo tikslą",
+    "trackFamilySpending": "Sekite išlaidas pagal šeimos narius, kad nustatytumėte tendencijas ir mokytumėte visus finansinės atsakomybės.",
+    "reviewIndividual": "Peržiūrėkite individualius išlaidų įpročius",
+    "groupSavingsGoals": "Apsvarstykite grupės taupymo tikslų ar bendrų išlaidų nustatymą, kad finansinis planavimas būtų paprastesnis visiems.",
+    "discussGroupGoals": "Aptarkite grupės finansinius tikslus"
   },
   "guide": {
     "welcome": "Sveiki atvykę į Išlaidų Sekiklį! 🎉",
