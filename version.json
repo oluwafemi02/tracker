@@ -1,5 +1,5 @@
 {
-  "version": "0.3.2",
+  "version": "0.3.3",
   "releaseDate": "2024-01-15",
-  "description": "Add subscription plan display in settings with tier information and days remaining"
+  "description": "Fix subscription status errors - add getCurrentState method and global function access"
 }

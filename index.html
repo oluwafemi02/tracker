@@ -15154,6 +15154,11 @@
             showNotification(t('subscription.manageInfo') || 'Subscription management coming soon!', 'info');
         }
 
+        // Make functions globally accessible
+        window.updateSubscriptionStatus = updateSubscriptionStatus;
+        window.showUpgradeModal = showUpgradeModal;
+        window.showSubscriptionDetails = showSubscriptionDetails;
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(updatePremiumUIState, 1000);

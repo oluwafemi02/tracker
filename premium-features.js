@@ -359,6 +359,15 @@ class PremiumManager {
     canExportPDF() {
         return this.hasFeature('exportFormats') && this.features[this.currentTier].exportFormats.includes('pdf');
     }
+    
+    getCurrentState() {
+        return {
+            tier: this.currentTier,
+            trialEndDate: this.trialEndDate,
+            licenseKey: this.licenseKey,
+            isValid: this.validateLicense()
+        };
+    }
 
     canUseAdvancedCharts() {
         return this.hasFeature('advancedAnalytics');
