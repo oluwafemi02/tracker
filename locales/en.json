@@ -418,8 +418,37 @@
     "mortgage": "Quick Mortgage",
     "carLoan": "Quick Car Loan"
   },
+  "dateRange": {
+    "month": "Month",
+    "quarter": "Quarter",
+    "year": "Year"
+  },
+  "charts": {
+    "spendingTrend": "Spending Trend",
+    "categoryBudget": "Category vs Budget",
+    "cashFlow": "Cash Flow Summary",
+    "dailySpending": "Daily Spending",
+    "spent": "Spent",
+    "budget": "Budget"
+  },
+  "cashFlow": {
+    "budget": "Budget",
+    "spent": "Spent",
+    "balance": "Balance"
+  },
   "insights": {
     "title": "Budget Insights",
+    "smart": "Smart Insights",
+    "weeklyTrend": "Weekly Trend",
+    "spentLess": "You spent {{percent}}% less this week than last week",
+    "spentMore": "You spent {{percent}}% more this week than last week",
+    "subscriptions": "Subscriptions",
+    "subscriptionPercent": "Subscriptions make up {{percent}}% of your expenses",
+    "topSpending": "Top Spending",
+    "topCategorySpend": "{{category}} is your biggest expense at {{percent}}% of total",
+    "budgetPace": "Budget Pace",
+    "underBudget": "You're {{percent}}% under expected budget usage",
+    "overBudget": "You're {{percent}}% over expected budget usage",
     "topSpendingCategories": "Top Spending Categories",
     "monthlyComparison": "Monthly Comparison",
     "yearlyOverview": "Yearly Overview",

@@ -1154,6 +1154,233 @@
             transform: translateY(-2px);
         }
 
+        /* Dashboard Enhancements */
+        .dashboard-filters {
+            margin-bottom: 2rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .date-range-selector {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .date-range-btn {
+            padding: 0.75rem 1.5rem;
+            border: 2px solid var(--border-color);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+
+        .date-range-btn:hover {
+            background: var(--bg-hover);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .date-range-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .range-icon {
+            font-size: 1.2rem;
+        }
+
+        .analytics-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .cash-flow-container {
+            padding: 1.5rem;
+        }
+
+        .cash-flow-item {
+            margin-bottom: 1.5rem;
+        }
+
+        .flow-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-amount {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .flow-bar {
+            height: 20px;
+            background: var(--bg-secondary);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .flow-fill {
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.5s ease;
+        }
+
+        .inflow-fill {
+            background: linear-gradient(135deg, #4caf50, #66bb6a);
+        }
+
+        .outflow-fill {
+            background: linear-gradient(135deg, #f44336, #ef5350);
+        }
+
+        .cash-flow-balance {
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .balance-label {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+        }
+
+        .balance-amount {
+            font-size: 2rem;
+            font-weight: 700;
+        }
+
+        .smart-insights-section {
+            margin: 2rem 0;
+            padding: 2rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+
+        .insights-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+        }
+
+        .insights-icon {
+            font-size: 1.8rem;
+        }
+
+        .insights-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1rem;
+        }
+
+        .insight-card {
+            padding: 1.25rem;
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .insight-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        .insight-type {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .insight-icon {
+            font-size: 1.5rem;
+        }
+
+        .insight-label {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .insight-content {
+            font-size: 1rem;
+            line-height: 1.5;
+            color: var(--text-primary);
+        }
+
+        .insight-value {
+            font-weight: 600;
+            color: var(--primary-color);
+        }
+
+        .insight-positive {
+            color: #4caf50;
+        }
+
+        .insight-negative {
+            color: #f44336;
+        }
+
+        .insight-neutral {
+            color: #ff9800;
+        }
+
+        /* Dashboard Enhancement Responsive */
+        @media (max-width: 768px) {
+            .analytics-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .date-range-btn {
+                padding: 0.5rem 1rem;
+                font-size: 0.85rem;
+            }
+            
+            .insights-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .smart-insights-section {
+                padding: 1rem;
+            }
+            
+            .cash-flow-container {
+                padding: 1rem;
+            }
+            
+            .flow-amount {
+                font-size: 1.25rem;
+            }
+            
+            .balance-amount {
+                font-size: 1.5rem;
+            }
+        }
+
         @media (max-width: 1024px) {
             .main-grid {
                 grid-template-columns: 1fr;
@@ -1838,6 +2065,38 @@
         }
         
         /* Dark mode adjustments */
+        @media (prefers-color-scheme: dark) {
+            .dashboard-filters {
+                background: #1a1a1a;
+            }
+            
+            .date-range-btn {
+                background: #2d2d2d;
+                border-color: #404040;
+            }
+            
+            .date-range-btn:hover {
+                background: #3d3d3d;
+            }
+            
+            .smart-insights-section {
+                background: #1a1a1a;
+            }
+            
+            .insight-card {
+                background: #2d2d2d;
+                border-color: #404040;
+            }
+            
+            .cash-flow-balance {
+                background: #2d2d2d;
+            }
+            
+            .flow-bar {
+                background: #1a1a1a;
+            }
+        }
+
         @media (prefers-color-scheme: dark) {
             .recurring-indicator {
                 background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
@@ -3934,6 +4193,24 @@
 
         <!-- Dashboard Tab Content -->
         <div id="dashboardTab" class="tab-content">
+            <!-- Date Range Filter -->
+            <div class="dashboard-filters">
+                <div class="date-range-selector">
+                    <button class="date-range-btn active" data-range="month">
+                        <span class="range-icon">📅</span>
+                        <span data-i18n="dateRange.month">Month</span>
+                    </button>
+                    <button class="date-range-btn" data-range="quarter">
+                        <span class="range-icon">📊</span>
+                        <span data-i18n="dateRange.quarter">Quarter</span>
+                    </button>
+                    <button class="date-range-btn" data-range="year">
+                        <span class="range-icon">📈</span>
+                        <span data-i18n="dateRange.year">Year</span>
+                    </button>
+                </div>
+            </div>
+
             <div class="dashboard">
                 <div class="card budget-card" id="budgetCard">
                     <h2><span class="card-icon">🎯</span> <span data-i18n="budget.monthly">Monthly Budget</span></h2>
@@ -3971,6 +4248,61 @@
                     <div id="upcomingRecurringList" class="upcoming-recurring-container">
                         <p style="color: var(--text-secondary); text-align: center; font-style: italic;">No upcoming recurring expenses</p>
                     </div>
+                </div>
+            </div>
+
+            <!-- New Analytics Section -->
+            <div class="analytics-section">
+                <!-- Spending Trend Chart -->
+                <div class="card">
+                    <h2><span class="card-icon">📉</span> <span data-i18n="charts.spendingTrend">Spending Trend</span></h2>
+                    <div class="chart-container">
+                        <canvas id="spendingTrendChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Category vs Budget Chart -->
+                <div class="card">
+                    <h2><span class="card-icon">🎯</span> <span data-i18n="charts.categoryBudget">Category vs Budget</span></h2>
+                    <div class="chart-container">
+                        <canvas id="categoryBudgetChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Cash Flow Summary -->
+                <div class="card">
+                    <h2><span class="card-icon">💸</span> <span data-i18n="charts.cashFlow">Cash Flow Summary</span></h2>
+                    <div class="cash-flow-container">
+                        <div class="cash-flow-item inflow">
+                            <div class="flow-label" data-i18n="cashFlow.budget">Budget</div>
+                            <div class="flow-amount" id="inflowAmount">€0</div>
+                            <div class="flow-bar">
+                                <div class="flow-fill inflow-fill" id="inflowBar"></div>
+                            </div>
+                        </div>
+                        <div class="cash-flow-item outflow">
+                            <div class="flow-label" data-i18n="cashFlow.spent">Spent</div>
+                            <div class="flow-amount" id="outflowAmount">€0</div>
+                            <div class="flow-bar">
+                                <div class="flow-fill outflow-fill" id="outflowBar"></div>
+                            </div>
+                        </div>
+                        <div class="cash-flow-balance">
+                            <div class="balance-label" data-i18n="cashFlow.balance">Balance</div>
+                            <div class="balance-amount" id="cashBalanceAmount">€0</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Smart Insights Section -->
+            <div class="smart-insights-section">
+                <h2 class="insights-header">
+                    <span class="insights-icon">💡</span>
+                    <span data-i18n="insights.smart">Smart Insights</span>
+                </h2>
+                <div class="insights-grid" id="smartInsightsGrid">
+                    <!-- Insights will be dynamically generated here -->
                 </div>
             </div>
 
@@ -7144,6 +7476,12 @@
             
             // Update upcoming recurring expenses
             updateUpcomingRecurringExpenses();
+            
+            // Update new enhanced charts
+            updateSpendingTrendChart();
+            updateCategoryBudgetChart();
+            updateCashFlowSummary();
+            generateSmartInsights();
         }
 
         // Update expense chart
@@ -13353,6 +13691,376 @@
         fixPremiumManager();
         overrideDemoActivation();
         
+        // Dashboard Enhancement Functions
+        let currentDateRange = 'month';
+        let spendingTrendChart = null;
+        let categoryBudgetChart = null;
+
+        // Date range filter functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup date range filter buttons
+            document.querySelectorAll('.date-range-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('.date-range-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    currentDateRange = this.dataset.range;
+                    updateDashboard();
+                });
+            });
+        });
+
+        // Get date range for filtering
+        function getDateRangeFilter() {
+            const now = new Date();
+            const startDate = new Date();
+            
+            switch(currentDateRange) {
+                case 'quarter':
+                    startDate.setMonth(now.getMonth() - 3);
+                    break;
+                case 'year':
+                    startDate.setFullYear(now.getFullYear() - 1);
+                    break;
+                case 'month':
+                default:
+                    startDate.setMonth(now.getMonth() - 1);
+            }
+            
+            return { start: startDate, end: now };
+        }
+
+        // Update spending trend chart
+        function updateSpendingTrendChart() {
+            const ctx = document.getElementById('spendingTrendChart').getContext('2d');
+            const dateRange = getDateRangeFilter();
+            
+            // Filter expenses by date range
+            const filteredExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
+            });
+            
+            // Group by day/week based on range
+            const groupedData = currentDateRange === 'year' ? 
+                groupExpensesByWeek(filteredExpenses) : 
+                groupExpensesByDay(filteredExpenses);
+            
+            const labels = Object.keys(groupedData).sort();
+            const data = labels.map(date => groupedData[date]);
+            
+            if (spendingTrendChart) {
+                spendingTrendChart.destroy();
+            }
+            
+            spendingTrendChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: t('charts.dailySpending') || 'Daily Spending',
+                        data: data,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return formatCurrencyAmount(context.parsed.y, mainCurrency);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrencyAmount(value, mainCurrency);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update category vs budget chart
+        function updateCategoryBudgetChart() {
+            const ctx = document.getElementById('categoryBudgetChart').getContext('2d');
+            const dateRange = getDateRangeFilter();
+            
+            // Calculate category totals
+            const categoryTotals = {};
+            const categoryBudgets = {};
+            
+            expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
+            }).forEach(expense => {
+                const category = expense.category;
+                categoryTotals[category] = (categoryTotals[category] || 0) + getAmountInMainCurrency(expense);
+            });
+            
+            // Calculate category budgets (proportional to monthly budget)
+            const totalSpent = Object.values(categoryTotals).reduce((sum, val) => sum + val, 0);
+            Object.keys(categoryTotals).forEach(category => {
+                categoryBudgets[category] = (categoryTotals[category] / totalSpent) * monthlyBudget;
+            });
+            
+            const categories = Object.keys(categoryTotals);
+            const spent = categories.map(cat => categoryTotals[cat]);
+            const budgets = categories.map(cat => categoryBudgets[cat]);
+            
+            if (categoryBudgetChart) {
+                categoryBudgetChart.destroy();
+            }
+            
+            categoryBudgetChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: categories,
+                    datasets: [
+                        {
+                            label: t('charts.spent') || 'Spent',
+                            data: spent,
+                            backgroundColor: 'rgba(244, 67, 54, 0.8)',
+                            borderColor: '#f44336',
+                            borderWidth: 1
+                        },
+                        {
+                            label: t('charts.budget') || 'Budget',
+                            data: budgets,
+                            backgroundColor: 'rgba(76, 175, 80, 0.8)',
+                            borderColor: '#4caf50',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': ' + formatCurrencyAmount(context.parsed.x, mainCurrency);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrencyAmount(value, mainCurrency);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update cash flow summary
+        function updateCashFlowSummary() {
+            const dateRange = getDateRangeFilter();
+            
+            // Calculate totals
+            const totalBudget = monthlyBudget * (currentDateRange === 'year' ? 12 : currentDateRange === 'quarter' ? 3 : 1);
+            const totalSpent = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
+            }).reduce((sum, expense) => sum + getAmountInMainCurrency(expense), 0);
+            
+            const balance = totalBudget - totalSpent;
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            
+            // Update displays
+            document.getElementById('inflowAmount').textContent = formatCurrencyAmount(totalBudget, mainCurrency);
+            document.getElementById('outflowAmount').textContent = formatCurrencyAmount(totalSpent, mainCurrency);
+            document.getElementById('cashBalanceAmount').textContent = formatCurrencyAmount(balance, mainCurrency);
+            
+            // Update bar widths
+            const maxAmount = Math.max(totalBudget, totalSpent);
+            document.getElementById('inflowBar').style.width = `${(totalBudget / maxAmount) * 100}%`;
+            document.getElementById('outflowBar').style.width = `${(totalSpent / maxAmount) * 100}%`;
+            
+            // Update balance color
+            const balanceElement = document.getElementById('cashBalanceAmount');
+            if (balance < 0) {
+                balanceElement.style.color = '#f44336';
+            } else if (balance < totalBudget * 0.1) {
+                balanceElement.style.color = '#ff9800';
+            } else {
+                balanceElement.style.color = '#4caf50';
+            }
+        }
+
+        // Generate smart insights
+        function generateSmartInsights() {
+            const insightsGrid = document.getElementById('smartInsightsGrid');
+            const insights = [];
+            const dateRange = getDateRangeFilter();
+            
+            // Filter expenses by date range
+            const filteredExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
+            });
+            
+            // Insight 1: Spending trend
+            const thisWeekTotal = getThisWeekTotal(filteredExpenses);
+            const lastWeekTotal = getLastWeekTotal(filteredExpenses);
+            if (thisWeekTotal !== null && lastWeekTotal !== null && lastWeekTotal > 0) {
+                const percentChange = ((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100;
+                insights.push({
+                    icon: percentChange < 0 ? '📉' : '📈',
+                    label: t('insights.weeklyTrend') || 'Weekly Trend',
+                    content: percentChange < 0 ? 
+                        t('insights.spentLess', { percent: Math.abs(percentChange).toFixed(1) }) || `You spent ${Math.abs(percentChange).toFixed(1)}% less this week than last week` :
+                        t('insights.spentMore', { percent: percentChange.toFixed(1) }) || `You spent ${percentChange.toFixed(1)}% more this week than last week`,
+                    type: percentChange < 0 ? 'positive' : percentChange > 20 ? 'negative' : 'neutral'
+                });
+            }
+            
+            // Insight 2: Subscription percentage
+            const recurringTotal = filteredExpenses.filter(e => e.isRecurring).reduce((sum, e) => sum + getAmountInMainCurrency(e), 0);
+            const totalSpent = filteredExpenses.reduce((sum, e) => sum + getAmountInMainCurrency(e), 0);
+            if (totalSpent > 0) {
+                const recurringPercent = (recurringTotal / totalSpent) * 100;
+                insights.push({
+                    icon: '🔄',
+                    label: t('insights.subscriptions') || 'Subscriptions',
+                    content: t('insights.subscriptionPercent', { percent: recurringPercent.toFixed(1) }) || 
+                        `Subscriptions make up ${recurringPercent.toFixed(1)}% of your expenses`,
+                    type: recurringPercent > 30 ? 'negative' : 'neutral'
+                });
+            }
+            
+            // Insight 3: Biggest category
+            const categoryTotals = {};
+            filteredExpenses.forEach(expense => {
+                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + getAmountInMainCurrency(expense);
+            });
+            const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
+            if (topCategory) {
+                const categoryPercent = (topCategory[1] / totalSpent) * 100;
+                insights.push({
+                    icon: categoryIcons[topCategory[0]] || '📊',
+                    label: t('insights.topSpending') || 'Top Spending',
+                    content: t('insights.topCategorySpend', { 
+                        category: topCategory[0], 
+                        percent: categoryPercent.toFixed(1) 
+                    }) || `${topCategory[0]} is your biggest expense at ${categoryPercent.toFixed(1)}% of total`,
+                    type: 'neutral'
+                });
+            }
+            
+            // Insight 4: Budget status
+            if (monthlyBudget > 0) {
+                const budgetUsed = (totalSpent / monthlyBudget) * 100;
+                const daysInMonth = new Date(dateRange.end.getFullYear(), dateRange.end.getMonth() + 1, 0).getDate();
+                const daysPassed = new Date().getDate();
+                const expectedUsage = (daysPassed / daysInMonth) * 100;
+                
+                insights.push({
+                    icon: '🎯',
+                    label: t('insights.budgetPace') || 'Budget Pace',
+                    content: budgetUsed < expectedUsage ?
+                        t('insights.underBudget', { percent: (expectedUsage - budgetUsed).toFixed(1) }) || 
+                        `You're ${(expectedUsage - budgetUsed).toFixed(1)}% under expected budget usage` :
+                        t('insights.overBudget', { percent: (budgetUsed - expectedUsage).toFixed(1) }) ||
+                        `You're ${(budgetUsed - expectedUsage).toFixed(1)}% over expected budget usage`,
+                    type: budgetUsed < expectedUsage ? 'positive' : 'negative'
+                });
+            }
+            
+            // Render insights
+            insightsGrid.innerHTML = insights.map(insight => `
+                <div class="insight-card">
+                    <div class="insight-type">
+                        <span class="insight-icon">${insight.icon}</span>
+                        <span class="insight-label">${insight.label}</span>
+                    </div>
+                    <div class="insight-content insight-${insight.type}">
+                        ${insight.content}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Helper functions
+        function groupExpensesByDay(expenses) {
+            const grouped = {};
+            expenses.forEach(expense => {
+                const date = new Date(expense.date).toLocaleDateString();
+                grouped[date] = (grouped[date] || 0) + getAmountInMainCurrency(expense);
+            });
+            return grouped;
+        }
+
+        function groupExpensesByWeek(expenses) {
+            const grouped = {};
+            expenses.forEach(expense => {
+                const date = new Date(expense.date);
+                const week = getWeekNumber(date);
+                const key = `Week ${week}`;
+                grouped[key] = (grouped[key] || 0) + getAmountInMainCurrency(expense);
+            });
+            return grouped;
+        }
+
+        function getWeekNumber(date) {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+            return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
+        }
+
+        function getThisWeekTotal(expenses) {
+            const now = new Date();
+            const weekStart = new Date(now);
+            weekStart.setDate(now.getDate() - now.getDay());
+            weekStart.setHours(0, 0, 0, 0);
+            
+            return expenses.filter(e => new Date(e.date) >= weekStart)
+                .reduce((sum, e) => sum + getAmountInMainCurrency(e), 0);
+        }
+
+        function getLastWeekTotal(expenses) {
+            const now = new Date();
+            const weekEnd = new Date(now);
+            weekEnd.setDate(now.getDate() - now.getDay() - 1);
+            weekEnd.setHours(23, 59, 59, 999);
+            
+            const weekStart = new Date(weekEnd);
+            weekStart.setDate(weekEnd.getDate() - 6);
+            weekStart.setHours(0, 0, 0, 0);
+            
+            return expenses.filter(e => {
+                const date = new Date(e.date);
+                return date >= weekStart && date <= weekEnd;
+            }).reduce((sum, e) => sum + getAmountInMainCurrency(e), 0);
+        }
+
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', function() {
             setTimeout(updatePremiumUIState, 1000);

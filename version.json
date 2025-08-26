@@ -1,5 +1,5 @@
 {
-  "version": "0.1.1",
+  "version": "0.2.0",
   "releaseDate": "2024-01-15",
-  "description": "Fix Smart Money Suggestions calculations with foreign currency expenses"
+  "description": "Enhanced dashboard with spending trends, category budgets, cash flow, and smart insights"
 }

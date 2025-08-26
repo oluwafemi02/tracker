@@ -1,4 +1,4 @@
-const APP_VERSION = '0.1.1';
+const APP_VERSION = '0.2.0';
 const CACHE_NAME = `expense-tracker-v${APP_VERSION}`;
 const urlsToCache = [
   '/tracker/',
