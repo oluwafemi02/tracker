@@ -11268,7 +11268,7 @@
                                 const mainExpenseIndex = expenses.findIndex(e => e.travelExpenseId === expense.id);
                                 if (mainExpenseIndex !== -1) {
                                     expenses.splice(mainExpenseIndex, 1);
-                                    localStorage.setItem('expenses', JSON.stringify(expenses));
+                                    localStorage.setItem('familyExpenses', JSON.stringify(expenses));
                                 }
                             } else if (!oldDeductStatus && formData.deductFromMainBudget) {
                                 // Wasn't deducting, now is - add to main expenses
@@ -11281,7 +11281,7 @@
                                     mainExpense.category = expense.category;
                                     mainExpense.date = expense.date;
                                     mainExpense.description = `${expense.description} (Trip: ${currentTrip?.name || 'Unknown'})`;
-                                    localStorage.setItem('expenses', JSON.stringify(expenses));
+                                    localStorage.setItem('familyExpenses', JSON.stringify(expenses));
                                 }
                             }
                             
@@ -11829,9 +11829,9 @@
                 travelExpenseId: travelExpense.id, // Link back to travel expense
                 source: 'trip'
             };
-
+            
             expenses.push(mainExpense);
-            localStorage.setItem('expenses', JSON.stringify(expenses));
+            localStorage.setItem('familyExpenses', JSON.stringify(expenses));
             
             // Update dashboard if we're on the main page
             if (typeof updateDashboard === 'function') {
@@ -11946,7 +11946,7 @@
                     const mainExpenseIndex = expenses.findIndex(e => e.travelExpenseId === expenseId);
                     if (mainExpenseIndex !== -1) {
                         expenses.splice(mainExpenseIndex, 1);
-                        localStorage.setItem('expenses', JSON.stringify(expenses));
+                        localStorage.setItem('familyExpenses', JSON.stringify(expenses));
                         
                         // Update main dashboard
                         if (typeof updateDashboard === 'function') {
