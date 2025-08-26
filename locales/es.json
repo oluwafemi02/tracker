@@ -479,5 +479,13 @@
     "exportJSON": "Exportar JSON"
   },
   "expenses": "Gastos",
-  "trips": "Viajes"
+  "trips": "Viajes",
+  "suggestions": {
+    "title": "Sugerencias Inteligentes de Dinero",
+    "setBudget": "Establece un presupuesto mensual para obtener sugerencias personalizadas de ahorro.",
+    "goToSettings": "Ve a Configuración para establecer tu presupuesto"
+  },
+  "guide": {
+    "welcome": "¡Bienvenido al Rastreador de Gastos! 🎉"
+  }
 }

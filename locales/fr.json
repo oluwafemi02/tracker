@@ -479,5 +479,13 @@
     "exportJSON": "Exporter JSON"
   },
   "expenses": "Dépenses",
-  "trips": "Voyages"
+  "trips": "Voyages",
+  "suggestions": {
+    "title": "Suggestions d'Argent Intelligentes",
+    "setBudget": "Définissez un budget mensuel pour obtenir des suggestions d'économie personnalisées.",
+    "goToSettings": "Allez dans Paramètres pour définir votre budget"
+  },
+  "guide": {
+    "welcome": "Bienvenue dans le Suivi des Dépenses! 🎉"
+  }
 }

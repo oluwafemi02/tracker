@@ -1,5 +1,5 @@
 {
-  "version": "0.0.5",
+  "version": "0.0.6",
   "releaseDate": "2024-01-15",
-  "description": "Comprehensive i18n overhaul - ALL hardcoded strings replaced with translations"
+  "description": "Complete i18n coverage - Smart Suggestions, Guide, Account Types, and ALL UI elements"
 }

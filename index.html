@@ -3587,9 +3587,9 @@
             <div class="tracker-type-selector">
                 <label for="trackerType" data-i18n="tracker.mode">Tracker Mode:</label>
                 <select id="trackerType" onchange="changeTrackerType()">
-                    <option value="personal">👤 Personal</option>
-                    <option value="family">👨‍👩‍👧‍👦 Family</option>
-                    <option value="group">👥 Group/Shared</option>
+                    <option value="personal" data-i18n="tracker.personal">👤 Personal</option>
+                    <option value="family" data-i18n="tracker.family">👨‍👩‍👧‍👦 Family</option>
+                    <option value="group" data-i18n="tracker.group">👥 Group/Shared</option>
                 </select>
             </div>
             
@@ -3599,7 +3599,7 @@
                 <button class="nav-tab" data-tab="travel">🧳 <span data-i18n="nav.trips">Trips</span></button>
                 <button class="nav-tab" data-tab="dashboard">📊 <span data-i18n="nav.dashboard">Dashboard</span></button>
                 <button class="nav-tab" data-tab="settings">⚙️ <span data-i18n="nav.settings">Settings</span></button>
-                <button class="help-btn" id="helpBtn" title="Need help? Start the interactive guide!">❓</button>
+                <button class="help-btn" id="helpBtn" data-i18n-title="help.needHelp">❓</button>
             </div>
             
             <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 0.75rem; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px;">
@@ -4532,10 +4532,10 @@
                     <h3>📚 User Guide</h3>
                     <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
                         <button class="btn btn-info" id="startGuideBtn">
-                            🎯 Start Interactive Guide
+                            🎯 <span data-i18n="guide.startInteractive">Start Interactive Guide</span>
                         </button>
                         <button class="btn btn-secondary" id="quickTourBtn">
-                            ⚡ Quick Feature Tour
+                            ⚡ <span data-i18n="guide.quickTour">Quick Feature Tour</span>
                         </button>
                     </div>
                 </div>
@@ -5017,7 +5017,7 @@
     <div id="guideOverlay" class="guide-overlay" style="display: none;">
         <div class="guide-content">
             <div class="guide-header">
-                <h2 id="guideTitle">Welcome to Expense Tracker! 🎉</h2>
+                <h2 id="guideTitle" data-i18n="guide.welcome">Welcome to Expense Tracker! 🎉</h2>
                 <button class="guide-close" id="closeGuideBtn">✖️</button>
             </div>
             <div class="guide-body">
@@ -5028,7 +5028,7 @@
                     <div class="progress-bar">
                         <div class="progress-fill" id="guideProgress"></div>
                     </div>
-                    <span class="progress-text" id="guideProgressText">Step 1 of 10</span>
+                    <span class="progress-text" id="guideProgressText" data-i18n="guide.progressText">Step 1 of 10</span>
                 </div>
             </div>
             <div class="guide-footer">
@@ -5700,6 +5700,22 @@
         
         // Update dropdowns language
         function updateDropdownsLanguage() {
+            // Update tracker type dropdown
+            const trackerSelect = document.getElementById('trackerType');
+            if (trackerSelect) {
+                trackerSelect.querySelectorAll('option').forEach(option => {
+                    const value = option.value;
+                    const icon = option.textContent.split(' ')[0];
+                    if (value === 'personal') {
+                        option.textContent = `${icon} ${t('tracker.personal')}`;
+                    } else if (value === 'family') {
+                        option.textContent = `${icon} ${t('tracker.family')}`;
+                    } else if (value === 'group') {
+                        option.textContent = `${icon} ${t('tracker.group')}`;
+                    }
+                });
+            }
+            
             // Update category options
             const categorySelects = document.querySelectorAll('select[id*="category"]');
             categorySelects.forEach(select => {
@@ -9920,8 +9936,8 @@
                 suggestions.push({
                     type: 'setup',
                     icon: '🎯',
-                    text: 'Set a monthly budget to get personalized money-saving suggestions and track your financial goals.',
-                    action: 'Go to Settings to set your budget',
+                    text: t('suggestions.setBudget'),
+                    action: t('suggestions.goToSettings'),
                     priority: 'high'
                 });
                 return suggestions;
@@ -9931,8 +9947,8 @@
                 suggestions.push({
                     type: 'start',
                     icon: '🚀',
-                    text: 'Start tracking your expenses to receive intelligent insights and savings recommendations.',
-                    action: 'Add your first expense above',
+                    text: t('suggestions.startTracking'),
+                    action: t('suggestions.addFirstExpense'),
                     priority: 'normal'
                 });
                 return suggestions;
@@ -9946,26 +9962,36 @@
                     suggestions.push({
                         type: 'savings',
                         icon: '💰',
-                        text: `Excellent! You have €${remaining.toFixed(2)} left this month. Consider putting ${Math.floor(savingsPercentage * 0.6)}% into savings.`,
-                        amount: `€${(remaining * 0.6).toFixed(2)}`,
-                        action: 'Build your emergency fund or invest for the future',
+                        text: t('suggestions.excellentSavings', { 
+                            remaining: formatCurrencyAmount(remaining, mainCurrency), 
+                            percentage: Math.floor(savingsPercentage * 0.6) 
+                        }),
+                        amount: formatCurrencyAmount(remaining * 0.6, mainCurrency),
+                        action: t('suggestions.buildEmergencyFund'),
                         priority: 'high'
                     });
                 } else if (savingsPercentage >= 15) {
                     suggestions.push({
                         type: 'savings',
                         icon: '💡',
-                        text: `Good job! You have €${remaining.toFixed(2)} remaining. Try to save at least €${(remaining * 0.5).toFixed(2)} of this.`,
-                        amount: `€${(remaining * 0.5).toFixed(2)}`,
-                        action: 'Start building your savings habit',
+                        text: t('suggestions.goodJob', {
+                            remaining: formatCurrencyAmount(remaining, mainCurrency),
+                            saveable: formatCurrencyAmount(remaining * 0.5, mainCurrency)
+                        }),
+                        amount: formatCurrencyAmount(remaining * 0.5, mainCurrency),
+                        action: t('suggestions.buildSavingsHabit'),
                         priority: 'normal'
                     });
                 } else if (savingsPercentage >= 5) {
                     suggestions.push({
                         type: 'caution',
                         icon: '⚠️',
-                        text: `You have €${remaining.toFixed(2)} left for ${daysLeft} days. That's €${dailyBudgetLeft.toFixed(2)} per day. Be mindful of spending.`,
-                        action: 'Focus on essential expenses only',
+                        text: t('suggestions.beMindful', {
+                            remaining: formatCurrencyAmount(remaining, mainCurrency),
+                            days: daysLeft,
+                            daily: formatCurrencyAmount(dailyBudgetLeft, mainCurrency)
+                        }),
+                        action: t('suggestions.focusOnEssentials'),
                         priority: 'warning'
                     });
                 }
@@ -10055,7 +10081,7 @@
             const suggestionsContent = document.getElementById('suggestionsContent');
 
             if (suggestions.length === 0) {
-                suggestionsContent.innerHTML = '<div class="no-suggestions">All good! No suggestions at this time.</div>';
+                suggestionsContent.innerHTML = `<div class="no-suggestions">${t('suggestions.noDataYet')}</div>`;
                 return;
             }
 
@@ -10570,19 +10596,19 @@
          // Interactive Guide System
                  const guideSteps = [
             {
-                title: "Welcome to Expense Tracker! 🎉",
+                title: t('guide.step1.title'),
                 content: `
-                    <p>This powerful app helps you track expenses, manage trips, set budgets, and sync data across all your devices!</p>
-                    <p><strong>🌟 Major Features You'll Master:</strong></p>
+                    <p>${t('guide.step1.intro')}</p>
+                    <p><strong>🌟 ${t('guide.step1.featuresTitle')}</strong></p>
                     <ul>
-                        <li>💰 Smart expense tracking with recurring payments</li>
-                        <li>🧳 Trip expense management with payer tracking</li>
-                        <li>📊 Interactive dashboard with budget projections</li>
-                        <li>📱 Cross-device data synchronization</li>
-                        <li>🔔 Intelligent notifications and reminders</li>
-                        <li>📈 Advanced financial insights and analytics</li>
+                        <li>💰 ${t('guide.step1.feature1')}</li>
+                        <li>🧳 ${t('guide.step1.feature2')}</li>
+                        <li>📊 ${t('guide.step1.feature3')}</li>
+                        <li>📱 ${t('guide.step1.feature4')}</li>
+                        <li>🔔 ${t('guide.step1.feature5')}</li>
+                        <li>📈 ${t('guide.step1.feature6')}</li>
                     </ul>
-                    <p><strong>Let's explore everything this app can do!</strong></p>
+                    <p><strong>${t('guide.step1.letsExplore')}</strong></p>
                 `,
                 target: null,
                 action: null

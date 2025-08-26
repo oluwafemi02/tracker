@@ -308,17 +308,15 @@
     "carLoan": "Greita Auto Paskola"
   },
   "insights": {
-    "title": "Budget Insights",
-    "topSpendingCategories": "Top Spending Categories",
-    "monthlyComparison": "Monthly Comparison",
-    "yearlyOverview": "Yearly Overview",
-    "spendingByPerson": "Spending by Person",
-    "fixedVsVariable": "Fixed vs Variable Costs",
-    "recurringAnalysis": "Recurring Expense Analysis",
-    "savingsOpportunities": "Savings Opportunities",
-    "unusualSpending": "Unusual Spending Detected",
-    "budgetHealth": "Budget Health Score",
-    "recommendations": "Personalized Recommendations"
+    "startTracking": "Pradėkite sekti savo išlaidas, kad gautumėte personalizuotas įžvalgas!",
+    "over80Budget": "Išnaudojote daugiau nei 80% savo biudžeto. Apsvarstykite nebūtinų išlaidų mažinimą.",
+    "wellWithinBudget": "Puiku! Jūs neviršijate savo biudžeto. Apsvarstykite galimybę sutaupyti papildomą sumą.",
+    "onTrackBudget": "Jūs laikotės savo biudžeto. Toliau stebėkite savo išlaidas.",
+    "setBudgetForInsights": "Nustatykite mėnesinį biudžetą, kad gautumėte geresnes įžvalgas ir rekomendacijas.",
+    "spendingIncreased": "Jūsų išlaidos padidėjo per pastarąją savaitę. Apsvarstykite naujausių pirkimų peržiūrą.",
+    "spendingDecreased": "Jūsų išlaidos sumažėjo per pastarąją savaitę. Puikiai kontroliuojate išlaidas!",
+    "spendingConsistent": "Jūsų išlaidų modelis atitinka jūsų mėnesio vidurkį.",
+    "addMoreExpenses": "Pridėkite daugiau išlaidų, kad pamatytumėte išsamias išlaidų tendencijas ir modelius."
   },
   "update": {
     "available": "Yra Atnaujinimas",
@@ -479,5 +477,72 @@
     "exportJSON": "Eksportuoti JSON"
   },
   "expenses": "Išlaidos",
-  "trips": "Kelionės"
+  "trips": "Kelionės",
+  "suggestions": {
+    "title": "Išmanūs Pinigų Pasiūlymai",
+    "setBudget": "Nustatykite mėnesinį biudžetą, kad gautumėte personalizuotus pinigų taupymo pasiūlymus ir sektumėte savo finansinius tikslus.",
+    "goToSettings": "Eikite į Nustatymus nustatyti savo biudžetą",
+    "startTracking": "Pradėkite sekti savo išlaidas, kad gautumėte išmanias įžvalgas ir taupymo rekomendacijas.",
+    "addFirstExpense": "Pridėkite savo pirmą išlaidą aukščiau",
+    "excellentSavings": "Puiku! Jums liko {{remaining}} šį mėnesį. Apsvarstykite galimybę {{percentage}}% įdėti į santaupas.",
+    "buildEmergencyFund": "Kurkite nepaprastųjų atvejų fondą arba investuokite į ateitį",
+    "goodJob": "Šaunu! Jums liko {{remaining}}. Pabandykite sutaupyti bent {{saveable}} iš šių.",
+    "buildSavingsHabit": "Pradėkite kurti taupymo įprotį",
+    "beMindful": "Jums liko {{remaining}} {{days}} dienoms. Tai {{daily}} per dieną. Būkite atsargūs su išlaidomis.",
+    "focusOnEssentials": "Sutelkite dėmesį tik į būtinas išlaidas",
+    "overBudget": "Viršijote biudžetą {{amount}}. Peržiūrėkite naujausias išlaidas ir sumažinkite, kur įmanoma.",
+    "reviewExpenses": "Peržiūrėkite naujausias išlaidas ir nustatykite sritis, kurias galima sumažinti",
+    "budgetAlert": "Biudžeto Įspėjimas: Išleidote {{percentage}}% savo mėnesio biudžeto.",
+    "slowDown": "Apsvarstykite galimybę sulėtinti nebūtinus pirkimus",
+    "tightBudget": "Šį mėnesį jūsų biudžetas ribotas. Atidžiai sekite kiekvieną išlaidą.",
+    "everyPennyCounts": "Kiekvienas centas svarbus - venkite impulsyvių pirkimų",
+    "noDataYet": "Viskas gerai! Šiuo metu pasiūlymų nėra.",
+    "reduceDining": "Sumažinkite išlaidas restoranams",
+    "reduceEntertainment": "Sumažinkite pramogų išlaidas",
+    "reduceShopping": "Ribokite apsipirkimo išlaidas",
+    "reviewRecurring": "Peržiūrėkite ir optimizuokite pasikartojančias išlaidas",
+    "cancelUnused": "Atšaukite nenaudojamas prenumeratas",
+    "highSpending": "Didelės išlaidos {{category}} - {{percentage}}% biudžeto",
+    "considerReducing": "Apsvarstykite {{category}} išlaidų mažinimą",
+    "recurringHigh": "Jūsų pasikartojančios išlaidos sudaro {{percentage}}% jūsų biudžeto",
+    "reviewSubscriptions": "Peržiūrėkite prenumeratas ir fiksuotas išlaidas"
+  },
+  "guide": {
+    "welcome": "Sveiki atvykę į Išlaidų Sekiklį! 🎉",
+    "step1": {
+      "title": "Sveiki atvykę į Išlaidų Sekiklį! 🎉",
+      "intro": "Ši galinga programa padeda sekti išlaidas, valdyti keliones, nustatyti biudžetus ir sinchronizuoti duomenis visuose įrenginiuose!",
+      "featuresTitle": "Pagrindinės funkcijos, kurias įvaldysite:",
+      "feature1": "Išmanus išlaidų sekimas su pasikartojančiais mokėjimais",
+      "feature2": "Kelionių išlaidų valdymas su kelių valiutų palaikymu",
+      "feature3": "Interaktyvus skydelis su biudžeto prognozėmis",
+      "feature4": "Duomenų sinchronizavimas tarp įrenginių",
+      "feature5": "Išmanūs pranešimai ir priminimai",
+      "feature6": "Pažangios finansinės įžvalgos ir analitika",
+      "letsExplore": "Išnagrinėkime viską, ką gali ši programa!"
+    },
+    "step2": {
+      "title": "Progresyvi žiniatinklio programos funkcijos",
+      "intro": "Jūs naudojate pažangią PWA!",
+      "feature1": "Įdiegti bet kuriame įrenginyje (mobiliajame, planšetėje, kompiuteryje)",
+      "feature2": "Veikia neprisijungus - sekite išlaidas bet kur",
+      "feature3": "Automatiniai atnaujinimai fone",
+      "feature4": "Vietinės programos patirtis su žiniatinklio lankstumu"
+    },
+    "step3": {
+      "title": "Išmanus išlaidų sekimas",
+      "intro": "Pridėkite išlaidas su galingomis funkcijomis",
+      "feature1": "Kelios valiutos su valiutų kursais",
+      "feature2": "Pasikartojančios išlaidos (prenumeratos, sąskaitos)",
+      "feature3": "Fiksuotos išlaidos prieš kintamas išlaidas",
+      "feature4": "Organizavimas pagal kategorijas",
+      "feature5": "Asmens sekimas (kas ką išleido)",
+      "tip": "Spustelėkite bet kurią išlaidą, kad pamatytumėte išsamią istoriją ir įžvalgas!"
+    },
+    "skipTour": "Praleisti Turą",
+    "previous": "Ankstesnis",
+    "next": "Kitas",
+    "finish": "Pradėti Naudoti!",
+    "progressText": "Žingsnis {{current}} iš {{total}}"
+  }
 }

@@ -479,5 +479,13 @@
     "exportJSON": "JSON Exportieren"
   },
   "expenses": "Ausgaben",
-  "trips": "Reisen"
+  "trips": "Reisen",
+  "suggestions": {
+    "title": "Intelligente Geldvorschläge",
+    "setBudget": "Legen Sie ein monatliches Budget fest, um personalisierte Sparvorschläge zu erhalten.",
+    "goToSettings": "Gehen Sie zu Einstellungen, um Ihr Budget festzulegen"
+  },
+  "guide": {
+    "welcome": "Willkommen beim Ausgaben-Tracker! 🎉"
+  }
 }
