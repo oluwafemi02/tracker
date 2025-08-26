@@ -12016,15 +12016,27 @@
 
         function updateTripStats() {
             if (!currentTrip) {
-                document.getElementById('tripTotal').textContent = '€0';
+                const defaultCurrency = mainCurrency || 'USD';
+                document.getElementById('tripTotal').textContent = formatCurrencyAmount(0, defaultCurrency);
                 document.getElementById('tripDays').textContent = '0';
                 document.getElementById('tripExpenseCount').textContent = '0';
-                document.getElementById('tripAvgDaily').textContent = '€0';
+                document.getElementById('tripAvgDaily').textContent = formatCurrencyAmount(0, defaultCurrency);
                 return;
             }
 
             const tripExpenses = travelExpenses.filter(e => e.tripId === currentTrip.id);
-            const total = tripExpenses.reduce((sum, expense) => sum + expense.amount, 0);
+            const tripCurrency = currentTrip.currency || mainCurrency;
+            
+            // Calculate total in trip currency
+            const total = tripExpenses.reduce((sum, expense) => {
+                // If expense is in trip currency, use original amount
+                if (expense.currency === tripCurrency) {
+                    return sum + expense.amount;
+                }
+                // Otherwise, need to convert (this is a simplified approach)
+                // In a real app, you'd need exchange rates between all currencies
+                return sum + expense.amount;
+            }, 0);
             
             // Calculate days
             const startDate = new Date(currentTrip.startDate);
@@ -12033,10 +12045,10 @@
             
             const avgDaily = days > 0 ? total / days : 0;
 
-            document.getElementById('tripTotal').textContent = `€${total.toFixed(2)}`;
+            document.getElementById('tripTotal').textContent = formatCurrencyAmount(total, tripCurrency);
             document.getElementById('tripDays').textContent = days;
             document.getElementById('tripExpenseCount').textContent = tripExpenses.length;
-            document.getElementById('tripAvgDaily').textContent = `€${avgDaily.toFixed(2)}`;
+            document.getElementById('tripAvgDaily').textContent = formatCurrencyAmount(avgDaily, tripCurrency);
         }
 
         function renderTravelExpensesList() {
@@ -12079,7 +12091,9 @@
             detailsDiv.className = 'travel-expense-details';
             
             const title = document.createElement('h4');
-            title.textContent = `${expense.category} - €${expense.amount.toFixed(2)}`;
+            const expenseCurrency = expense.currency || currentTrip?.currency || mainCurrency;
+            const currencySymbol = CURRENCIES[expenseCurrency]?.symbol || expenseCurrency;
+            title.textContent = `${expense.category} - ${formatCurrencyAmount(expense.amount, expenseCurrency)}`;
             
             const details = document.createElement('p');
             const formattedDate = new Date(expense.date).toLocaleDateString();
@@ -12099,6 +12113,10 @@
             
             if (expense.deductFromMainBudget) {
                 detailsText += ` • 💰 Deducted from main budget`;
+                // Show converted amount if different currency
+                if (expenseCurrency !== mainCurrency && expense.convertedAmount) {
+                    detailsText += ` (${formatCurrencyAmount(expense.convertedAmount, mainCurrency)})`;
+                }
             }
             
             details.textContent = detailsText;
@@ -12108,7 +12126,19 @@
             
             const amountDiv = document.createElement('div');
             amountDiv.className = 'travel-expense-amount';
-            amountDiv.textContent = `€${expense.amount.toFixed(2)}`;
+            
+            // Show original amount
+            amountDiv.innerHTML = formatCurrencyAmount(expense.amount, expenseCurrency);
+            
+            // Show converted amount below if different currency and deducted from main budget
+            if (expense.deductFromMainBudget && expenseCurrency !== mainCurrency && expense.convertedAmount) {
+                const convertedDiv = document.createElement('div');
+                convertedDiv.style.fontSize = '0.85rem';
+                convertedDiv.style.color = 'var(--text-secondary)';
+                convertedDiv.style.marginTop = '2px';
+                convertedDiv.textContent = `≈ ${formatCurrencyAmount(expense.convertedAmount, mainCurrency)}`;
+                amountDiv.appendChild(convertedDiv);
+            }
             
             const actionsDiv = document.createElement('div');
             actionsDiv.className = 'travel-expense-actions';
@@ -12150,9 +12180,13 @@
                 return;
             }
 
-            // Calculate category totals
+            // Calculate category totals in trip currency
+            const tripCurrency = currentTrip.currency || mainCurrency;
             const categoryTotals = {};
+            
             tripExpenses.forEach(expense => {
+                // For now, we're adding amounts directly regardless of currency
+                // In a real app, you'd convert to trip currency
                 categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
             });
 
@@ -12172,7 +12206,7 @@
                 
                 const categoryAmount = document.createElement('div');
                 categoryAmount.className = 'category-amount';
-                categoryAmount.textContent = `€${amount.toFixed(2)}`;
+                categoryAmount.textContent = formatCurrencyAmount(amount, tripCurrency);
                 
                 categoryItem.appendChild(categoryInfo);
                 categoryItem.appendChild(categoryAmount);
