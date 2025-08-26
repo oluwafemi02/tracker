@@ -1,5 +1,5 @@
 {
-  "version": "0.2.1",
+  "version": "0.3.0",
   "releaseDate": "2024-01-15",
-  "description": "Fix dashboard charts not displaying - added proper error handling and tab navigation"
+  "description": "Complete dashboard redesign with proper date selection and beautiful UI"
 }

@@ -1154,51 +1154,232 @@
             transform: translateY(-2px);
         }
 
-        /* Dashboard Enhancements */
-        .dashboard-filters {
+        /* Enhanced Dashboard Design */
+        .dashboard-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: var(--border-radius);
             margin-bottom: 2rem;
-            padding: 1rem;
-            background: var(--bg-secondary);
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow-sm);
+            box-shadow: var(--shadow-lg);
         }
 
-        .date-range-selector {
+        .dashboard-title {
             display: flex;
-            gap: 0.5rem;
-            justify-content: center;
-            flex-wrap: wrap;
+            align-items: center;
+            gap: 1rem;
+            margin: 0 0 1.5rem 0;
+            font-size: 2rem;
+            font-weight: 700;
         }
 
-        .date-range-btn {
-            padding: 0.75rem 1.5rem;
-            border: 2px solid var(--border-color);
-            background: var(--bg-primary);
-            color: var(--text-primary);
-            border-radius: var(--border-radius);
+        .title-icon {
+            font-size: 2.5rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        .dashboard-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .date-selector-group {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .custom-date-selector {
+            display: flex;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50px;
+            padding: 0.25rem;
+            backdrop-filter: blur(10px);
+        }
+
+        .date-nav-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.3);
+            color: white;
+            font-size: 1.5rem;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            font-size: 0.95rem;
-            font-weight: 500;
+            justify-content: center;
         }
 
-        .date-range-btn:hover {
-            background: var(--bg-hover);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+        .date-nav-btn:hover {
+            background: rgba(255, 255, 255, 0.4);
+            transform: scale(1.1);
         }
 
-        .date-range-btn.active {
+        .date-display {
+            padding: 0 2rem;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .period-label {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .period-select {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 25px;
+            font-size: 1rem;
+            cursor: pointer;
+            backdrop-filter: blur(10px);
+        }
+
+        .period-select option {
             background: var(--primary-color);
             color: white;
-            border-color: var(--primary-color);
         }
 
-        .range-icon {
+        .dashboard-actions {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
             font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(180deg);
+        }
+
+        /* Metrics Summary */
+        .metrics-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background: var(--bg-primary);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            box-shadow: var(--shadow-md);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .metric-card.primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--accent-color) 100%);
+            color: white;
+            border: none;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, transparent 0%, rgba(255,255,255,0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .metric-card:hover::before {
+            opacity: 1;
+        }
+
+        .metric-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+
+        .metric-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .metric-change {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .change-arrow {
+            font-size: 1.2rem;
+        }
+
+        .metric-change.positive {
+            color: #4caf50;
+        }
+
+        .metric-change.negative {
+            color: #f44336;
+        }
+
+        .metric-progress {
+            margin-top: 0.75rem;
+            height: 8px;
+            background: rgba(0,0,0,0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .metric-progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, #4caf50 0%, #8bc34a 100%);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        .metric-subtitle {
+            font-size: 0.85rem;
+            opacity: 0.7;
+            margin-top: 0.25rem;
         }
 
         .analytics-section {
@@ -1351,13 +1532,48 @@
 
         /* Dashboard Enhancement Responsive */
         @media (max-width: 768px) {
-            .analytics-section {
+            .dashboard-header {
+                padding: 1.5rem;
+            }
+            
+            .dashboard-title {
+                font-size: 1.5rem;
+            }
+            
+            .dashboard-controls {
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .date-selector-group {
+                flex-direction: column;
+                width: 100%;
+            }
+            
+            .custom-date-selector {
+                width: 100%;
+                justify-content: space-between;
+            }
+            
+            .date-display {
+                flex: 1;
+                padding: 0 1rem;
+            }
+            
+            .metrics-summary {
                 grid-template-columns: 1fr;
             }
             
-            .date-range-btn {
-                padding: 0.5rem 1rem;
-                font-size: 0.85rem;
+            .metric-card {
+                padding: 1.25rem;
+            }
+            
+            .metric-value {
+                font-size: 1.75rem;
+            }
+            
+            .analytics-section {
+                grid-template-columns: 1fr;
             }
             
             .insights-grid {
@@ -2066,17 +2282,51 @@
         
         /* Dark mode adjustments */
         @media (prefers-color-scheme: dark) {
-            .dashboard-filters {
-                background: #1a1a1a;
+            :root {
+                --primary-color: #6b5b95;
+                --accent-color: #8b7bb9;
             }
             
-            .date-range-btn {
+            .dashboard-header {
+                background: linear-gradient(135deg, #4a4a4a 0%, #2d2d2d 100%);
+            }
+            
+            .custom-date-selector {
+                background: rgba(255, 255, 255, 0.1);
+            }
+            
+            .date-nav-btn {
+                background: rgba(255, 255, 255, 0.1);
+            }
+            
+            .date-nav-btn:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
+            
+            .period-select {
+                background: rgba(255, 255, 255, 0.1);
+                border-color: rgba(255, 255, 255, 0.2);
+            }
+            
+            .action-btn {
+                background: rgba(255, 255, 255, 0.1);
+            }
+            
+            .action-btn:hover {
+                background: rgba(255, 255, 255, 0.2);
+            }
+            
+            .metric-card {
                 background: #2d2d2d;
                 border-color: #404040;
             }
             
-            .date-range-btn:hover {
-                background: #3d3d3d;
+            .metric-card.primary {
+                background: linear-gradient(135deg, #4a4a4a 0%, #2d2d2d 100%);
+            }
+            
+            .metric-progress {
+                background: rgba(255, 255, 255, 0.1);
             }
             
             .smart-insights-section {
@@ -4193,21 +4443,83 @@
 
         <!-- Dashboard Tab Content -->
         <div id="dashboardTab" class="tab-content">
-            <!-- Date Range Filter -->
-            <div class="dashboard-filters">
-                <div class="date-range-selector">
-                    <button class="date-range-btn active" data-range="month">
-                        <span class="range-icon">📅</span>
-                        <span data-i18n="dateRange.month">Month</span>
-                    </button>
-                    <button class="date-range-btn" data-range="quarter">
-                        <span class="range-icon">📊</span>
-                        <span data-i18n="dateRange.quarter">Quarter</span>
-                    </button>
-                    <button class="date-range-btn" data-range="year">
-                        <span class="range-icon">📈</span>
-                        <span data-i18n="dateRange.year">Year</span>
-                    </button>
+            <!-- Enhanced Date Range Filter -->
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">
+                    <span class="title-icon">📊</span>
+                    <span data-i18n="dashboard.title">Financial Dashboard</span>
+                </h1>
+                <div class="dashboard-controls">
+                    <div class="date-selector-group">
+                        <div class="custom-date-selector">
+                            <button class="date-nav-btn" id="prevPeriod">
+                                <span>‹</span>
+                            </button>
+                            <div class="date-display" id="currentPeriodDisplay">
+                                <span class="period-label">January 2024</span>
+                            </div>
+                            <button class="date-nav-btn" id="nextPeriod">
+                                <span>›</span>
+                            </button>
+                        </div>
+                        <div class="period-type-selector">
+                            <select id="periodTypeSelector" class="period-select">
+                                <option value="month" data-i18n="dateRange.month">Month</option>
+                                <option value="quarter" data-i18n="dateRange.quarter">Quarter</option>
+                                <option value="year" data-i18n="dateRange.year">Year</option>
+                                <option value="custom" data-i18n="dateRange.custom">Custom Range</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="dashboard-actions">
+                        <button class="action-btn" id="refreshDashboard" data-i18n-title="dashboard.refresh">
+                            <span>🔄</span>
+                        </button>
+                        <button class="action-btn" id="exportDashboard" data-i18n-title="dashboard.export">
+                            <span>📤</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Metrics Summary -->
+            <div class="metrics-summary">
+                <div class="metric-card primary">
+                    <div class="metric-icon">💰</div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="totalSpentMetric">€0</div>
+                        <div class="metric-label" data-i18n="metrics.totalSpent">Total Spent</div>
+                        <div class="metric-change" id="spentChange">
+                            <span class="change-arrow">↑</span>
+                            <span class="change-value">0%</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">🎯</div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="budgetUsageMetric">0%</div>
+                        <div class="metric-label" data-i18n="metrics.budgetUsed">Budget Used</div>
+                        <div class="metric-progress">
+                            <div class="metric-progress-bar" id="budgetProgressBar"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">📈</div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="avgDailyMetric">€0</div>
+                        <div class="metric-label" data-i18n="metrics.dailyAverage">Daily Average</div>
+                        <div class="metric-subtitle" id="projectedMonthly">€0 projected</div>
+                    </div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-icon">🏷️</div>
+                    <div class="metric-content">
+                        <div class="metric-value" id="transactionCountMetric">0</div>
+                        <div class="metric-label" data-i18n="metrics.transactions">Transactions</div>
+                        <div class="metric-subtitle" id="topCategoryMetric">No data</div>
+                    </div>
                 </div>
             </div>
 
@@ -6205,14 +6517,11 @@
             updateDashboard();
             filterAndRenderExpenses(); // Use new system
             
-            // If dashboard is the active tab on load, update the new charts
+            // If dashboard is the active tab on load, initialize it
             const dashboardTab = document.getElementById('dashboardTab');
             if (dashboardTab && dashboardTab.classList.contains('active')) {
                 setTimeout(() => {
-                    updateSpendingTrendChart();
-                    updateCategoryBudgetChart();
-                    updateCashFlowSummary();
-                    generateSmartInsights();
+                    initializeDashboard();
                 }, 500);
             }
             
@@ -13705,51 +14014,320 @@
         fixPremiumManager();
         overrideDemoActivation();
         
-        // Dashboard Enhancement Functions
-        let currentDateRange = 'month';
-        let spendingTrendChart = null;
-        let categoryBudgetChart = null;
+        // Enhanced Dashboard Functions
+        let dashboardState = {
+            periodType: 'month',
+            currentDate: new Date(),
+            selectedMonth: new Date().getMonth(),
+            selectedYear: new Date().getFullYear(),
+            selectedQuarter: Math.floor(new Date().getMonth() / 3),
+            charts: {
+                spending: null,
+                category: null,
+                trend: null
+            }
+        };
 
-        // Date range filter functionality
-        document.addEventListener('DOMContentLoaded', function() {
-            // Setup date range filter buttons
-            document.querySelectorAll('.date-range-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    document.querySelectorAll('.date-range-btn').forEach(b => b.classList.remove('active'));
-                    this.classList.add('active');
-                    currentDateRange = this.dataset.range;
-                    updateDashboard();
+        // Initialize Dashboard
+        function initializeDashboard() {
+            setupDashboardControls();
+            updatePeriodDisplay();
+            updateDashboardData();
+        }
+
+        // Setup Dashboard Controls
+        function setupDashboardControls() {
+            // Period type selector
+            const periodSelector = document.getElementById('periodTypeSelector');
+            if (periodSelector) {
+                periodSelector.addEventListener('change', function() {
+                    dashboardState.periodType = this.value;
+                    updatePeriodDisplay();
+                    updateDashboardData();
                 });
-            });
-        });
+            }
 
-        // Get date range for filtering
-        function getDateRangeFilter() {
-            const now = new Date();
-            now.setHours(23, 59, 59, 999); // End of today
-            const startDate = new Date();
+            // Previous/Next buttons
+            const prevBtn = document.getElementById('prevPeriod');
+            const nextBtn = document.getElementById('nextPeriod');
             
-            switch(currentDateRange) {
-                case 'quarter':
-                    // Last 3 months
-                    startDate.setMonth(now.getMonth() - 2);
-                    startDate.setDate(1);
-                    startDate.setHours(0, 0, 0, 0);
-                    break;
-                case 'year':
-                    // Last 12 months
-                    startDate.setMonth(now.getMonth() - 11);
-                    startDate.setDate(1);
-                    startDate.setHours(0, 0, 0, 0);
-                    break;
-                case 'month':
-                default:
-                    // Current month only
-                    startDate.setDate(1);
-                    startDate.setHours(0, 0, 0, 0);
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => navigatePeriod(-1));
             }
             
-            return { start: startDate, end: now };
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => navigatePeriod(1));
+            }
+
+            // Refresh button
+            const refreshBtn = document.getElementById('refreshDashboard');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    updateDashboardData();
+                    showNotification(t('dashboard.refreshed') || 'Dashboard refreshed', 'success');
+                });
+            }
+
+            // Export button
+            const exportBtn = document.getElementById('exportDashboard');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', exportDashboardData);
+            }
+        }
+
+        // Navigate periods
+        function navigatePeriod(direction) {
+            switch(dashboardState.periodType) {
+                case 'month':
+                    dashboardState.selectedMonth += direction;
+                    if (dashboardState.selectedMonth < 0) {
+                        dashboardState.selectedMonth = 11;
+                        dashboardState.selectedYear--;
+                    } else if (dashboardState.selectedMonth > 11) {
+                        dashboardState.selectedMonth = 0;
+                        dashboardState.selectedYear++;
+                    }
+                    break;
+                case 'quarter':
+                    dashboardState.selectedQuarter += direction;
+                    if (dashboardState.selectedQuarter < 0) {
+                        dashboardState.selectedQuarter = 3;
+                        dashboardState.selectedYear--;
+                    } else if (dashboardState.selectedQuarter > 3) {
+                        dashboardState.selectedQuarter = 0;
+                        dashboardState.selectedYear++;
+                    }
+                    break;
+                case 'year':
+                    dashboardState.selectedYear += direction;
+                    break;
+            }
+            updatePeriodDisplay();
+            updateDashboardData();
+        }
+
+        // Update period display
+        function updatePeriodDisplay() {
+            const display = document.getElementById('currentPeriodDisplay');
+            if (!display) return;
+            
+            let periodText = '';
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            switch(dashboardState.periodType) {
+                case 'month':
+                    periodText = `${monthNames[dashboardState.selectedMonth]} ${dashboardState.selectedYear}`;
+                    break;
+                case 'quarter':
+                    periodText = `Q${dashboardState.selectedQuarter + 1} ${dashboardState.selectedYear}`;
+                    break;
+                case 'year':
+                    periodText = `${dashboardState.selectedYear}`;
+                    break;
+                case 'custom':
+                    periodText = 'Custom Range';
+                    break;
+            }
+            
+            display.querySelector('.period-label').textContent = periodText;
+        }
+
+        // Get date range based on selected period
+        function getDateRangeFilter() {
+            const startDate = new Date();
+            const endDate = new Date();
+            
+            switch(dashboardState.periodType) {
+                case 'month':
+                    startDate.setFullYear(dashboardState.selectedYear, dashboardState.selectedMonth, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setFullYear(dashboardState.selectedYear, dashboardState.selectedMonth + 1, 0);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+                case 'quarter':
+                    const startMonth = dashboardState.selectedQuarter * 3;
+                    startDate.setFullYear(dashboardState.selectedYear, startMonth, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setFullYear(dashboardState.selectedYear, startMonth + 3, 0);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+                case 'year':
+                    startDate.setFullYear(dashboardState.selectedYear, 0, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setFullYear(dashboardState.selectedYear, 11, 31);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+            }
+            
+            return { start: startDate, end: endDate };
+        }
+
+        // Update all dashboard data
+        function updateDashboardData() {
+            const dateRange = getDateRangeFilter();
+            
+            // Filter expenses for the selected period
+            const periodExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
+            });
+            
+            // Update metrics
+            updateDashboardMetrics(periodExpenses, dateRange);
+            
+            // Update existing dashboard components
+            updateDashboard();
+            
+            // Update new charts
+            updateSpendingTrendChart();
+            updateCategoryBudgetChart();
+            updateCashFlowSummary();
+            generateSmartInsights();
+        }
+
+        // Update dashboard metrics
+        function updateDashboardMetrics(periodExpenses, dateRange) {
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            
+            // Calculate total spent
+            const totalSpent = periodExpenses.reduce((sum, expense) => sum + getAmountInMainCurrency(expense), 0);
+            const totalSpentEl = document.getElementById('totalSpentMetric');
+            if (totalSpentEl) {
+                totalSpentEl.textContent = formatCurrencyAmount(totalSpent, mainCurrency);
+            }
+            
+            // Calculate comparison with previous period
+            const prevRange = getPreviousPeriodRange();
+            const prevExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= prevRange.start && expenseDate <= prevRange.end;
+            });
+            const prevTotal = prevExpenses.reduce((sum, expense) => sum + getAmountInMainCurrency(expense), 0);
+            
+            const changeEl = document.getElementById('spentChange');
+            if (changeEl && prevTotal > 0) {
+                const percentChange = ((totalSpent - prevTotal) / prevTotal) * 100;
+                const arrow = percentChange > 0 ? '↑' : '↓';
+                const changeClass = percentChange > 0 ? 'negative' : 'positive';
+                changeEl.className = `metric-change ${changeClass}`;
+                changeEl.innerHTML = `<span class="change-arrow">${arrow}</span><span class="change-value">${Math.abs(percentChange).toFixed(1)}%</span>`;
+            }
+            
+            // Calculate budget usage
+            const budgetUsageEl = document.getElementById('budgetUsageMetric');
+            const progressBar = document.getElementById('budgetProgressBar');
+            if (budgetUsageEl && monthlyBudget > 0) {
+                const usage = (totalSpent / monthlyBudget) * 100;
+                budgetUsageEl.textContent = `${Math.round(usage)}%`;
+                if (progressBar) {
+                    progressBar.style.width = `${Math.min(usage, 100)}%`;
+                    progressBar.style.background = usage > 100 ? 'linear-gradient(90deg, #f44336 0%, #ff5252 100%)' : 
+                                                 usage > 80 ? 'linear-gradient(90deg, #ff9800 0%, #ffc107 100%)' :
+                                                 'linear-gradient(90deg, #4caf50 0%, #8bc34a 100%)';
+                }
+            }
+            
+            // Calculate daily average
+            const days = Math.ceil((dateRange.end - dateRange.start) / (1000 * 60 * 60 * 24)) + 1;
+            const dailyAvg = totalSpent / days;
+            const avgDailyEl = document.getElementById('avgDailyMetric');
+            if (avgDailyEl) {
+                avgDailyEl.textContent = formatCurrencyAmount(dailyAvg, mainCurrency);
+            }
+            
+            // Calculate projected monthly
+            const projectedEl = document.getElementById('projectedMonthly');
+            if (projectedEl) {
+                const projected = dailyAvg * 30;
+                projectedEl.textContent = `${formatCurrencyAmount(projected, mainCurrency)} ${t('metrics.projected') || 'projected'}`;
+            }
+            
+            // Transaction count and top category
+            const transactionCountEl = document.getElementById('transactionCountMetric');
+            if (transactionCountEl) {
+                transactionCountEl.textContent = periodExpenses.length;
+            }
+            
+            // Find top category
+            const categoryTotals = {};
+            periodExpenses.forEach(expense => {
+                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + getAmountInMainCurrency(expense);
+            });
+            
+            const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
+            const topCategoryEl = document.getElementById('topCategoryMetric');
+            if (topCategoryEl) {
+                if (topCategory) {
+                    const icon = categoryIcons[topCategory[0]] || '📝';
+                    topCategoryEl.textContent = `${icon} ${topCategory[0]}`;
+                } else {
+                    topCategoryEl.textContent = t('metrics.noData') || 'No data';
+                }
+            }
+        }
+
+        // Get previous period range for comparison
+        function getPreviousPeriodRange() {
+            const startDate = new Date();
+            const endDate = new Date();
+            
+            switch(dashboardState.periodType) {
+                case 'month':
+                    startDate.setFullYear(dashboardState.selectedYear, dashboardState.selectedMonth - 1, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setFullYear(dashboardState.selectedYear, dashboardState.selectedMonth, 0);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+                case 'quarter':
+                    const prevQuarter = dashboardState.selectedQuarter - 1;
+                    const prevYear = prevQuarter < 0 ? dashboardState.selectedYear - 1 : dashboardState.selectedYear;
+                    const adjustedQuarter = prevQuarter < 0 ? 3 : prevQuarter;
+                    const startMonth = adjustedQuarter * 3;
+                    startDate.setFullYear(prevYear, startMonth, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setFullYear(prevYear, startMonth + 3, 0);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+                case 'year':
+                    startDate.setFullYear(dashboardState.selectedYear - 1, 0, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setFullYear(dashboardState.selectedYear - 1, 11, 31);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+            }
+            
+            return { start: startDate, end: endDate };
+        }
+
+        // Export dashboard data
+        function exportDashboardData() {
+            const dateRange = getDateRangeFilter();
+            const periodExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
+            });
+            
+            // Create CSV data
+            let csv = 'Date,Description,Category,Amount,Currency,Converted Amount,Tags\n';
+            
+            periodExpenses.forEach(expense => {
+                const tags = [];
+                if (expense.isRecurring) tags.push('Recurring');
+                if (expense.isFixedCost) tags.push('Fixed Cost');
+                
+                csv += `${expense.date},"${expense.description}","${expense.category}",${expense.amount},${expense.currency || mainCurrency},${expense.convertedAmount || expense.amount},"${tags.join(', ')}"\n`;
+            });
+            
+            // Download CSV
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dashboard-export-${dateRange.start.toISOString().split('T')[0]}-to-${dateRange.end.toISOString().split('T')[0]}.csv`;
+            a.click();
+            
+            showNotification(t('dashboard.exported') || 'Dashboard data exported', 'success');
         }
 
         // Update spending trend chart
@@ -13776,9 +14354,9 @@
             
             // If no data, show empty state
             if (labels.length === 0) {
-                if (spendingTrendChart) {
-                    spendingTrendChart.destroy();
-                    spendingTrendChart = null;
+                if (dashboardState.charts.spending) {
+                    dashboardState.charts.spending.destroy();
+                    dashboardState.charts.spending = null;
                 }
                 // Clear the canvas and show message
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -13790,11 +14368,11 @@
                 return;
             }
             
-            if (spendingTrendChart) {
-                spendingTrendChart.destroy();
+            if (dashboardState.charts.spending) {
+                dashboardState.charts.spending.destroy();
             }
             
-            spendingTrendChart = new Chart(ctx, {
+            dashboardState.charts.spending = new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
@@ -13869,9 +14447,9 @@
             
             // If no data, show empty state
             if (categories.length === 0) {
-                if (categoryBudgetChart) {
-                    categoryBudgetChart.destroy();
-                    categoryBudgetChart = null;
+                if (dashboardState.charts.category) {
+                    dashboardState.charts.category.destroy();
+                    dashboardState.charts.category = null;
                 }
                 // Clear the canvas and show message
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -13883,11 +14461,11 @@
                 return;
             }
             
-            if (categoryBudgetChart) {
-                categoryBudgetChart.destroy();
+            if (dashboardState.charts.category) {
+                dashboardState.charts.category.destroy();
             }
             
-            categoryBudgetChart = new Chart(ctx, {
+            dashboardState.charts.category = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: categories,
@@ -13952,8 +14530,14 @@
             
             const dateRange = getDateRangeFilter();
             
-            // Calculate totals
-            const totalBudget = monthlyBudget * (currentDateRange === 'year' ? 12 : currentDateRange === 'quarter' ? 3 : 1);
+            // Calculate totals based on period type
+            let totalBudget = monthlyBudget;
+            if (dashboardState.periodType === 'year') {
+                totalBudget = monthlyBudget * 12;
+            } else if (dashboardState.periodType === 'quarter') {
+                totalBudget = monthlyBudget * 3;
+            }
+            
             const totalSpent = expenses.filter(expense => {
                 const expenseDate = new Date(expense.date);
                 return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
@@ -14161,14 +14745,7 @@
                     
                     // Update dashboard if switching to dashboard tab
                     if (tabName === 'dashboard') {
-                        updateDashboard();
-                        // Force update of new charts
-                        setTimeout(() => {
-                            updateSpendingTrendChart();
-                            updateCategoryBudgetChart();
-                            updateCashFlowSummary();
-                            generateSmartInsights();
-                        }, 100);
+                        initializeDashboard();
                     }
                     
                     // Initialize travel tab if switching to travel tab

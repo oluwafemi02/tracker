@@ -421,7 +421,23 @@
   "dateRange": {
     "month": "Month",
     "quarter": "Quarter",
-    "year": "Year"
+    "year": "Year",
+    "custom": "Custom Range"
+  },
+  "dashboard": {
+    "title": "Financial Dashboard",
+    "refresh": "Refresh dashboard",
+    "refreshed": "Dashboard refreshed",
+    "export": "Export dashboard data",
+    "exported": "Dashboard data exported"
+  },
+  "metrics": {
+    "totalSpent": "Total Spent",
+    "budgetUsed": "Budget Used",
+    "dailyAverage": "Daily Average",
+    "transactions": "Transactions",
+    "projected": "projected",
+    "noData": "No data"
   },
   "charts": {
     "spendingTrend": "Spending Trend",
