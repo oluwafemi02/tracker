@@ -65,7 +65,12 @@
     "electricity": "Electricity",
     "water": "Water",
     "gas": "Gas",
-    "transportation": "Transportation"
+    "transportation": "Transportation",
+    "mortgage": "Mortgage",
+    "car loan/lease": "Car Loan/Lease",
+    "healthcare": "Healthcare",
+    "other loan": "Other Loan",
+    "__add_new__": "Add New Category..."
   },
   "person": {
     "me": "Me",
@@ -73,7 +78,10 @@
     "family": "Family",
     "child1": "Child 1",
     "child2": "Child 2",
-    "shared": "Shared"
+    "shared": "Shared",
+    "you": "You",
+    "partner": "Partner",
+    "both": "Both"
   },
   "recurring": {
     "title": "Recurring Expenses",

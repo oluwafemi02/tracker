@@ -65,7 +65,12 @@
     "electricity": "Elektra",
     "water": "Vanduo",
     "gas": "Dujos",
-    "transportation": "Transportas"
+    "transportation": "Transportas",
+    "mortgage": "Hipoteka",
+    "car loan/lease": "Automobilio paskola/nuoma",
+    "healthcare": "Sveikatos priežiūra",
+    "other loan": "Kita paskola",
+    "__add_new__": "Pridėti naują kategoriją..."
   },
   "person": {
     "me": "Aš",
@@ -73,7 +78,10 @@
     "family": "Šeima",
     "child1": "Vaikas 1",
     "child2": "Vaikas 2",
-    "shared": "Bendros"
+    "shared": "Bendros",
+    "you": "Tu",
+    "partner": "Partneris",
+    "both": "Abu"
   },
   "recurring": {
     "title": "Pasikartojančios Išlaidos",

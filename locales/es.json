@@ -65,7 +65,12 @@
     "electricity": "Electricidad",
     "water": "Agua",
     "gas": "Gas",
-    "transportation": "Transporte"
+    "transportation": "Transporte",
+    "mortgage": "Hipoteca",
+    "car loan/lease": "Préstamo/Arrendamiento de Auto",
+    "healthcare": "Salud",
+    "other loan": "Otro Préstamo",
+    "__add_new__": "Agregar Nueva Categoría..."
   },
   "person": {
     "me": "Yo",
@@ -73,7 +78,10 @@
     "family": "Familia",
     "child1": "Hijo 1",
     "child2": "Hijo 2",
-    "shared": "Compartido"
+    "shared": "Compartido",
+    "you": "Tú",
+    "partner": "Pareja",
+    "both": "Ambos"
   },
   "recurring": {
     "title": "Gastos Recurrentes",

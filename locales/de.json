@@ -65,7 +65,12 @@
     "electricity": "Strom",
     "water": "Wasser",
     "gas": "Gas",
-    "transportation": "Transport"
+    "transportation": "Transport",
+    "mortgage": "Hypothek",
+    "car loan/lease": "Autokredit/Leasing",
+    "healthcare": "Gesundheitswesen",
+    "other loan": "Sonstiger Kredit",
+    "__add_new__": "Neue Kategorie hinzufügen..."
   },
   "person": {
     "me": "Ich",
@@ -73,7 +78,10 @@
     "family": "Familie",
     "child1": "Kind 1",
     "child2": "Kind 2",
-    "shared": "Geteilt"
+    "shared": "Geteilt",
+    "you": "Du",
+    "partner": "Partner",
+    "both": "Beide"
   },
   "recurring": {
     "title": "Wiederkehrende Ausgaben",
