@@ -3712,8 +3712,16 @@
                             <div class="form-grid">
                                 <div class="input-group">
                                     <span class="input-icon">💰</span>
-                                    <label for="amount">Amount (€)</label>
+                                    <label for="amount">Amount</label>
                                     <input type="number" id="amount" step="0.01" required placeholder="0.00">
+                                </div>
+                                
+                                <div class="input-group">
+                                    <span class="input-icon">💱</span>
+                                    <label for="currency">Currency</label>
+                                    <select id="currency" required>
+                                        <!-- Will be populated dynamically -->
+                                    </select>
                                 </div>
                                 
                                 <div class="input-group">
@@ -4400,8 +4408,19 @@
                 <h2><span class="card-icon">⚙️</span> Settings & Configuration</h2>
                 <div class="settings-grid">
                     <div class="form-group">
-                        <label for="monthlyBudget">Monthly Budget (€)</label>
-                        <input type="number" id="monthlyBudget" placeholder="1500" min="0">
+                        <label for="mainCurrencySelect">Main Currency</label>
+                        <select id="mainCurrencySelect">
+                            <!-- Will be populated dynamically -->
+                        </select>
+                    </div>
+                    <button class="btn" id="setCurrencyBtn">💱 Set Currency</button>
+                    
+                    <div class="form-group">
+                        <label for="monthlyBudget">Monthly Budget</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <span id="budgetCurrencySymbol" style="align-self: center; font-size: 1.2rem;"></span>
+                            <input type="number" id="monthlyBudget" placeholder="1500" min="0" style="flex: 1;">
+                        </div>
                     </div>
                     <button class="btn" id="setBudgetBtn">💾 Set Budget</button>
                 </div>
@@ -5345,6 +5364,59 @@
         let filteredExpenses = [...expenses];
         let customCategories = JSON.parse(localStorage.getItem('customCategories')) || [];
         
+        // Currency settings
+        let mainCurrency = localStorage.getItem('mainCurrency') || detectDefaultCurrency();
+        let exchangeRates = JSON.parse(localStorage.getItem('exchangeRates')) || {};
+        
+        // Supported currencies with symbols
+        const CURRENCIES = {
+            'USD': { symbol: '$', name: 'US Dollar' },
+            'EUR': { symbol: '€', name: 'Euro' },
+            'GBP': { symbol: '£', name: 'British Pound' },
+            'NGN': { symbol: '₦', name: 'Nigerian Naira' },
+            'JPY': { symbol: '¥', name: 'Japanese Yen' },
+            'CNY': { symbol: '¥', name: 'Chinese Yuan' },
+            'INR': { symbol: '₹', name: 'Indian Rupee' },
+            'CAD': { symbol: '$', name: 'Canadian Dollar' },
+            'AUD': { symbol: '$', name: 'Australian Dollar' },
+            'CHF': { symbol: 'CHF', name: 'Swiss Franc' },
+            'SEK': { symbol: 'kr', name: 'Swedish Krona' },
+            'NOK': { symbol: 'kr', name: 'Norwegian Krone' },
+            'DKK': { symbol: 'kr', name: 'Danish Krone' },
+            'NZD': { symbol: '$', name: 'New Zealand Dollar' },
+            'SGD': { symbol: '$', name: 'Singapore Dollar' },
+            'HKD': { symbol: '$', name: 'Hong Kong Dollar' },
+            'KRW': { symbol: '₩', name: 'South Korean Won' },
+            'MXN': { symbol: '$', name: 'Mexican Peso' },
+            'BRL': { symbol: 'R$', name: 'Brazilian Real' },
+            'ZAR': { symbol: 'R', name: 'South African Rand' }
+        };
+        
+        // Detect default currency based on locale
+        function detectDefaultCurrency() {
+            const locale = navigator.language || 'en-US';
+            const currencyMap = {
+                'en-US': 'USD',
+                'en-GB': 'GBP',
+                'en-NG': 'NGN',
+                'fr-FR': 'EUR',
+                'de-DE': 'EUR',
+                'es-ES': 'EUR',
+                'it-IT': 'EUR',
+                'ja-JP': 'JPY',
+                'zh-CN': 'CNY',
+                'en-IN': 'INR',
+                'en-CA': 'CAD',
+                'en-AU': 'AUD',
+                'en-NZ': 'NZD',
+                'en-SG': 'SGD',
+                'ko-KR': 'KRW',
+                'pt-BR': 'BRL',
+                'en-ZA': 'ZAR'
+            };
+            return currencyMap[locale] || 'USD';
+        }
+        
         // Migrate existing expenses to include fixed field
         function migrateExpenses() {
             let migrated = false;
@@ -5354,6 +5426,14 @@
                     // Default: recurring expenses are fixed, others are variable
                     expense.fixed = expense.isRecurring || false;
                 }
+                
+                // Migrate currency fields
+                if (expense.currency === undefined) {
+                    migrated = true;
+                    expense.currency = mainCurrency;
+                    expense.convertedAmount = expense.amount;
+                }
+                
                 return expense;
             });
             
@@ -5404,6 +5484,9 @@
         document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('date').valueAsDate = new Date();
             document.getElementById('monthlyBudget').value = monthlyBudget;
+            
+            // Initialize currency dropdowns
+            populateCurrencyDropdowns();
             
             // Load dark mode preference
             const isDarkMode = localStorage.getItem('darkMode') === 'true';
@@ -6152,6 +6235,121 @@
             updateDashboard();
             showNotification('Budget updated successfully!', 'success');
         }
+        // Currency Functions
+        function populateCurrencyDropdowns() {
+            const currencySelect = document.getElementById('currency');
+            const mainCurrencySelect = document.getElementById('mainCurrencySelect');
+            
+            Object.keys(CURRENCIES).forEach(code => {
+                const option = new Option(`${code} - ${CURRENCIES[code].name}`, code);
+                currencySelect.appendChild(option.cloneNode(true));
+                mainCurrencySelect.appendChild(option);
+            });
+            
+            // Set default values
+            currencySelect.value = mainCurrency;
+            mainCurrencySelect.value = mainCurrency;
+            updateBudgetCurrencySymbol();
+        }
+        
+        function updateBudgetCurrencySymbol() {
+            const symbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            document.getElementById('budgetCurrencySymbol').textContent = symbol;
+            
+            // Update all currency displays
+            document.querySelectorAll('[data-currency-display]').forEach(el => {
+                el.textContent = symbol;
+            });
+        }
+        
+        function setCurrency() {
+            const newCurrency = document.getElementById('mainCurrencySelect').value;
+            if (newCurrency && newCurrency !== mainCurrency) {
+                mainCurrency = newCurrency;
+                localStorage.setItem('mainCurrency', mainCurrency);
+                updateBudgetCurrencySymbol();
+                showNotification(`Main currency set to ${newCurrency}`, 'success');
+                
+                // Update expense form currency dropdown default
+                document.getElementById('currency').value = mainCurrency;
+                
+                // Refresh displays
+                updateDashboard();
+                filterAndRenderExpenses();
+            }
+        }
+        
+        let pendingExpenseData = null;
+        
+        function showExchangeRateModal(expenseCurrency, callback) {
+            const rateKey = `${expenseCurrency}_${mainCurrency}`;
+            const lastRate = exchangeRates[rateKey];
+            
+            document.getElementById('exchangeRatePrompt').innerHTML = 
+                `Your expense is in <strong>${expenseCurrency}</strong> but your budget is in <strong>${mainCurrency}</strong>.<br>
+                Please enter the exchange rate:`;
+            
+            document.getElementById('fromCurrency').textContent = expenseCurrency;
+            document.getElementById('toCurrency').textContent = mainCurrency;
+            
+            if (lastRate) {
+                document.getElementById('exchangeRateInput').value = lastRate;
+                document.getElementById('lastRateHint').textContent = `Last used rate: ${lastRate}`;
+            } else {
+                document.getElementById('exchangeRateInput').value = '';
+                document.getElementById('lastRateHint').textContent = 'Enter exchange rate';
+            }
+            
+            document.getElementById('exchangeRateModal').style.display = 'block';
+            document.getElementById('exchangeRateInput').focus();
+            
+            // Store callback
+            window.exchangeRateCallback = callback;
+        }
+        
+        function closeExchangeRateModal() {
+            document.getElementById('exchangeRateModal').style.display = 'none';
+            pendingExpenseData = null;
+            window.exchangeRateCallback = null;
+        }
+        
+        function confirmExchangeRate() {
+            const rate = parseFloat(document.getElementById('exchangeRateInput').value);
+            if (!rate || rate <= 0) {
+                showNotification('Please enter a valid exchange rate', 'error');
+                return;
+            }
+            
+            const fromCurrency = document.getElementById('fromCurrency').textContent;
+            const rateKey = `${fromCurrency}_${mainCurrency}`;
+            exchangeRates[rateKey] = rate;
+            localStorage.setItem('exchangeRates', JSON.stringify(exchangeRates));
+            
+            closeExchangeRateModal();
+            
+            if (window.exchangeRateCallback) {
+                window.exchangeRateCallback(rate);
+            }
+        }
+        
+        function formatCurrencyAmount(amount, currency) {
+            const symbol = CURRENCIES[currency]?.symbol || currency;
+            return `${symbol}${amount.toFixed(2)}`;
+        }
+        
+        function getConvertedAmount(amount, fromCurrency, toCurrency, rate) {
+            if (fromCurrency === toCurrency) return amount;
+            return amount * rate;
+        }
+        
+        // Get the amount in main currency for calculations
+        function getAmountInMainCurrency(expense) {
+            if (!expense.currency || expense.currency === mainCurrency) {
+                return expense.amount;
+            }
+            return expense.convertedAmount || expense.amount;
+        }
+        
         // Handle expense form submission
         function handleExpenseSubmit(e) {
             e.preventDefault();
@@ -6161,6 +6359,7 @@
             const person = document.getElementById('person').value;
             const description = document.getElementById('description').value;
             const date = document.getElementById('date').value;
+            const currency = document.getElementById('currency').value;
             
             if (amount <= 0) {
                 showNotification('Amount must be greater than 0', 'error');
@@ -6180,6 +6379,7 @@
                 person: trackerType === 'personal' ? 'You' : person,
                 description: description,
                 date: date,
+                currency: currency,
                 timestamp: new Date().toISOString(),
                 isRecurring: isRecurring,
                 recurringFrequency: isRecurring ? recurringFrequency : null,
@@ -6188,6 +6388,21 @@
                 fixed: isFixedCost
             };
             
+            // Check if currency conversion is needed
+            if (currency !== mainCurrency) {
+                showExchangeRateModal(currency, (rate) => {
+                    expense.exchangeRate = rate;
+                    expense.convertedAmount = getConvertedAmount(amount, currency, mainCurrency, rate);
+                    saveExpense(expense);
+                });
+                return;
+            } else {
+                expense.convertedAmount = amount;
+                saveExpense(expense);
+            }
+        }
+        
+        function saveExpense(expense) {
             if (editingExpenseId) {
                 const index = expenses.findIndex(e => e.id === editingExpenseId);
                 expenses[index] = expense;
@@ -6208,7 +6423,7 @@
                 expenses.push(expense);
                 
                 // Create recurring template if this is a recurring expense
-                if (isRecurring) {
+                if (expense.isRecurring) {
                     const recurringTemplate = createRecurringTemplate(expense);
                     recurringExpenses.push(recurringTemplate);
                     localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses));
@@ -6377,15 +6592,16 @@
             
             // Calculate total including recurring expenses that should be deducted
             const recurringTotal = calculateMonthlyRecurringTotal(currentMonth, currentYear);
-            const expenseTotal = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
+            const expenseTotal = monthlyExpenses.reduce((total, expense) => total + getAmountInMainCurrency(expense), 0);
             const monthlyTotal = expenseTotal + recurringTotal;
             
             // Update budget display
-            document.getElementById('budgetAmount').textContent = `€${monthlyBudget.toFixed(2)}`;
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            document.getElementById('budgetAmount').textContent = `${currencySymbol}${monthlyBudget.toFixed(2)}`;
             
             // Make monthly total clickable
             const monthlyTotalElement = document.getElementById('monthlyTotal');
-            monthlyTotalElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">€${monthlyTotal.toFixed(2)}</span>`;
+            monthlyTotalElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">${currencySymbol}${monthlyTotal.toFixed(2)}</span>`;
             monthlyTotalElement.title = "Click to see detailed breakdown of spent amount";
             
             // Show breakdown if there are recurring expenses - make clickable
@@ -7027,7 +7243,18 @@
             // Update basic information
             document.getElementById('expenseDetailTitle').textContent = `${categoryIcons[expense.category] || '📝'} ${expense.category} Details`;
             document.getElementById('detailCategory').textContent = expense.category;
-            document.getElementById('detailAmount').textContent = `€${expense.amount.toFixed(2)}`;
+            
+            // Format amount with currency
+            const expenseCurrency = expense.currency || mainCurrency;
+            let amountText = formatCurrencyAmount(expense.amount, expenseCurrency);
+            
+            // Add conversion info if different currency
+            if (expenseCurrency !== mainCurrency && expense.exchangeRate) {
+                amountText += ` (≈ ${formatCurrencyAmount(expense.convertedAmount, mainCurrency)})`;
+                amountText += `\n💱 Rate: 1 ${expenseCurrency} = ${expense.exchangeRate} ${mainCurrency}`;
+            }
+            
+            document.getElementById('detailAmount').textContent = amountText;
             document.getElementById('detailPerson').textContent = expense.person;
             document.getElementById('detailDescription').textContent = expense.description || 'No description';
             document.getElementById('detailDate').textContent = new Date(expense.date).toLocaleDateString('en-US', {
@@ -7659,8 +7886,20 @@
             // Amount section
             const amountDiv = document.createElement('div');
             amountDiv.className = 'expense-amount';
-            const highlightedAmount = highlightSearchTerms(`€${expense.amount.toFixed(2)}`, searchTerm);
-            amountDiv.innerHTML = highlightedAmount;
+            
+            // Format amount with currency
+            const expenseCurrency = expense.currency || mainCurrency;
+            const originalAmount = formatCurrencyAmount(expense.amount, expenseCurrency);
+            
+            let amountHtml = highlightSearchTerms(originalAmount, searchTerm);
+            
+            // Add converted amount if different currency
+            if (expenseCurrency !== mainCurrency && expense.convertedAmount) {
+                const convertedAmount = formatCurrencyAmount(expense.convertedAmount, mainCurrency);
+                amountHtml += `<br><small style="opacity: 0.7;">(≈ ${highlightSearchTerms(convertedAmount, searchTerm)})</small>`;
+            }
+            
+            amountDiv.innerHTML = amountHtml;
             
             // Actions section
             const actionsDiv = document.createElement('div');
@@ -10725,6 +10964,12 @@
             if (setBudgetBtn) {
                 setBudgetBtn.addEventListener('click', setBudget);
             }
+            
+            // Set currency button
+            const setCurrencyBtn = document.getElementById('setCurrencyBtn');
+            if (setCurrencyBtn) {
+                setCurrencyBtn.addEventListener('click', setCurrency);
+            }
 
             // Recurring modal buttons
             const processRecurringBtn = document.getElementById('processRecurringBtn');
@@ -12471,5 +12716,39 @@
         }
     })();
     </script>
+    
+    <!-- Exchange Rate Modal -->
+    <div id="exchangeRateModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>💱 Currency Conversion</h2>
+                <button class="close-btn" onclick="closeExchangeRateModal()">&times;</button>
+            </div>
+            <div style="padding: 1.5rem;">
+                <p id="exchangeRatePrompt" style="margin-bottom: 1.5rem; text-align: center;">
+                    <!-- Dynamic content -->
+                </p>
+                <div class="form-group">
+                    <label for="exchangeRateInput">Exchange Rate</label>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span>1 <span id="fromCurrency"></span> =</span>
+                        <input type="number" id="exchangeRateInput" step="0.000001" placeholder="0.00" style="flex: 1;" onkeypress="if(event.key === 'Enter') confirmExchangeRate()">
+                        <span id="toCurrency"></span>
+                    </div>
+                    <small style="color: var(--text-secondary); display: block; margin-top: 0.5rem;">
+                        <span id="lastRateHint"></span>
+                    </small>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn btn-primary" onclick="confirmExchangeRate()" style="flex: 1;">
+                        ✅ Confirm
+                    </button>
+                    <button class="btn" onclick="closeExchangeRateModal()" style="flex: 1;">
+                        ❌ Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
