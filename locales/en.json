@@ -372,6 +372,13 @@
     "manage": "Manage Subscription",
     "manageInfo": "Subscription management coming soon!"
   },
+  "support": {
+    "title": "Help & Support",
+    "description": "Have questions or need assistance? We're here to help!",
+    "contactUs": "Contact Support",
+    "faq": "View FAQ",
+    "faqComingSoon": "FAQ section coming soon!"
+  },
   "filters": {
     "all": "All",
     "thisMonth": "This Month",

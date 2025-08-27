@@ -1235,6 +1235,19 @@
             border-top: 1px solid var(--border-color);
         }
 
+        .support-card {
+            background: var(--bg-secondary);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+            margin-top: 1rem;
+        }
+
+        .support-card p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
         /* Subscription section responsive */
         @media (max-width: 768px) {
             .plan-header {
@@ -5469,6 +5482,24 @@
                         <button class="btn btn-warning" id="exportAllDataBtn">📥 <span data-i18n="buttons.exportData">Export All Data</span></button>
                         <button class="btn btn-danger" id="clearAllDataBtn">🗑️ <span data-i18n="buttons.clearData">Clear All Data</span></button>
                         <button class="btn btn-warning" id="clearCacheBtn">🔄 Clear Cache & Reload</button>
+                    </div>
+                </div>
+                
+                <!-- Support Section -->
+                <div style="margin-top: 2rem;">
+                    <h3><span class="section-icon">💬</span> <span data-i18n="support.title">Help & Support</span></h3>
+                    <div class="support-card">
+                        <p data-i18n="support.description">Have questions or need assistance? We're here to help!</p>
+                        <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
+                            <button class="btn btn-primary" onclick="openSupportContact()">
+                                <span>📧</span>
+                                <span data-i18n="support.contactUs">Contact Support</span>
+                            </button>
+                            <button class="btn btn-secondary" onclick="openFAQ()">
+                                <span>❓</span>
+                                <span data-i18n="support.faq">View FAQ</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -14872,9 +14903,9 @@
                 return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
             });
             
-            // Insight 1: Spending trend
-            const thisWeekTotal = getThisWeekTotal(filteredExpenses);
-            const lastWeekTotal = getLastWeekTotal(filteredExpenses);
+            // Insight 1: Spending trend (using ALL expenses, not just filtered)
+            const thisWeekTotal = getThisWeekTotal(expenses);
+            const lastWeekTotal = getLastWeekTotal(expenses);
             if (thisWeekTotal !== null && lastWeekTotal !== null && lastWeekTotal > 0) {
                 const percentChange = ((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100;
                 insights.push({
@@ -14985,29 +15016,37 @@
             return Math.ceil((((d - yearStart) / 86400000) + 1)/7);
         }
 
-        function getThisWeekTotal(expenses) {
+        function getThisWeekTotal(allExpenses) {
             const now = new Date();
             const weekStart = new Date(now);
             weekStart.setDate(now.getDate() - now.getDay());
             weekStart.setHours(0, 0, 0, 0);
             
-            return expenses.filter(e => new Date(e.date) >= weekStart)
-                .reduce((sum, e) => sum + getAmountInMainCurrency(e), 0);
-        }
-
-        function getLastWeekTotal(expenses) {
-            const now = new Date();
             const weekEnd = new Date(now);
-            weekEnd.setDate(now.getDate() - now.getDay() - 1);
             weekEnd.setHours(23, 59, 59, 999);
             
-            const weekStart = new Date(weekEnd);
-            weekStart.setDate(weekEnd.getDate() - 6);
-            weekStart.setHours(0, 0, 0, 0);
-            
-            return expenses.filter(e => {
+            return allExpenses.filter(e => {
                 const date = new Date(e.date);
                 return date >= weekStart && date <= weekEnd;
+            }).reduce((sum, e) => sum + getAmountInMainCurrency(e), 0);
+        }
+
+        function getLastWeekTotal(allExpenses) {
+            const now = new Date();
+            const thisWeekStart = new Date(now);
+            thisWeekStart.setDate(now.getDate() - now.getDay());
+            thisWeekStart.setHours(0, 0, 0, 0);
+            
+            const lastWeekStart = new Date(thisWeekStart);
+            lastWeekStart.setDate(lastWeekStart.getDate() - 7);
+            
+            const lastWeekEnd = new Date(thisWeekStart);
+            lastWeekEnd.setDate(lastWeekEnd.getDate() - 1);
+            lastWeekEnd.setHours(23, 59, 59, 999);
+            
+            return allExpenses.filter(e => {
+                const date = new Date(e.date);
+                return date >= lastWeekStart && date <= lastWeekEnd;
             }).reduce((sum, e) => sum + getAmountInMainCurrency(e), 0);
         }
 
@@ -15154,10 +15193,49 @@
             showNotification(t('subscription.manageInfo') || 'Subscription management coming soon!', 'info');
         }
 
+        // Open support contact with encoded email
+        function openSupportContact() {
+            // Encode the email to prevent scraping (base64 encoded)
+            const encodedEmail = 'ZmVtaXN0ZXZlMDJAZ21haWwuY29t';
+            const decodedEmail = atob(encodedEmail);
+            
+            // Get device and app info for support email
+            const appVersion = APP_VERSION || '0.3.5';
+            const userAgent = navigator.userAgent;
+            const language = currentLanguage || 'en';
+            const platform = navigator.platform;
+            
+            // Create pre-filled email
+            const subject = encodeURIComponent('Expense Tracker Support Request');
+            const body = encodeURIComponent(`Hi,
+
+I need help with the Expense Tracker app.
+
+[Please describe your issue here]
+
+---
+App Information:
+Version: ${appVersion}
+Language: ${language}
+Platform: ${platform}
+Browser: ${userAgent}
+`);
+            
+            // Open email client with pre-filled content
+            window.location.href = `mailto:${decodedEmail}?subject=${subject}&body=${body}`;
+        }
+        
+        // Open FAQ
+        function openFAQ() {
+            showNotification(t('support.faqComingSoon') || 'FAQ section coming soon!', 'info');
+        }
+
         // Make functions globally accessible
         window.updateSubscriptionStatus = updateSubscriptionStatus;
         window.showUpgradeModal = showUpgradeModal;
         window.showSubscriptionDetails = showSubscriptionDetails;
+        window.openSupportContact = openSupportContact;
+        window.openFAQ = openFAQ;
         window.initializeDashboard = initializeDashboard;
         window.updateSpendingTrendChart = updateSpendingTrendChart;
         window.updateCategoryBudgetChart = updateCategoryBudgetChart;

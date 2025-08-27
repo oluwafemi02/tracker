@@ -1,5 +1,5 @@
 {
-  "version": "0.3.5",
+  "version": "0.3.6",
   "releaseDate": "2024-01-15",
-  "description": "Fix push notification errors - handle non-JSON data and permission failures gracefully"
+  "description": "Fix Smart Insights calculations and add support contact feature"
 }
