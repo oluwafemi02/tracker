@@ -14906,6 +14906,15 @@
             // Insight 1: Spending trend (using ALL expenses, not just filtered)
             const thisWeekTotal = getThisWeekTotal(expenses);
             const lastWeekTotal = getLastWeekTotal(expenses);
+            
+            // Debug logging
+            console.log('Smart Insights Debug:', {
+                thisWeekTotal,
+                lastWeekTotal,
+                allExpensesCount: expenses.length,
+                calculation: lastWeekTotal > 0 ? `${((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100}%` : 'N/A'
+            });
+            
             if (thisWeekTotal !== null && lastWeekTotal !== null && lastWeekTotal > 0) {
                 const percentChange = ((thisWeekTotal - lastWeekTotal) / lastWeekTotal) * 100;
                 insights.push({
@@ -15200,7 +15209,7 @@
             const decodedEmail = atob(encodedEmail);
             
             // Get device and app info for support email
-            const appVersion = APP_VERSION || '0.3.5';
+            const appVersion = '0.3.7'; // Current version
             const userAgent = navigator.userAgent;
             const language = currentLanguage || 'en';
             const platform = navigator.platform;
