@@ -256,6 +256,17 @@
     "pageInfo": "Page {{current}} of {{total}}",
     "showingExpenses": "Showing {{start}}-{{end}} of {{total}} expenses"
   },
+  "predictions": {
+    "currentPace": "At current pace, you'll exceed budget by {{amount}} in {{days}} days",
+    "recentAcceleration": "Recent spending surge detected! If maintained, you'll be {{amount}} over budget",
+    "weekendSpending": "Weekend spending is {{percent}}% higher than weekdays",
+    "planWeekends": "Plan weekend activities to control spending",
+    "impulsePattern": "Small purchases ({{count}} this month) account for {{percent}}% of spending",
+    "trackSmallPurchases": "Consider the 24-hour rule for non-essential purchases",
+    "recurringHigh": "Fixed costs will consume {{percent}}% of budget this month",
+    "reviewSubscriptions": "Review subscriptions for potential savings",
+    "adjustSpending": "Adjust spending to stay on track"
+  },
   "suggestions": {
     "title": "Smart Money Suggestions",
     "setBudget": "Set a monthly budget to get personalized money-saving suggestions and track your financial goals.",

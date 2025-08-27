@@ -4190,6 +4190,26 @@
             border-left-color: #f44336;
         }
 
+        .suggestion-item.prediction {
+            background: linear-gradient(135deg, rgba(103, 58, 183, 0.05) 0%, rgba(63, 81, 181, 0.05) 100%);
+            border-left-color: #5c6bc0;
+            position: relative;
+            overflow: visible;
+        }
+
+        .prediction-badge {
+            position: absolute;
+            top: -8px;
+            right: 16px;
+            background: linear-gradient(135deg, #673ab7 0%, #3f51b5 100%);
+            color: white;
+            padding: 2px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
         .suggestion-icon {
             font-size: 1.5rem;
             flex-shrink: 0;
@@ -10877,7 +10897,124 @@
                 personSelect.setAttribute('required', 'required');
             }
         }
-        // Smart Suggestions Engine
+        // Predictive Analytics Functions
+        function calculateSpendingVelocity(expenses, days = 7) {
+            const now = new Date();
+            const startDate = new Date(now);
+            startDate.setDate(startDate.getDate() - days);
+            
+            const recentExpenses = expenses.filter(e => {
+                const expenseDate = new Date(e.date);
+                return expenseDate >= startDate && expenseDate <= now;
+            });
+            
+            const totalSpent = recentExpenses.reduce((sum, e) => sum + getAmountInMainCurrency(e), 0);
+            return totalSpent / days; // Average daily spending
+        }
+        
+        function predictMonthEndTotal(currentTotal, daysElapsed, daysInMonth) {
+            if (daysElapsed === 0) return 0;
+            const dailyAverage = currentTotal / daysElapsed;
+            return dailyAverage * daysInMonth;
+        }
+        
+        function analyzeSpendingPatterns(expenses) {
+            const patterns = {
+                weekday: { total: 0, count: 0 },
+                weekend: { total: 0, count: 0 },
+                recurring: { total: 0, count: 0 },
+                impulse: { total: 0, count: 0 } // Expenses under certain amount
+            };
+            
+            expenses.forEach(expense => {
+                const date = new Date(expense.date);
+                const dayOfWeek = date.getDay();
+                const amount = getAmountInMainCurrency(expense);
+                
+                if (dayOfWeek === 0 || dayOfWeek === 6) {
+                    patterns.weekend.total += amount;
+                    patterns.weekend.count++;
+                } else {
+                    patterns.weekday.total += amount;
+                    patterns.weekday.count++;
+                }
+                
+                if (expense.isRecurring) {
+                    patterns.recurring.total += amount;
+                    patterns.recurring.count++;
+                }
+                
+                // Consider expenses under 20 units as potential impulse buys
+                if (amount < 20 && !expense.isRecurring) {
+                    patterns.impulse.total += amount;
+                    patterns.impulse.count++;
+                }
+            });
+            
+            return patterns;
+        }
+        
+        function generatePredictiveScenarios(monthlyExpenses, monthlyBudget, remaining, daysLeft, daysInMonth) {
+            const scenarios = [];
+            const currentTotal = monthlyExpenses.reduce((sum, e) => sum + getAmountInMainCurrency(e), 0);
+            const daysElapsed = daysInMonth - daysLeft;
+            
+            // Calculate various spending velocities
+            const last7DaysVelocity = calculateSpendingVelocity(expenses, 7);
+            const last3DaysVelocity = calculateSpendingVelocity(expenses, 3);
+            const monthToDateVelocity = daysElapsed > 0 ? currentTotal / daysElapsed : 0;
+            
+            // Scenario 1: Continue at current month pace
+            if (monthToDateVelocity > 0 && daysLeft > 0) {
+                const projectedTotal = currentTotal + (monthToDateVelocity * daysLeft);
+                const projectedOverspend = projectedTotal - monthlyBudget;
+                
+                if (projectedOverspend > 0) {
+                    scenarios.push({
+                        type: 'current_pace',
+                        icon: '📈',
+                        prediction: t('predictions.currentPace') || `At current pace, you'll exceed budget by ${formatCurrencyAmount(projectedOverspend, mainCurrency)} in ${daysLeft} days`,
+                        velocity: monthToDateVelocity,
+                        confidence: 'high'
+                    });
+                }
+            }
+            
+            // Scenario 2: Recent acceleration (last 3 days vs month average)
+            if (last3DaysVelocity > monthToDateVelocity * 1.5 && daysLeft > 0) {
+                const projectedTotal = currentTotal + (last3DaysVelocity * daysLeft);
+                const projectedOverspend = projectedTotal - monthlyBudget;
+                
+                scenarios.push({
+                    type: 'acceleration',
+                    icon: '🚀',
+                    prediction: t('predictions.recentAcceleration') || `Recent spending surge detected! If maintained, you'll be ${formatCurrencyAmount(projectedOverspend, mainCurrency)} over budget`,
+                    velocity: last3DaysVelocity,
+                    confidence: 'medium'
+                });
+            }
+            
+            // Scenario 3: Weekend spending pattern
+            const patterns = analyzeSpendingPatterns(monthlyExpenses);
+            if (patterns.weekend.count > 0 && patterns.weekday.count > 0) {
+                const weekendAvg = patterns.weekend.total / patterns.weekend.count;
+                const weekdayAvg = patterns.weekday.total / patterns.weekday.count;
+                
+                if (weekendAvg > weekdayAvg * 2) {
+                    scenarios.push({
+                        type: 'weekend_pattern',
+                        icon: '🛍️',
+                        prediction: t('predictions.weekendSpending') || `Weekend spending is ${((weekendAvg / weekdayAvg - 1) * 100).toFixed(0)}% higher than weekdays`,
+                        action: t('predictions.planWeekends') || 'Plan weekend activities to control spending',
+                        confidence: 'high'
+                    });
+                }
+            }
+            
+            return scenarios;
+        }
+
+        // Enhanced Smart Suggestions Engine with Predictive Modeling
         function generateSmartSuggestions() {
             const currentMonth = new Date().getMonth();
             const currentYear = new Date().getFullYear();
@@ -10888,10 +11025,29 @@
 
             const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + getAmountInMainCurrency(expense), 0);
             const remaining = monthlyBudget - monthlyTotal;
-            const daysLeft = new Date(currentYear, currentMonth + 1, 0).getDate() - new Date().getDate();
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const daysLeft = daysInMonth - new Date().getDate();
             const dailyBudgetLeft = daysLeft > 0 ? remaining / daysLeft : 0;
 
             const suggestions = [];
+            
+            // Add predictive scenarios first if we have data
+            if (monthlyBudget > 0 && monthlyExpenses.length > 0 && daysLeft > 0) {
+                const scenarios = generatePredictiveScenarios(monthlyExpenses, monthlyBudget, remaining, daysLeft, daysInMonth);
+                
+                // Add the most relevant scenario as a primary suggestion
+                if (scenarios.length > 0) {
+                    const primaryScenario = scenarios[0];
+                    suggestions.push({
+                        type: 'prediction',
+                        icon: primaryScenario.icon,
+                        text: primaryScenario.prediction,
+                        action: primaryScenario.action || t('suggestions.adjustSpending') || 'Adjust spending to stay on track',
+                        priority: 'urgent',
+                        isPrediction: true
+                    });
+                }
+            }
 
             if (monthlyBudget === 0) {
                 suggestions.push({
@@ -10984,7 +11140,42 @@
                 });
             }
 
-            // Category-based suggestions
+            // Add pattern-based insights
+            if (monthlyExpenses.length >= 7) { // Need at least a week of data
+                const patterns = analyzeSpendingPatterns(monthlyExpenses);
+                
+                // Impulse spending insight
+                if (patterns.impulse.count >= 5) {
+                    const impulsePercentage = (patterns.impulse.total / monthlyTotal) * 100;
+                    if (impulsePercentage > 15) {
+                        suggestions.push({
+                            type: 'pattern',
+                            icon: '🎯',
+                            text: t('predictions.impulsePattern') || `Small purchases (${patterns.impulse.count} this month) account for ${impulsePercentage.toFixed(0)}% of spending`,
+                            action: t('predictions.trackSmallPurchases') || 'Consider the 24-hour rule for non-essential purchases',
+                            priority: 'normal'
+                        });
+                    }
+                }
+                
+                // Recurring vs one-time analysis
+                if (patterns.recurring.count > 0) {
+                    const recurringPercentage = (patterns.recurring.total / monthlyTotal) * 100;
+                    const projectedRecurring = patterns.recurring.total * (daysInMonth / new Date().getDate());
+                    
+                    if (projectedRecurring > monthlyBudget * 0.5) {
+                        suggestions.push({
+                            type: 'recurring_alert',
+                            icon: '🔄',
+                            text: t('predictions.recurringHigh') || `Fixed costs will consume ${(projectedRecurring / monthlyBudget * 100).toFixed(0)}% of budget this month`,
+                            action: t('predictions.reviewSubscriptions') || 'Review subscriptions for potential savings',
+                            priority: 'high'
+                        });
+                    }
+                }
+            }
+
+            // Category-based suggestions with predictions
             const categoryTotals = {};
             monthlyExpenses.forEach(expense => {
                 categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + getAmountInMainCurrency(expense);
@@ -11061,6 +11252,9 @@
 
             suggestionsContent.innerHTML = suggestions.map(suggestion => {
                 let itemClass = 'suggestion-item';
+                if (suggestion.isPrediction) {
+                    itemClass += ' prediction';
+                }
                 if (suggestion.priority === 'urgent' || suggestion.priority === 'high') {
                     itemClass += ' priority';
                 } else if (suggestion.priority === 'warning') {
@@ -11074,6 +11268,7 @@
                             <div class="suggestion-text">${suggestion.text}</div>
                             ${suggestion.amount ? `<div class="suggestion-amount">${suggestion.amount}</div>` : ''}
                             <div class="suggestion-meta">${suggestion.action}</div>
+                            ${suggestion.isPrediction ? '<div class="prediction-badge">AI Prediction</div>' : ''}
                         </div>
                     </div>
                 `;
@@ -15209,7 +15404,7 @@
             const decodedEmail = atob(encodedEmail);
             
             // Get device and app info for support email
-            const appVersion = '0.3.7'; // Current version
+            const appVersion = '0.3.8'; // Current version
             const userAgent = navigator.userAgent;
             const language = currentLanguage || 'en';
             const platform = navigator.platform;

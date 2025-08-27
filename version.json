@@ -1,5 +1,5 @@
 {
-  "version": "0.3.7",
+  "version": "0.3.8",
   "releaseDate": "2024-01-15",
-  "description": "Fix APP_VERSION error in support contact and add debug logging"
+  "description": "Add predictive modeling and what-if scenarios to Smart Money Suggestions"
 }
