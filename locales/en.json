@@ -456,7 +456,9 @@
     "refresh": "Refresh dashboard",
     "refreshed": "Dashboard refreshed",
     "export": "Export dashboard data",
-    "exported": "Dashboard data exported"
+    "exported": "Dashboard data exported",
+    "smartSuggestions": "Smart Money Suggestions",
+    "noSuggestions": "Add some expenses and set a budget to see personalized suggestions!"
   },
   "metrics": {
     "totalSpent": "Total Spent",

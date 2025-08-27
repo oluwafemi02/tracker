@@ -10973,7 +10973,10 @@
                     scenarios.push({
                         type: 'current_pace',
                         icon: '📈',
-                        prediction: t('predictions.currentPace') || `At current pace, you'll exceed budget by ${formatCurrencyAmount(projectedOverspend, mainCurrency)} in ${daysLeft} days`,
+                        prediction: t('predictions.currentPace', { 
+                            amount: formatCurrencyAmount(projectedOverspend, mainCurrency), 
+                            days: daysLeft 
+                        }) || `At current pace, you'll exceed budget by ${formatCurrencyAmount(projectedOverspend, mainCurrency)} in ${daysLeft} days`,
                         velocity: monthToDateVelocity,
                         confidence: 'high'
                     });
@@ -10988,7 +10991,9 @@
                 scenarios.push({
                     type: 'acceleration',
                     icon: '🚀',
-                    prediction: t('predictions.recentAcceleration') || `Recent spending surge detected! If maintained, you'll be ${formatCurrencyAmount(projectedOverspend, mainCurrency)} over budget`,
+                    prediction: t('predictions.recentAcceleration', {
+                        amount: formatCurrencyAmount(projectedOverspend, mainCurrency)
+                    }) || `Recent spending surge detected! If maintained, you'll be ${formatCurrencyAmount(projectedOverspend, mainCurrency)} over budget`,
                     velocity: last3DaysVelocity,
                     confidence: 'medium'
                 });
@@ -11004,7 +11009,9 @@
                     scenarios.push({
                         type: 'weekend_pattern',
                         icon: '🛍️',
-                        prediction: t('predictions.weekendSpending') || `Weekend spending is ${((weekendAvg / weekdayAvg - 1) * 100).toFixed(0)}% higher than weekdays`,
+                        prediction: t('predictions.weekendSpending', {
+                            percent: ((weekendAvg / weekdayAvg - 1) * 100).toFixed(0)
+                        }) || `Weekend spending is ${((weekendAvg / weekdayAvg - 1) * 100).toFixed(0)}% higher than weekdays`,
                         action: t('predictions.planWeekends') || 'Plan weekend activities to control spending',
                         confidence: 'high'
                     });
@@ -11151,7 +11158,10 @@
                         suggestions.push({
                             type: 'pattern',
                             icon: '🎯',
-                            text: t('predictions.impulsePattern') || `Small purchases (${patterns.impulse.count} this month) account for ${impulsePercentage.toFixed(0)}% of spending`,
+                            text: t('predictions.impulsePattern', {
+                                count: patterns.impulse.count,
+                                percent: impulsePercentage.toFixed(0)
+                            }) || `Small purchases (${patterns.impulse.count} this month) account for ${impulsePercentage.toFixed(0)}% of spending`,
                             action: t('predictions.trackSmallPurchases') || 'Consider the 24-hour rule for non-essential purchases',
                             priority: 'normal'
                         });
@@ -11167,7 +11177,9 @@
                         suggestions.push({
                             type: 'recurring_alert',
                             icon: '🔄',
-                            text: t('predictions.recurringHigh') || `Fixed costs will consume ${(projectedRecurring / monthlyBudget * 100).toFixed(0)}% of budget this month`,
+                            text: t('predictions.recurringHigh', {
+                                percent: (projectedRecurring / monthlyBudget * 100).toFixed(0)
+                            }) || `Fixed costs will consume ${(projectedRecurring / monthlyBudget * 100).toFixed(0)}% of budget this month`,
                             action: t('predictions.reviewSubscriptions') || 'Review subscriptions for potential savings',
                             priority: 'high'
                         });
@@ -15404,7 +15416,7 @@
             const decodedEmail = atob(encodedEmail);
             
             // Get device and app info for support email
-            const appVersion = '0.3.8'; // Current version
+            const appVersion = '0.3.9'; // Current version
             const userAgent = navigator.userAgent;
             const language = currentLanguage || 'en';
             const platform = navigator.platform;
