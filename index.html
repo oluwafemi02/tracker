@@ -1074,23 +1074,51 @@
           /* PWA Specific Styles */
           .install-button {
               position: fixed !important;
-              bottom: 20px !important;
+              bottom: 100px !important;
               right: 20px !important;
-              z-index: 1000 !important;
+              z-index: 998 !important;
               background: var(--primary-gradient) !important;
               color: white !important;
               border: none !important;
               border-radius: 50px !important;
-              padding: 1rem 1.5rem !important;
+              padding: 0.75rem 1.25rem !important;
               font-weight: 600 !important;
               box-shadow: var(--shadow-xl) !important;
               transition: var(--transition) !important;
               cursor: pointer !important;
+              font-size: 0.9rem !important;
+              white-space: nowrap !important;
           }
 
           .install-button:hover {
               transform: translateY(-2px);
               box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
+          }
+
+          /* Dark mode support for install button */
+          .dark-mode .install-button {
+              background: linear-gradient(135deg, #7c3aed 0%, #667eea 100%) !important;
+              color: white !important;
+              box-shadow: 0 8px 32px rgba(124, 58, 237, 0.3) !important;
+          }
+
+          .dark-mode .install-button:hover {
+              box-shadow: 0 12px 48px rgba(124, 58, 237, 0.5) !important;
+          }
+
+          /* Notification badge for install button */
+          .install-button::after {
+              content: 'NEW';
+              position: absolute;
+              top: -8px;
+              right: -8px;
+              background: #ef4444;
+              color: white;
+              font-size: 0.65rem;
+              font-weight: 700;
+              padding: 2px 6px;
+              border-radius: 10px;
+              animation: pulse 1.5s infinite;
           }
 
           @keyframes bounce {
@@ -2146,6 +2174,20 @@
             outline-offset: 2px;
         }
 
+        /* Special focus states for floating buttons */
+        .fab:focus-visible,
+        .install-button:focus-visible {
+            outline: 3px solid var(--primary-color);
+            outline-offset: 4px;
+        }
+
+        /* Ensure proper contrast in dark mode focus states */
+        .dark-mode button:focus-visible,
+        .dark-mode .fab:focus-visible,
+        .dark-mode .install-button:focus-visible {
+            outline-color: #818cf8;
+        }
+
         /* Empty state illustration */
         .empty-state {
             text-align: center;
@@ -2646,25 +2688,64 @@
             position: fixed;
             bottom: 2rem;
             right: 2rem;
-            width: 60px;
+            min-width: 60px;
             height: 60px;
-            border-radius: 50%;
+            border-radius: 30px;
             background: var(--primary-gradient);
             color: white;
             border: none;
             font-size: 1.5rem;
             cursor: pointer;
             box-shadow: var(--shadow-lg);
-            transition: var(--transition);
-            z-index: 1000;
+            transition: all 0.3s ease;
+            z-index: 999;
             display: flex;
             align-items: center;
             justify-content: center;
+            padding: 0 1rem;
+            gap: 0.5rem;
+            overflow: hidden;
+        }
+
+        .fab-icon {
+            display: inline-flex;
+            transition: transform 0.3s ease;
+        }
+
+        .fab-label {
+            display: none;
+            font-size: 0.9rem;
+            font-weight: 600;
+            white-space: nowrap;
+            opacity: 0;
+            transition: opacity 0.3s ease;
         }
 
         .fab:hover {
-            transform: scale(1.1) rotate(90deg);
+            transform: scale(1.05);
             box-shadow: var(--shadow-xl);
+            padding: 0 1.5rem;
+            min-width: 140px;
+        }
+
+        .fab:hover .fab-icon {
+            transform: rotate(90deg);
+        }
+
+        .fab:hover .fab-label {
+            display: inline;
+            opacity: 1;
+        }
+
+        /* Ensure FAB is visible in dark mode */
+        .dark-mode .fab {
+            background: var(--primary-gradient);
+            color: white;
+            box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+        }
+
+        .dark-mode .fab:hover {
+            box-shadow: 0 12px 48px rgba(102, 126, 234, 0.5);
         }
 
         /* Enhanced Statistics Cards */
@@ -4911,9 +4992,27 @@
             .fab {
                 bottom: 1rem;
                 right: 1rem;
-                width: 50px;
-                height: 50px;
-                font-size: 1.2rem;
+                min-width: 56px;
+                height: 56px;
+                font-size: 1.3rem;
+                box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+            }
+
+            .fab:hover {
+                min-width: 130px;
+                padding: 0 1.25rem;
+            }
+
+            .fab-label {
+                font-size: 0.85rem;
+            }
+            
+            /* Adjust install button on mobile */
+            .install-button {
+                bottom: 80px !important;
+                right: 15px !important;
+                padding: 0.6rem 1rem !important;
+                font-size: 0.85rem !important;
             }
             
             .card-enhanced:hover {
@@ -6389,8 +6488,9 @@
     <div id="notification" class="notification"></div>
     
     <!-- Floating Action Button -->
-    <button class="fab" id="fabScrollBtn" title="Add New Expense">
-        ➕
+    <button class="fab" id="fabScrollBtn" title="Add New Expense" aria-label="Add New Expense">
+        <span class="fab-icon">➕</span>
+        <span class="fab-label">Add Expense</span>
     </button>
     
     <!-- Insights Modal -->
@@ -13155,9 +13255,9 @@
                 installBtn.addEventListener('click', installPWA);
                 installBtn.style.cssText = `
                     position: fixed;
-                    bottom: 20px;
+                    bottom: 100px;
                     right: 20px;
-                    z-index: 1000;
+                    z-index: 998;
                     display: flex;
                     align-items: center;
                     gap: 0.5rem;
