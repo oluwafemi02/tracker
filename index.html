@@ -467,9 +467,7 @@
         }
 
         .expense-list-header {
-            position: sticky;
-            top: 0;
-            z-index: 100;
+            position: relative;
             background: var(--card-bg);
             padding-bottom: 1rem;
             margin-bottom: 1rem;
@@ -500,8 +498,11 @@
         .expense-filters-section {
             display: flex;
             gap: 1rem;
-            align-items: center;
+            align-items: flex-start;
             flex-wrap: wrap;
+            position: relative;
+            background: var(--card-bg);
+            padding: 1rem 0;
         }
 
         .view-toggle-container {
@@ -657,14 +658,13 @@
         .expense-list {
             max-height: calc(100vh - 200px);
             overflow-y: auto;
+            position: relative;
+            contain: layout;
         }
 
-        /* Ensure sticky header works with scroll */
+        /* Ensure proper header layout */
         .expense-list-header {
-            position: sticky;
-            top: 0;
             background: var(--card-bg);
-            z-index: 100;
         }
 
         /* Responsive table styles */
@@ -682,6 +682,8 @@
             .expense-filters-section {
                 flex-direction: column;
                 gap: 0.5rem;
+                align-items: stretch;
+                padding: 0.75rem 0;
             }
 
             .view-toggle-container {
@@ -716,6 +718,8 @@
         .search-container {
             position: relative;
             margin-bottom: 1rem;
+            width: 100%;
+            max-width: 400px;
         }
 
         .search-input-wrapper {
@@ -2526,7 +2530,7 @@
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             padding: 20px;
-            z-index: 100;
+            z-index: 90;
             max-height: calc(100vh - 120px);
             overflow-y: auto;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -2686,7 +2690,7 @@
         /* Floating Action Button */
         .fab {
             position: fixed;
-            bottom: 2rem;
+            top: 2rem;
             right: 2rem;
             min-width: 60px;
             height: 60px;
@@ -2746,6 +2750,25 @@
 
         .dark-mode .fab:hover {
             box-shadow: 0 12px 48px rgba(102, 126, 234, 0.5);
+        }
+
+        /* Dark mode support for floating panel */
+        .dark-mode .expense-summary-panel {
+            background: rgba(45, 50, 62, 0.95);
+            border: 1px solid var(--border-color);
+        }
+
+        .dark-mode .panel-title {
+            color: var(--text-primary);
+        }
+
+        .dark-mode .export-btn {
+            background: var(--card-bg);
+            border-color: var(--border-color);
+        }
+
+        .dark-mode .export-btn:hover {
+            background: var(--hover-bg);
         }
 
         /* Enhanced Statistics Cards */
@@ -3173,10 +3196,13 @@
         .right-panel {
             margin-right: 360px;
             transition: margin-right 0.3s ease;
+            width: calc(100% - 360px);
+            max-width: 100%;
         }
 
         .right-panel.full-width {
             margin-right: 0;
+            width: 100%;
         }
 
         /* Enhanced Search and Filter Section */
@@ -3222,15 +3248,17 @@
         /* Mobile Responsive Improvements */
         @media (max-width: 1024px) {
             .expense-summary-panel {
-                position: sticky;
-                top: 80px;
+                position: relative;
+                top: auto;
                 right: auto;
-                width: calc(100% - 40px);
-                margin: 0 20px 20px 20px;
+                width: 100%;
+                margin: 0 0 20px 0;
+                max-height: none;
             }
             
             .right-panel {
                 margin-right: 0;
+                width: 100%;
             }
         }
 
@@ -4990,7 +5018,7 @@
         /* Responsive Enhancements */
         @media (max-width: 768px) {
             .fab {
-                bottom: 1rem;
+                top: 1rem;
                 right: 1rem;
                 min-width: 56px;
                 height: 56px;
