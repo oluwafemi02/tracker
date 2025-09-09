@@ -2098,9 +2098,77 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        @keyframes shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(102, 126, 234, 0.4); }
+            50% { box-shadow: 0 0 0 10px rgba(102, 126, 234, 0); }
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes slideInUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Smooth scroll behavior */
+        html {
+            scroll-behavior: smooth;
+        }
+
         /* Enhanced Animations */
         .bounce-in {
             animation: bounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+        }
+
+        /* Loading skeleton animation */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+        }
+
+        /* Enhanced focus states for accessibility */
+        button:focus-visible,
+        input:focus-visible,
+        select:focus-visible,
+        textarea:focus-visible,
+        a:focus-visible {
+            outline: 2px solid var(--primary-color);
+            outline-offset: 2px;
+        }
+
+        /* Empty state illustration */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            animation: fadeInScale 0.5s ease-out;
+        }
+
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+
+        .empty-state-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .empty-state-description {
+            color: var(--text-secondary);
+            margin-bottom: 24px;
         }
 
         /* Toggle Switch Styling */
@@ -2406,6 +2474,173 @@
             box-shadow: var(--shadow-md);
         }
 
+        /* Floating Expense Summary Panel */
+        .expense-summary-panel {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            width: 320px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            z-index: 100;
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+
+        .expense-summary-panel.minimized {
+            height: auto;
+            padding: 12px 16px;
+        }
+
+        .expense-summary-panel.minimized .panel-body {
+            display: none;
+        }
+
+        .expense-summary-panel.minimized .panel-header {
+            margin-bottom: 0;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .panel-title {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .panel-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .panel-controls button {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: none;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .panel-controls button:hover {
+            background: var(--hover-bg);
+            transform: translateY(-1px);
+        }
+
+        .stats-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .stat-item {
+            flex: 1;
+            text-align: center;
+            padding: 12px;
+            background: var(--bg-secondary);
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .stat-label {
+            display: block;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            display: block;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-next {
+            color: #f59e0b;
+        }
+
+        .stat-total {
+            color: var(--primary-color);
+        }
+
+        .export-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+        }
+
+        .export-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 10px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+        }
+
+        .export-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .export-btn.csv {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+        }
+
+        .export-btn.json {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+        }
+
+        .export-btn.excel {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+        }
+
+        .export-btn.pdf {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            color: white;
+        }
+
+        .export-icon {
+            width: 16px;
+            height: 16px;
+        }
+
         /* Floating Action Button */
         .fab {
             position: fixed;
@@ -2651,48 +2886,90 @@
             to { opacity: 1; transform: scale(1) translateY(0); }
         }
 
-        /* Recurring Expense Styles */
-        .recurring-indicator {
+        /* Modern Tag System */
+        .expense-tag {
             display: inline-flex;
             align-items: center;
-            gap: 0.3rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            gap: 4px;
+            transition: all 0.2s ease;
+            margin-left: 4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .expense-tag:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .tag-icon {
+            width: 10px;
+            height: 10px;
+            display: inline-block;
+        }
+
+        /* Tag variants with gradient backgrounds */
+        .tag-recurring,
+        .recurring-indicator {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 0.25rem 0.75rem;
-            border-radius: 999px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            margin-left: 0.5rem;
-            box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            gap: 4px;
             transition: all 0.2s ease;
-            position: relative;
-            overflow: hidden;
-        }
-        
-        .recurring-indicator:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 8px rgba(102, 126, 234, 0.4);
-        }
-        
-        /* Fixed Cost Indicator Styles */
-        .fixed-cost-indicator {
+            margin-left: 4px;
             display: inline-flex;
             align-items: center;
-            gap: 0.3rem;
-            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-            color: white;
-            padding: 0.3rem 0.85rem;
-            border-radius: 999px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            margin-left: 0.5rem;
-            box-shadow: 0 3px 6px rgba(16, 185, 129, 0.3);
-            transition: all 0.2s ease;
-            position: relative;
-            overflow: hidden;
-            letter-spacing: 0.025em;
         }
-        
+
+        .tag-next {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .tag-fixed,
+        .fixed-cost-indicator {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            gap: 4px;
+            transition: all 0.2s ease;
+            margin-left: 4px;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .tag-variable {
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            color: white;
+        }
+
+        /* Hover effects for all tags */
+        .recurring-indicator:hover,
+        .fixed-cost-indicator:hover,
+        .expense-tag:hover {
+            transform: scale(1.05) translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Add shimmer effect */
+        .expense-tag::before,
+        .recurring-indicator::before,
         .fixed-cost-indicator::before {
             content: '';
             position: absolute;
@@ -2704,12 +2981,9 @@
             transform: rotate(45deg) translateX(-100%);
             transition: transform 0.6s ease;
         }
-        
-        .fixed-cost-indicator:hover {
-            transform: translateY(-1px) scale(1.02);
-            box-shadow: 0 5px 10px rgba(16, 185, 129, 0.4);
-        }
-        
+
+        .expense-tag:hover::before,
+        .recurring-indicator:hover::before,
         .fixed-cost-indicator:hover::before {
             transform: rotate(45deg) translateX(100%);
         }
@@ -2782,22 +3056,168 @@
         }
 
         @media (prefers-color-scheme: dark) {
-            .recurring-indicator {
+            .recurring-indicator,
+            .tag-recurring {
                 background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-                box-shadow: 0 2px 4px rgba(124, 58, 237, 0.4);
             }
             
-            .recurring-indicator:hover {
-                box-shadow: 0 4px 8px rgba(168, 85, 247, 0.5);
-            }
-            
-            .fixed-cost-indicator {
+            .fixed-cost-indicator,
+            .tag-fixed {
                 background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
-                box-shadow: 0 3px 6px rgba(52, 211, 153, 0.4);
+            }
+
+            .expense-summary-panel {
+                background: rgba(30, 30, 30, 0.95);
+                color: var(--text-primary);
+            }
+
+            .stat-item,
+            .export-btn {
+                background: rgba(255, 255, 255, 0.05);
+            }
+
+            .panel-controls button {
+                background: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        /* Page Layout Improvements */
+        .expenses-page {
+            position: relative;
+            min-height: 100vh;
+            padding-top: 20px;
+        }
+
+        /* Adjust main content area to make space for floating panel */
+        .right-panel {
+            margin-right: 360px;
+            transition: margin-right 0.3s ease;
+        }
+
+        .right-panel.full-width {
+            margin-right: 0;
+        }
+
+        /* Enhanced Search and Filter Section */
+        #searchInput {
+            width: 100%;
+            padding: 12px 16px 12px 44px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+
+        #searchInput:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            outline: none;
+        }
+
+        /* Better filter dropdown styling */
+        #categoryFilter,
+        #personFilter {
+            padding: 10px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #categoryFilter:hover,
+        #personFilter:hover {
+            border-color: #cbd5e0;
+        }
+
+        #categoryFilter:focus,
+        #personFilter:focus {
+            border-color: #667eea;
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        /* Mobile Responsive Improvements */
+        @media (max-width: 1024px) {
+            .expense-summary-panel {
+                position: sticky;
+                top: 80px;
+                right: auto;
+                width: calc(100% - 40px);
+                margin: 0 20px 20px 20px;
             }
             
-            .fixed-cost-indicator:hover {
-                box-shadow: 0 5px 10px rgba(52, 211, 153, 0.5);
+            .right-panel {
+                margin-right: 0;
+            }
+        }
+
+        @media (max-width: 768px) {
+            /* Convert floating panel to bottom sheet on mobile */
+            .expense-summary-panel {
+                position: fixed;
+                bottom: 0;
+                top: auto;
+                left: 0;
+                right: 0;
+                width: 100%;
+                margin: 0;
+                border-radius: 20px 20px 0 0;
+                transform: translateY(calc(100% - 80px));
+                transition: transform 0.3s ease;
+                z-index: 200;
+            }
+            
+            .expense-summary-panel.expanded {
+                transform: translateY(0);
+            }
+
+            /* Add drag handle for mobile */
+            .expense-summary-panel::before {
+                content: '';
+                position: absolute;
+                top: 8px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 40px;
+                height: 4px;
+                background: rgba(0, 0, 0, 0.2);
+                border-radius: 2px;
+            }
+            
+            /* Stack export buttons 2x2 on mobile */
+            .export-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+            }
+            
+            /* Smaller tags on mobile */
+            .expense-tag,
+            .recurring-indicator,
+            .fixed-cost-indicator {
+                font-size: 10px;
+                padding: 2px 6px;
+            }
+
+            /* Adjust expense list header for mobile */
+            .expense-header-top {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .expense-export-buttons {
+                display: none; /* Hide in header on mobile, they're in the floating panel */
+            }
+
+            /* Full width expense list on mobile */
+            .right-panel {
+                padding: 10px;
+            }
+
+            .expense-list {
+                padding: 1rem;
             }
         }
 
@@ -4933,6 +5353,89 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Floating Expense Summary Panel -->
+            <div class="expense-summary-panel" id="expenseSummaryPanel" role="region" aria-label="Expense Summary Panel">
+                <div class="panel-header">
+                    <h2 class="panel-title">
+                        <span aria-hidden="true">📊</span>
+                        All Expenses
+                    </h2>
+                    <div class="panel-controls">
+                        <button class="btn-minimize" id="minimizePanel" title="Minimize" aria-label="Minimize panel" aria-expanded="true">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M5 12h14"/>
+                            </svg>
+                        </button>
+                        <button class="btn-settings" title="View Settings" aria-label="View expense settings">
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <circle cx="12" cy="12" r="3"/>
+                                <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="panel-body">
+                    <!-- Compact stats row -->
+                    <div class="stats-row">
+                        <div class="stat-item">
+                            <span class="stat-label">Current</span>
+                            <span class="stat-value" id="currentExpenseTotal">€0.00</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Next</span>
+                            <span class="stat-value stat-next" id="nextExpenseTotal">€0.00</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Total</span>
+                            <span class="stat-value stat-total" id="totalExpenseTotal">€0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Export actions in a grid -->
+                    <div class="export-grid" role="group" aria-label="Export options">
+                        <button class="export-btn csv" id="panelExportCSV" aria-label="Export expenses as CSV file">
+                            <svg class="export-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <line x1="12" y1="18" x2="12" y2="12"/>
+                                <line x1="9" y1="15" x2="15" y2="15"/>
+                            </svg>
+                            <span>CSV</span>
+                        </button>
+                        <button class="export-btn json" id="panelExportJSON" aria-label="Export expenses as JSON file">
+                            <svg class="export-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <path d="M10 12h4"/>
+                                <path d="M10 16h4"/>
+                            </svg>
+                            <span>JSON</span>
+                        </button>
+                        <button class="export-btn excel" id="panelExportExcel" aria-label="Export expenses as Excel file">
+                            <svg class="export-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <path d="M10 9v6"/>
+                                <path d="M14 9v6"/>
+                                <path d="M8 13h8"/>
+                            </svg>
+                            <span>Excel</span>
+                        </button>
+                        <button class="export-btn pdf" id="panelExportPDF" aria-label="Export expenses as PDF file">
+                            <svg class="export-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                                <polyline points="14 2 14 8 20 8"/>
+                                <path d="M9 9h6"/>
+                                <path d="M9 13h6"/>
+                                <path d="M9 17h4"/>
+                            </svg>
+                            <span>PDF</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Dashboard Tab Content -->
@@ -6691,6 +7194,43 @@
         let expenseChart = null;
         let filteredExpenses = [...expenses];
         let customCategories = JSON.parse(localStorage.getItem('customCategories')) || [];
+        
+        // Function to update expense summary panel
+        function updateExpenseSummaryPanel() {
+            // Wait for mainCurrency and other dependencies
+            if (typeof mainCurrency === 'undefined' || typeof getAmountInMainCurrency === 'undefined') {
+                setTimeout(updateExpenseSummaryPanel, 100);
+                return;
+            }
+            
+            const expenses = getExpenses();
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            
+            // Calculate current month expenses
+            const currentMonthExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate.getMonth() === currentMonth && 
+                       expenseDate.getFullYear() === currentYear;
+            });
+            
+            const currentTotal = currentMonthExpenses.reduce((sum, expense) => 
+                sum + getAmountInMainCurrency(expense), 0);
+            
+            // Calculate next month's recurring expenses
+            const recurringExpenses = getRecurringExpenses();
+            const nextTotal = recurringExpenses.reduce((sum, recurring) => 
+                sum + getAmountInMainCurrency(recurring), 0);
+            
+            // Update panel values
+            const currentEl = document.getElementById('currentExpenseTotal');
+            const nextEl = document.getElementById('nextExpenseTotal');
+            const totalEl = document.getElementById('totalExpenseTotal');
+            
+            if (currentEl) currentEl.textContent = formatCurrencyAmount(currentTotal, mainCurrency);
+            if (nextEl) nextEl.textContent = formatCurrencyAmount(nextTotal, mainCurrency);
+            if (totalEl) totalEl.textContent = formatCurrencyAmount(currentTotal + nextTotal, mainCurrency);
+        }
         
         // Rollover data structure
         let rolloverData = JSON.parse(localStorage.getItem('rolloverData')) || {
@@ -10307,7 +10847,7 @@
             
             if (expense.isRecurring) {
                 const recurringSpan = document.createElement('span');
-                recurringSpan.className = 'recurring-indicator';
+                recurringSpan.className = 'expense-tag tag-recurring';
 
                 let frequency = expense.recurringFrequency;
                 let lastDate = expense.lastProcessedDate || expense.date;
@@ -10323,20 +10863,32 @@
 
                 if (frequency && lastDate) {
                     const nextDue = calculateNextDueDate(lastDate, frequency);
-                    recurringSpan.textContent = `🔄 Recurring • Next: ${nextDue.toLocaleDateString()}`;
+                    recurringSpan.innerHTML = '<span class="tag-icon">🔄</span> RECURRING';
+                    
+                    // Add next payment date as a separate tag
+                    const nextSpan = document.createElement('span');
+                    nextSpan.className = 'expense-tag tag-next';
+                    nextSpan.innerHTML = `<span class="tag-icon">📅</span> NEXT: ${nextDue.toLocaleDateString()}`;
+                    contentDiv.appendChild(recurringSpan);
+                    contentDiv.appendChild(nextSpan);
                 } else {
-                    recurringSpan.textContent = '🔄 Recurring';
+                    recurringSpan.innerHTML = '<span class="tag-icon">🔄</span> RECURRING';
+                    contentDiv.appendChild(recurringSpan);
                 }
-
-                contentDiv.appendChild(recurringSpan);
             }
 
             // Add Fixed Cost badge
             if (expense.fixed) {
                 const fixedSpan = document.createElement('span');
-                fixedSpan.className = 'fixed-cost-indicator';
-                fixedSpan.textContent = '💰 Fixed Cost';
+                fixedSpan.className = 'expense-tag tag-fixed';
+                fixedSpan.innerHTML = '<span class="tag-icon">💰</span> FIXED';
                 contentDiv.appendChild(fixedSpan);
+            } else {
+                // Variable cost tag
+                const variableSpan = document.createElement('span');
+                variableSpan.className = 'expense-tag tag-variable';
+                variableSpan.innerHTML = '<span class="tag-icon">📊</span> VARIABLE';
+                contentDiv.appendChild(variableSpan);
             }
             
             mainDiv.appendChild(iconDiv);
@@ -10477,18 +11029,24 @@
             
             if (expense.isRecurring || expense.parentRecurringId) {
                 const recurringTag = document.createElement('span');
-                recurringTag.className = 'expense-table-tag recurring';
-                recurringTag.textContent = '🔄 Recurring';
+                recurringTag.className = 'expense-tag tag-recurring';
+                recurringTag.innerHTML = '<span class="tag-icon">🔄</span> RECURRING';
                 recurringTag.title = 'Recurring expense';
                 tagsDiv.appendChild(recurringTag);
             }
             
             if (expense.fixed) {
                 const fixedTag = document.createElement('span');
-                fixedTag.className = 'expense-table-tag fixed';
-                fixedTag.textContent = '💰 Fixed';
+                fixedTag.className = 'expense-tag tag-fixed';
+                fixedTag.innerHTML = '<span class="tag-icon">💰</span> FIXED';
                 fixedTag.title = 'Fixed cost';
                 tagsDiv.appendChild(fixedTag);
+            } else {
+                const variableTag = document.createElement('span');
+                variableTag.className = 'expense-tag tag-variable';
+                variableTag.innerHTML = '<span class="tag-icon">📊</span> VARIABLE';
+                variableTag.title = 'Variable cost';
+                tagsDiv.appendChild(variableTag);
             }
             
             tagsCell.appendChild(tagsDiv);
@@ -10579,6 +11137,7 @@
         function filterExpenses() {
             currentPage = 1; // Reset pagination when filters change
             filterAndRenderExpenses();
+            updateExpenseSummaryPanel();
         }
 
         // Edit expense (enhanced with recurring support)
@@ -13847,6 +14406,94 @@
             const exportPDFBtn = document.getElementById('exportPDFBtn');
             if (exportPDFBtn) {
                 exportPDFBtn.addEventListener('click', exportToPDF);
+            }
+
+            // Panel export buttons
+            const panelExportCSV = document.getElementById('panelExportCSV');
+            if (panelExportCSV) {
+                panelExportCSV.addEventListener('click', exportToCSV);
+            }
+
+            const panelExportJSON = document.getElementById('panelExportJSON');
+            if (panelExportJSON) {
+                panelExportJSON.addEventListener('click', exportToJSON);
+            }
+
+            const panelExportExcel = document.getElementById('panelExportExcel');
+            if (panelExportExcel) {
+                panelExportExcel.addEventListener('click', exportToExcel);
+            }
+
+            const panelExportPDF = document.getElementById('panelExportPDF');
+            if (panelExportPDF) {
+                panelExportPDF.addEventListener('click', exportToPDF);
+            }
+
+            // Panel minimize functionality
+            const minimizeBtn = document.getElementById('minimizePanel');
+            const summaryPanel = document.getElementById('expenseSummaryPanel');
+            
+            if (minimizeBtn && summaryPanel) {
+                minimizeBtn.addEventListener('click', () => {
+                    summaryPanel.classList.toggle('minimized');
+                    const isMinimized = summaryPanel.classList.contains('minimized');
+                    minimizeBtn.innerHTML = isMinimized ? 
+                        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>' :
+                        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14"/></svg>';
+                    
+                    // Update ARIA attributes
+                    minimizeBtn.setAttribute('aria-expanded', !isMinimized);
+                    minimizeBtn.setAttribute('aria-label', isMinimized ? 'Expand panel' : 'Minimize panel');
+                    
+                    // Save minimize state
+                    localStorage.setItem('summaryPanelMinimized', isMinimized);
+                });
+
+                // Restore minimize state
+                if (localStorage.getItem('summaryPanelMinimized') === 'true') {
+                    summaryPanel.classList.add('minimized');
+                    minimizeBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+                    minimizeBtn.setAttribute('aria-expanded', 'false');
+                    minimizeBtn.setAttribute('aria-label', 'Expand panel');
+                }
+
+                // Mobile bottom sheet functionality
+                if (window.innerWidth <= 768) {
+                    let startY = null;
+                    let currentY = null;
+                    let isDragging = false;
+
+                    summaryPanel.addEventListener('touchstart', (e) => {
+                        if (e.target.closest('.panel-header')) {
+                            startY = e.touches[0].clientY;
+                            isDragging = true;
+                        }
+                    });
+
+                    summaryPanel.addEventListener('touchmove', (e) => {
+                        if (!isDragging) return;
+                        currentY = e.touches[0].clientY;
+                        const deltaY = currentY - startY;
+                        
+                        if (deltaY > 0) {
+                            summaryPanel.style.transform = `translateY(calc(100% - 80px + ${deltaY}px))`;
+                        }
+                    });
+
+                    summaryPanel.addEventListener('touchend', () => {
+                        if (!isDragging) return;
+                        isDragging = false;
+                        
+                        const deltaY = currentY - startY;
+                        if (deltaY > 100) {
+                            summaryPanel.classList.remove('expanded');
+                        } else {
+                            summaryPanel.classList.add('expanded');
+                        }
+                        
+                        summaryPanel.style.transform = '';
+                    });
+                }
             }
 
             // Set budget button
