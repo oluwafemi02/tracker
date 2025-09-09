@@ -463,15 +463,75 @@
             padding: 2rem;
             box-shadow: var(--shadow-md);
             border: 1px solid var(--border-color);
+            position: relative;
         }
 
         .expense-list-header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--card-bg);
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .expense-header-top {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 2rem;
+            margin-bottom: 1rem;
             flex-wrap: wrap;
             gap: 1rem;
+        }
+
+        .expense-header-title {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .expense-export-buttons {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .expense-filters-section {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .view-toggle-container {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-left: auto;
+        }
+
+        .view-toggle-btn {
+            padding: 0.5rem 1rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .view-toggle-btn:hover {
+            background: var(--hover-bg);
+        }
+
+        .view-toggle-btn.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
         }
 
         .expense-filters {
@@ -485,6 +545,171 @@
             display: flex;
             flex-direction: column;
             gap: 0.5rem;
+        }
+
+        /* Table View Styles */
+        .expenses-table-container {
+            overflow-x: auto;
+            margin-top: 1rem;
+        }
+
+        .expenses-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .expenses-table th,
+        .expenses-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .expenses-table th {
+            background: var(--bg-secondary);
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .expenses-table tr:hover {
+            background: var(--hover-bg);
+        }
+
+        .expense-table-category {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .expense-table-tags {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .expense-table-tag {
+            padding: 0.125rem 0.5rem;
+            background: var(--bg-secondary);
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+
+        .expense-table-tag.recurring {
+            background: var(--success-light);
+            color: var(--success-dark);
+        }
+
+        .expense-table-tag.fixed {
+            background: var(--warning-light);
+            color: var(--warning-dark);
+        }
+
+        .expense-table-actions {
+            display: flex;
+            gap: 0.25rem;
+        }
+
+        .expense-table-actions button {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.8rem;
+            min-width: auto;
+        }
+
+        /* Hide table in card view, hide cards in table view */
+        .view-mode-card .expenses-table-container {
+            display: none;
+        }
+
+        .view-mode-table #expensesList {
+            display: none;
+        }
+
+        .view-mode-table #paginationTop,
+        .view-mode-table #paginationBottom {
+            display: none !important;
+        }
+
+        /* Add collapsible/expandable behavior for table */
+        .expenses-table.collapsed tbody tr:nth-child(n+11) {
+            display: none;
+        }
+
+        .expense-table-expand-btn {
+            margin-top: 1rem;
+            text-align: center;
+            width: 100%;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .expense-table-expand-btn:hover {
+            background: var(--hover-bg);
+        }
+
+        /* Make expense list container scrollable */
+        .expense-list {
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+
+        /* Ensure sticky header works with scroll */
+        .expense-list-header {
+            position: sticky;
+            top: 0;
+            background: var(--card-bg);
+            z-index: 100;
+        }
+
+        /* Responsive table styles */
+        @media (max-width: 768px) {
+            .expense-header-top {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .expense-export-buttons {
+                margin-top: 1rem;
+                justify-content: flex-start;
+            }
+
+            .expense-filters-section {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .view-toggle-container {
+                margin-left: 0;
+                margin-top: 0.5rem;
+            }
+
+            .expenses-table {
+                font-size: 0.8rem;
+            }
+
+            .expenses-table th,
+            .expenses-table td {
+                padding: 0.5rem;
+            }
+
+            .expense-table-actions button {
+                padding: 0.25rem;
+                font-size: 0.7rem;
+            }
+
+            /* Hide less important columns on mobile */
+            .expenses-table th:nth-child(2),
+            .expenses-table td:nth-child(2),
+            .expenses-table th:nth-child(5),
+            .expenses-table td:nth-child(5) {
+                display: none;
+            }
         }
 
         /* Smart Search Styles */
@@ -4578,66 +4803,86 @@
 
                 <div class="right-panel">
                     <!-- Expense List -->
-                    <div class="expense-list">
+                    <div class="expense-list view-mode-card" id="expenseListContainer">
                         <div class="expense-list-header">
-                            <h2><span class="card-icon">📋</span> <span id="expenseListTitle">Recent Expenses</span></h2>
-                            
-                            <!-- Smart Search Bar -->
-                            <div class="search-container">
-                                                            <div class="search-input-wrapper">
-                                <span class="search-icon">🔍</span>
-                                <input type="text" id="searchInput" placeholder="Search expenses..." autocomplete="off">
-                                <button id="clearSearch" style="display: none;">✖️</button>
-                            </div>
-                                <div id="searchResults" class="search-results"></div>
-                            </div>
-                            
-                            <!-- View Mode Toggle -->
-                            <div class="view-mode-toggle">
-                                <button id="recentModeBtn" class="view-mode-btn active" data-view-mode="recent">
-                                    <span class="view-icon">📅</span>
-                                    <span>Recent (30 days)</span>
-                                </button>
-                                <button id="allModeBtn" class="view-mode-btn" data-view-mode="all">
-                                    <span class="view-icon">📋</span>
-                                    <span>All Expenses</span>
-                                </button>
-                            </div>
-                            
-                            <div class="expense-filters">
-                                <div class="filter-group">
-                                    <label>Filter by Category</label>
-                                    <select id="categoryFilter" onchange="filterExpenses()">
-                                        <option value="">All Categories</option>
-                                        <option value="Rent">🏠 Rent</option>
-                                        <option value="Mortgage">🏡 Mortgage</option>
-                                        <option value="Utilities">⚡ Utilities</option>
-                                        <option value="Groceries">🛒 Groceries</option>
-                                        <option value="Transportation">🚗 Transportation</option>
-                                        <option value="Car Loan/Lease">🚙 Car Loan/Lease</option>
-                                        <option value="Healthcare">🏥 Healthcare</option>
-                                        <option value="Entertainment">🎬 Entertainment</option>
-                                        <option value="Dining">🍽️ Dining</option>
-                                        <option value="Shopping">🛍️ Shopping</option>
-                                        <option value="Education">📚 Education</option>
-                                        <option value="Insurance">🛡️ Insurance</option>
-                                        <option value="Other Loan">💳 Other Loan</option>
-                                        <option value="Other">📝 Other</option>
-                                    </select>
+                            <div class="expense-header-top">
+                                <div class="expense-header-title">
+                                    <h2><span class="card-icon">📋</span> <span id="expenseListTitle">Recent Expenses</span></h2>
                                 </div>
-                                <div class="filter-group" id="personFilterGroup">
-                                    <label id="personFilterLabel">Filter by Person</label>
-                                    <select id="personFilter" onchange="filterExpenses()">
-                                        <option value="">All People</option>
-                                        <option value="You">👤 You</option>
-                                        <option value="Partner">👥 Partner</option>
-                                        <option value="Both">💏 Both</option>
-                                    </select>
+                                <div class="expense-export-buttons">
+                                    <button class="btn btn-success" id="exportCSVBtn">📥 <span data-i18n="buttons.exportCSV">Export CSV</span></button>
+                                    <button class="btn btn-success" id="exportJSONBtn">📥 <span data-i18n="buttons.exportJSON">Export JSON</span></button>
+                                    <button class="btn btn-warning" id="exportExcelBtn" data-premium-feature="excel_export">📊 <span data-i18n="buttons.exportExcel">Export Excel</span></button>
+                                    <button class="btn btn-warning" id="exportPDFBtn" data-premium-feature="pdf_export">📄 <span data-i18n="buttons.exportPDF">Export PDF</span></button>
                                 </div>
-                                <button class="btn btn-success" id="exportCSVBtn">📥 <span data-i18n="buttons.exportCSV">Export CSV</span></button>
-                                <button class="btn btn-success" id="exportJSONBtn">📥 <span data-i18n="buttons.exportJSON">Export JSON</span></button>
-                                <button class="btn btn-warning" id="exportExcelBtn" data-premium-feature="excel_export">📊 <span data-i18n="buttons.exportExcel">Export Excel</span></button>
-                                <button class="btn btn-warning" id="exportPDFBtn" data-premium-feature="pdf_export">📄 <span data-i18n="buttons.exportPDF">Export PDF</span></button>
+                            </div>
+                            
+                            <div class="expense-filters-section">
+                                <!-- Smart Search Bar -->
+                                <div class="search-container">
+                                    <div class="search-input-wrapper">
+                                        <span class="search-icon">🔍</span>
+                                        <input type="text" id="searchInput" placeholder="Search expenses..." autocomplete="off">
+                                        <button id="clearSearch" style="display: none;">✖️</button>
+                                    </div>
+                                    <div id="searchResults" class="search-results"></div>
+                                </div>
+                                
+                                <!-- View Mode Toggle -->
+                                <div class="view-mode-toggle">
+                                    <button id="recentModeBtn" class="view-mode-btn active" data-view-mode="recent">
+                                        <span class="view-icon">📅</span>
+                                        <span>Recent (30 days)</span>
+                                    </button>
+                                    <button id="allModeBtn" class="view-mode-btn" data-view-mode="all">
+                                        <span class="view-icon">📋</span>
+                                        <span>All Expenses</span>
+                                    </button>
+                                </div>
+                                
+                                <div class="expense-filters">
+                                    <div class="filter-group">
+                                        <label>Filter by Category</label>
+                                        <select id="categoryFilter" onchange="filterExpenses()">
+                                            <option value="">All Categories</option>
+                                            <option value="Rent">🏠 Rent</option>
+                                            <option value="Mortgage">🏡 Mortgage</option>
+                                            <option value="Utilities">⚡ Utilities</option>
+                                            <option value="Groceries">🛒 Groceries</option>
+                                            <option value="Transportation">🚗 Transportation</option>
+                                            <option value="Car Loan/Lease">🚙 Car Loan/Lease</option>
+                                            <option value="Healthcare">🏥 Healthcare</option>
+                                            <option value="Entertainment">🎬 Entertainment</option>
+                                            <option value="Dining">🍽️ Dining</option>
+                                            <option value="Shopping">🛍️ Shopping</option>
+                                            <option value="Education">📚 Education</option>
+                                            <option value="Insurance">🛡️ Insurance</option>
+                                            <option value="Other Loan">💳 Other Loan</option>
+                                            <option value="Other">📝 Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="filter-group" id="personFilterGroup">
+                                        <label id="personFilterLabel">Filter by Person</label>
+                                        <select id="personFilter" onchange="filterExpenses()">
+                                            <option value="">All People</option>
+                                            <option value="You">👤 You</option>
+                                            <option value="Partner">👥 Partner</option>
+                                            <option value="Both">💏 Both</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <!-- View Toggle -->
+                                    <div class="view-toggle-container">
+                                        <button class="view-toggle-btn active" id="cardViewBtn" title="Card View">
+                                            <span>🃏</span>
+                                            <span>Cards</span>
+                                        </button>
+                                        <button class="view-toggle-btn" id="tableViewBtn" title="Table View">
+                                            <span>📊</span>
+                                            <span>Table</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                         
@@ -4655,6 +4900,26 @@
                         
                         <div id="expensesList">
                             <div class="no-expenses" data-i18n="expense.noExpenses">No expenses added yet. Add your first expense above!</div>
+                        </div>
+                        
+                        <!-- Table View Container -->
+                        <div class="expenses-table-container" id="expensesTableContainer">
+                            <table class="expenses-table" id="expensesTable">
+                                <thead>
+                                    <tr>
+                                        <th>Category</th>
+                                        <th>Description</th>
+                                        <th>Person</th>
+                                        <th>Date</th>
+                                        <th>Tags</th>
+                                        <th style="text-align: right;">Amount</th>
+                                        <th style="text-align: center;">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expensesTableBody">
+                                    <!-- Table rows will be inserted here -->
+                                </tbody>
+                            </table>
                         </div>
                         
                         <!-- Bottom Pagination -->
@@ -6761,8 +7026,9 @@
 
         // Global variables for new features
         let currentPage = 1;
-        let itemsPerPage = 10;
+        let itemsPerPage = 15;
         let currentViewMode = 'recent'; // 'recent' or 'all'
+        let currentViewStyle = 'card'; // 'card' or 'table'
         let searchTerm = '';
         let totalFilteredExpenses = 0;
 
@@ -9389,6 +9655,169 @@
             return expenseDiv;
         }
 
+        // Render expenses table
+        function renderExpensesTable(expensesToRender = null) {
+            const expensesTableBody = document.getElementById('expensesTableBody');
+            const expenses = expensesToRender || filteredExpenses;
+            
+            if (expenses.length === 0) {
+                expensesTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No expenses found</td></tr>';
+                return;
+            }
+            
+            // Sort expenses by date (newest first)
+            const sortedExpenses = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            // Clear existing content
+            expensesTableBody.innerHTML = '';
+            
+            // Create table rows
+            sortedExpenses.forEach(expense => {
+                const row = createExpenseTableRow(expense);
+                expensesTableBody.appendChild(row);
+            });
+        }
+
+        // Create expense table row
+        function createExpenseTableRow(expense) {
+            const row = document.createElement('tr');
+            
+            const icon = categoryIcons[expense.category] || '📝';
+            const formattedDate = new Date(expense.date).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric'
+            });
+            
+            // Category cell
+            const categoryCell = document.createElement('td');
+            const categoryDiv = document.createElement('div');
+            categoryDiv.className = 'expense-table-category';
+            categoryDiv.innerHTML = `<span>${icon}</span><span>${escapeHtml(expense.category)}</span>`;
+            categoryCell.appendChild(categoryDiv);
+            
+            // Description cell
+            const descCell = document.createElement('td');
+            descCell.textContent = expense.description || '-';
+            descCell.title = expense.description || '';
+            descCell.style.maxWidth = '200px';
+            descCell.style.whiteSpace = 'nowrap';
+            descCell.style.overflow = 'hidden';
+            descCell.style.textOverflow = 'ellipsis';
+            
+            // Person cell
+            const personCell = document.createElement('td');
+            personCell.innerHTML = `👤 ${escapeHtml(expense.person)}`;
+            
+            // Date cell
+            const dateCell = document.createElement('td');
+            dateCell.textContent = formattedDate;
+            
+            // Tags cell
+            const tagsCell = document.createElement('td');
+            const tagsDiv = document.createElement('div');
+            tagsDiv.className = 'expense-table-tags';
+            
+            if (expense.isRecurring || expense.parentRecurringId) {
+                const recurringTag = document.createElement('span');
+                recurringTag.className = 'expense-table-tag recurring';
+                recurringTag.textContent = '🔄 Recurring';
+                recurringTag.title = 'Recurring expense';
+                tagsDiv.appendChild(recurringTag);
+            }
+            
+            if (expense.fixed) {
+                const fixedTag = document.createElement('span');
+                fixedTag.className = 'expense-table-tag fixed';
+                fixedTag.textContent = '💰 Fixed';
+                fixedTag.title = 'Fixed cost';
+                tagsDiv.appendChild(fixedTag);
+            }
+            
+            tagsCell.appendChild(tagsDiv);
+            
+            // Amount cell
+            const amountCell = document.createElement('td');
+            amountCell.style.textAlign = 'right';
+            amountCell.style.fontWeight = '600';
+            
+            const expenseCurrency = expense.currency || mainCurrency;
+            if (expenseCurrency === mainCurrency) {
+                amountCell.textContent = formatCurrencyAmount(expense.amount, mainCurrency);
+            } else {
+                const convertedAmount = expense.convertedAmount || expense.amount;
+                amountCell.innerHTML = `${formatCurrencyAmount(convertedAmount, mainCurrency)}<br><small style="opacity: 0.7;">(${formatCurrencyAmount(expense.amount, expenseCurrency)})</small>`;
+            }
+            
+            // Actions cell
+            const actionsCell = document.createElement('td');
+            actionsCell.style.textAlign = 'center';
+            
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'expense-table-actions';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-warning';
+            editBtn.title = 'Edit expense';
+            editBtn.textContent = '✏️';
+            editBtn.addEventListener('click', () => editExpense(expense.id));
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-danger';
+            deleteBtn.title = 'Delete expense';
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.addEventListener('click', () => deleteExpense(expense.id));
+            
+            actionsDiv.appendChild(editBtn);
+            actionsDiv.appendChild(deleteBtn);
+            actionsCell.appendChild(actionsDiv);
+            
+            // Assemble row
+            row.appendChild(categoryCell);
+            row.appendChild(descCell);
+            row.appendChild(personCell);
+            row.appendChild(dateCell);
+            row.appendChild(tagsCell);
+            row.appendChild(amountCell);
+            row.appendChild(actionsCell);
+            
+            // Add click event to row for viewing details
+            row.style.cursor = 'pointer';
+            row.addEventListener('click', (e) => {
+                if (!e.target.closest('button')) {
+                    showExpenseDetailModal(expense.id);
+                }
+            });
+            
+            return row;
+        }
+
+        // Toggle view style (card/table)
+        function toggleViewStyle(style) {
+            currentViewStyle = style;
+            const container = document.getElementById('expenseListContainer');
+            
+            // Update container class
+            if (style === 'table') {
+                container.classList.remove('view-mode-card');
+                container.classList.add('view-mode-table');
+            } else {
+                container.classList.remove('view-mode-table');
+                container.classList.add('view-mode-card');
+            }
+            
+            // Update button states
+            document.getElementById('cardViewBtn').classList.toggle('active', style === 'card');
+            document.getElementById('tableViewBtn').classList.toggle('active', style === 'table');
+            
+            // Re-render expenses in the new view
+            if (style === 'table') {
+                renderExpensesTable(filteredExpenses);
+            } else {
+                renderExpensesWithPagination();
+            }
+        }
+
         // Filter expenses (updated for new features)
         function filterExpenses() {
             currentPage = 1; // Reset pagination when filters change
@@ -10721,6 +11150,15 @@
 
         // Pagination Functions
         function renderExpensesWithPagination() {
+            // For table view, show all expenses without pagination
+            if (currentViewStyle === 'table') {
+                renderExpensesTable(filteredExpenses);
+                // Hide pagination in table view
+                document.getElementById('paginationTop').style.display = 'none';
+                document.getElementById('paginationBottom').style.display = 'none';
+                return;
+            }
+            
             const totalPages = Math.ceil(totalFilteredExpenses / itemsPerPage);
             const startIndex = (currentPage - 1) * itemsPerPage;
             const endIndex = startIndex + itemsPerPage;
@@ -12485,6 +12923,18 @@
                     }
                 });
             });
+
+            // View style toggle (card/table)
+            const cardViewBtn = document.getElementById('cardViewBtn');
+            const tableViewBtn = document.getElementById('tableViewBtn');
+            
+            if (cardViewBtn) {
+                cardViewBtn.addEventListener('click', () => toggleViewStyle('card'));
+            }
+            
+            if (tableViewBtn) {
+                tableViewBtn.addEventListener('click', () => toggleViewStyle('table'));
+            }
 
             // Filter selects
             const categoryFilter = document.getElementById('categoryFilter');
