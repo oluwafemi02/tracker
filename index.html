@@ -2685,16 +2685,13 @@
 
         /* Floating Action Button */
         .fab {
-            position: fixed;
-            bottom: 2rem;
-            right: 2rem;
             min-width: 60px;
-            height: 60px;
-            border-radius: 30px;
+            height: 50px;
+            border-radius: 25px;
             background: var(--primary-gradient);
             color: white;
             border: none;
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             cursor: pointer;
             box-shadow: var(--shadow-lg);
             transition: all 0.3s ease;
@@ -2735,6 +2732,14 @@
         .fab:hover .fab-label {
             display: inline;
             opacity: 1;
+        }
+
+        /* Header FAB Container */
+        .header-fab-container {
+            display: flex;
+            justify-content: center;
+            margin: 1rem 0;
+            gap: 1rem;
         }
 
         /* Ensure FAB is visible in dark mode */
@@ -4990,11 +4995,9 @@
         /* Responsive Enhancements */
         @media (max-width: 768px) {
             .fab {
-                bottom: 1rem;
-                right: 1rem;
                 min-width: 56px;
-                height: 56px;
-                font-size: 1.3rem;
+                height: 45px;
+                font-size: 1.2rem;
                 box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
             }
 
@@ -5005,6 +5008,10 @@
 
             .fab-label {
                 font-size: 0.85rem;
+            }
+            
+            .header-fab-container {
+                margin: 0.75rem 0;
             }
             
             /* Adjust install button on mobile */
@@ -5073,6 +5080,14 @@
                     <option value="family" data-i18n="tracker.family">👨‍👩‍👧‍👦 Family</option>
                     <option value="group" data-i18n="tracker.group">👥 Group/Shared</option>
                 </select>
+            </div>
+            
+            <!-- Add Expense Button -->
+            <div class="header-fab-container">
+                <button class="fab" id="fabScrollBtn" title="Add New Expense" aria-label="Add New Expense">
+                    <span class="fab-icon">➕</span>
+                    <span class="fab-label">Add Expense</span>
+                </button>
             </div>
             
             <!-- Navigation Tabs -->
@@ -6487,12 +6502,6 @@
     <!-- Notification -->
     <div id="notification" class="notification"></div>
     
-    <!-- Floating Action Button -->
-    <button class="fab" id="fabScrollBtn" title="Add New Expense" aria-label="Add New Expense">
-        <span class="fab-icon">➕</span>
-        <span class="fab-label">Add Expense</span>
-    </button>
-    
     <!-- Insights Modal -->
     <div id="insightsModal" class="modal">
         <div class="modal-content">
@@ -7292,7 +7301,7 @@
         let monthlyBudget = parseFloat(localStorage.getItem('monthlyBudget')) || 0;
         let editingExpenseId = null;
         let expenseChart = null;
-        let filteredExpenses = [...expenses];
+        let filteredExpenses = [];
         let customCategories = JSON.parse(localStorage.getItem('customCategories')) || [];
         
         // Function to update expense summary panel
@@ -7960,6 +7969,9 @@
             
             // Auto-process past recurring expenses
             autoProcessPastRecurringExpenses();
+            
+            // Initialize filteredExpenses after loading expenses
+            filteredExpenses = [...expenses];
             
             // Check for due recurring expenses on load
             checkRecurringExpenses();
