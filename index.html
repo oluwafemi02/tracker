@@ -5028,6 +5028,42 @@
                     </div>
                     <div id="budgetStatus" data-i18n="budget.setMonthly">Set your monthly budget</div>
                 </div>
+                
+                <!-- Rollover Balance Section -->
+                <div class="rollover-balance-section" id="rolloverBalanceSection" style="display: none;">
+                    <div class="rollover-balance-header">
+                        <h3>💰 Rollover Balance</h3>
+                        <span class="rollover-badge" id="rolloverBadge">Pending</span>
+                    </div>
+                    <div class="rollover-balance-content">
+                        <div class="rollover-stat">
+                            <div class="rollover-stat-label">Available Rollover</div>
+                            <div class="rollover-stat-value" id="rolloverStatAmount">€0</div>
+                        </div>
+                        <div class="rollover-stat">
+                            <div class="rollover-stat-label">Reserve Fund</div>
+                            <div class="rollover-stat-value" id="reserveFundAmount">€0</div>
+                        </div>
+                    </div>
+                    <div class="rollover-history-toggle">
+                        <button onclick="toggleRolloverHistory()">View History</button>
+                    </div>
+                    <div class="rollover-history" id="rolloverHistory" style="display: none;">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+                
+                <!-- Reserve Fund Section -->
+                <div class="reserve-fund-section" id="reserveFundSection" style="display: none;">
+                    <div class="reserve-fund-header">
+                        <h3>🏦 Reserve Fund</h3>
+                    </div>
+                    <div class="reserve-fund-balance" id="reserveFundBalance">€0</div>
+                    <div class="reserve-fund-actions">
+                        <button class="btn" onclick="showWithdrawFromReserveModal()">💸 Withdraw</button>
+                        <button class="btn btn-secondary" onclick="showReserveFundHistory()">📊 View History</button>
+                    </div>
+                </div>
 
                 <div class="card">
                     <h2><span class="card-icon">📊</span> This Month's Total</h2>
@@ -5096,6 +5132,32 @@
                         <div class="cash-flow-balance">
                             <div class="balance-label" data-i18n="cashFlow.balance">Balance</div>
                             <div class="balance-amount" id="cashBalanceAmount">€0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Rollover Analytics -->
+                <div class="card" id="rolloverAnalyticsCard" style="display: none;">
+                    <h2><span class="card-icon">💰</span> Rollover Analytics</h2>
+                    <div class="chart-container">
+                        <canvas id="rolloverTrendChart"></canvas>
+                    </div>
+                    <div class="rollover-stats-grid" style="margin-top: 1.5rem; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem;">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Saved</div>
+                            <div class="stat-value" id="totalSavedStat">€0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Average Rollover</div>
+                            <div class="stat-value" id="avgRolloverStat">€0</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Best Month</div>
+                            <div class="stat-value" id="bestMonthStat">-</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-label">Savings Rate</div>
+                            <div class="stat-value" id="savingsRateStat">0%</div>
                         </div>
                     </div>
                 </div>
@@ -5683,6 +5745,35 @@
                             <span class="shortcut-key">Esc</span>
                             <span class="shortcut-desc">Close Modals/Clear Search</span>
                         </div>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 2rem;">
+                    <h3>💰 Rollover Settings</h3>
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem; cursor: pointer;">
+                            <input type="checkbox" id="autoRolloverToggle" onchange="updateAutoRollover()" style="width: 20px; height: 20px;">
+                            <span>Enable automatic rollover</span>
+                        </label>
+                        <small style="color: var(--text-secondary); display: block; margin-top: 0.5rem;">
+                            Automatically handle leftover balance based on your default preference
+                        </small>
+                    </div>
+                    
+                    <div class="form-group" id="defaultActionGroup" style="display: none;">
+                        <label for="defaultRolloverAction">Default rollover action</label>
+                        <select id="defaultRolloverAction" onchange="updateDefaultRolloverAction()">
+                            <option value="prompt">Ask me each time</option>
+                            <option value="add_to_budget">Add to current budget</option>
+                            <option value="save">Save to reserve fund</option>
+                            <option value="carry_forward">Carry forward as credit</option>
+                            <option value="allocate">Allocate to categories</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-top: 1rem;">
+                        <button class="btn btn-secondary" onclick="showRolloverHistory()">📊 View Rollover History</button>
+                        <button class="btn btn-secondary" onclick="manualRolloverCheck()">🔄 Check for Rollover Now</button>
                     </div>
                 </div>
                 
@@ -6601,6 +6692,23 @@
         let filteredExpenses = [...expenses];
         let customCategories = JSON.parse(localStorage.getItem('customCategories')) || [];
         
+        // Rollover data structure
+        let rolloverData = JSON.parse(localStorage.getItem('rolloverData')) || {
+            currentRollover: {
+                amount: 0,
+                source: '',
+                status: 'pending', // pending, allocated, saved, added, carried_forward
+                decision: null,
+                timestamp: null
+            },
+            history: [],
+            reserveFund: 0,
+            preferences: {
+                autoRollover: false,
+                defaultAction: 'prompt' // prompt, add_to_budget, save, carry_forward, allocate
+            }
+        };
+        
         // Supported languages - Define first before using
         const LANGUAGES = {
             'en': { name: 'English', flag: '🇬🇧' },
@@ -7000,11 +7108,147 @@
             }
         }
         
+        // Migrate rollover data for existing users
+        function migrateRolloverData() {
+            // Check if this is a first-time setup for rollover
+            if (!localStorage.getItem('rolloverData') && localStorage.getItem('familyExpenses')) {
+                // Initialize rollover data for existing users
+                const now = new Date();
+                const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                const monthBalance = calculatePreviousMonthBalance(previousMonth);
+                
+                if (monthBalance > 0) {
+                    rolloverData.currentRollover = {
+                        amount: monthBalance,
+                        source: previousMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                        status: 'pending',
+                        decision: null,
+                        timestamp: Date.now()
+                    };
+                }
+                
+                // Save initial rollover data
+                saveRolloverData();
+                
+                // Set last checked month to prevent duplicate checks
+                if (!lastCheckedMonth) {
+                    lastCheckedMonth = `${previousMonth.getFullYear()}-${previousMonth.getMonth()}`;
+                    localStorage.setItem('lastCheckedMonth', lastCheckedMonth);
+                }
+            }
+        }
+        
         // Run migration on load
         migrateExpenses();
+        migrateRolloverData();
         let recurringExpenses = JSON.parse(localStorage.getItem('recurringExpenses')) || [];
         let trackerType = localStorage.getItem('trackerType') || 'personal';
         let savingsGoal = parseFloat(localStorage.getItem('savingsGoal')) || 0;
+        
+        // Function to save rollover data
+        function saveRolloverData() {
+            localStorage.setItem('rolloverData', JSON.stringify(rolloverData));
+        }
+        
+        // Month transition detection
+        let lastCheckedMonth = localStorage.getItem('lastCheckedMonth') || null;
+        
+        function checkMonthTransition() {
+            const now = new Date();
+            const currentMonthKey = `${now.getFullYear()}-${now.getMonth()}`;
+            
+            if (lastCheckedMonth && lastCheckedMonth !== currentMonthKey) {
+                // Handle multiple month gaps
+                const lastDate = new Date(lastCheckedMonth.split('-')[0], lastCheckedMonth.split('-')[1]);
+                const monthsDiff = (now.getFullYear() - lastDate.getFullYear()) * 12 + (now.getMonth() - lastDate.getMonth());
+                
+                if (monthsDiff > 1) {
+                    // User returns after multiple months - only process the most recent previous month
+                    const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+                    processSingleMonthRollover(previousMonth);
+                } else {
+                    // Normal single month transition
+                    processSingleMonthRollover(lastDate);
+                }
+            }
+            
+            // Update last checked month
+            lastCheckedMonth = currentMonthKey;
+            localStorage.setItem('lastCheckedMonth', currentMonthKey);
+        }
+        
+        function processSingleMonthRollover(monthDate) {
+            const monthName = monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const monthBalance = calculatePreviousMonthBalance(monthDate);
+            
+            // Handle negative balance (overspending)
+            if (monthBalance < 0 && monthlyBudget > 0) {
+                // Offer to deduct from current month or reserve fund
+                if (rolloverData.reserveFund >= Math.abs(monthBalance)) {
+                    if (confirm(`You overspent by ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${Math.abs(monthBalance).toFixed(2)} in ${monthName}. Deduct from Reserve Fund?`)) {
+                        rolloverData.reserveFund += monthBalance; // monthBalance is negative
+                        rolloverData.history.push({
+                            month: monthName,
+                            year: monthDate.getFullYear(),
+                            amount: Math.abs(monthBalance),
+                            decision: 'overspent_deducted_from_reserve',
+                            timestamp: Date.now()
+                        });
+                        saveRolloverData();
+                        updateDashboard();
+                        showNotification(`Deducted ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${Math.abs(monthBalance).toFixed(2)} from Reserve Fund`, 'warning');
+                    }
+                }
+                return;
+            }
+            
+            // Handle positive balance
+            if (monthBalance > 0 && (rolloverData.currentRollover.status !== 'pending' || 
+                rolloverData.currentRollover.source !== monthName)) {
+                // Set up rollover data
+                rolloverData.currentRollover = {
+                    amount: monthBalance,
+                    source: monthName,
+                    status: 'pending',
+                    decision: null,
+                    timestamp: Date.now()
+                };
+                saveRolloverData();
+                
+                // Check if auto-rollover is enabled
+                if (rolloverData.preferences.autoRollover && rolloverData.preferences.defaultAction !== 'prompt') {
+                    handleAutoRollover();
+                } else {
+                    // Show rollover modal after a slight delay
+                    setTimeout(() => showRolloverModal(), 1000);
+                }
+            }
+        }
+        
+        function calculatePreviousMonthBalance(monthDate) {
+            const month = monthDate.getMonth();
+            const year = monthDate.getFullYear();
+            
+            // Get expenses for the previous month
+            const monthlyExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate.getMonth() === month && expenseDate.getFullYear() === year;
+            });
+            
+            // Calculate total expenses
+            const totalExpenses = monthlyExpenses.reduce((total, expense) => total + getAmountInMainCurrency(expense), 0);
+            
+            // Calculate budget for that month (assume same as current if not stored separately)
+            const monthBudget = monthlyBudget; // In a real implementation, you might store monthly budgets
+            
+            // Return leftover balance
+            return Math.max(0, monthBudget - totalExpenses);
+        }
+        
+        function handleAutoRollover() {
+            const action = rolloverData.preferences.defaultAction;
+            handleRolloverDecision(action);
+        }
 
         // Category icons mapping
         const categoryIcons = {
@@ -7052,8 +7296,14 @@
             // Initialize currency dropdowns
             populateCurrencyDropdowns();
             
+            // Check for month transition on app load
+            checkMonthTransition();
+            
             // Initialize exchange rate history display
             updateExchangeRateHistoryDisplay();
+            
+            // Initialize rollover settings
+            initializeRolloverSettings();
             
             // Load dark mode preference
             const isDarkMode = localStorage.getItem('darkMode') === 'true';
@@ -7794,6 +8044,509 @@
                 showNotification('All data cleared successfully', 'success');
             }
         }
+        
+        // Update rollover display
+        function updateRolloverDisplay() {
+            const rolloverSection = document.getElementById('rolloverBalanceSection');
+            const reserveSection = document.getElementById('reserveFundSection');
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            
+            // Show/hide rollover section based on status
+            if (rolloverData.currentRollover.amount > 0 || rolloverData.history.length > 0 || rolloverData.reserveFund > 0) {
+                rolloverSection.style.display = 'block';
+                
+                // Update rollover amount
+                document.getElementById('rolloverStatAmount').textContent = 
+                    `${currencySymbol}${rolloverData.currentRollover.amount.toFixed(2)}`;
+                
+                // Update reserve fund amount
+                document.getElementById('reserveFundAmount').textContent = 
+                    `${currencySymbol}${rolloverData.reserveFund.toFixed(2)}`;
+                
+                // Update badge
+                const badge = document.getElementById('rolloverBadge');
+                switch(rolloverData.currentRollover.status) {
+                    case 'pending':
+                        badge.textContent = 'Pending';
+                        badge.style.background = 'var(--warning-color)';
+                        break;
+                    case 'added':
+                        badge.textContent = 'Added to Budget';
+                        badge.style.background = 'var(--success-color)';
+                        break;
+                    case 'saved':
+                        badge.textContent = 'Saved';
+                        badge.style.background = 'var(--primary-color)';
+                        break;
+                    case 'allocated':
+                        badge.textContent = 'Allocated';
+                        badge.style.background = 'var(--info-color)';
+                        break;
+                    case 'carried_forward':
+                        badge.textContent = 'Carried Forward';
+                        badge.style.background = 'var(--secondary-color)';
+                        break;
+                }
+            } else {
+                rolloverSection.style.display = 'none';
+            }
+            
+            // Show/hide reserve fund section
+            if (rolloverData.reserveFund > 0) {
+                reserveSection.style.display = 'block';
+                document.getElementById('reserveFundBalance').textContent = 
+                    `${currencySymbol}${rolloverData.reserveFund.toFixed(2)}`;
+            } else {
+                reserveSection.style.display = 'none';
+            }
+        }
+        
+        // Toggle rollover history
+        function toggleRolloverHistory() {
+            const historyDiv = document.getElementById('rolloverHistory');
+            const isVisible = historyDiv.style.display !== 'none';
+            
+            if (!isVisible) {
+                // Populate history
+                const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+                historyDiv.innerHTML = '';
+                
+                if (rolloverData.history.length === 0) {
+                    historyDiv.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">No rollover history yet</p>';
+                } else {
+                    rolloverData.history.slice(-10).reverse().forEach(item => {
+                        const date = new Date(item.timestamp).toLocaleDateString();
+                        const decisionText = item.decision.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        
+                        const historyItem = document.createElement('div');
+                        historyItem.className = 'rollover-history-item';
+                        historyItem.innerHTML = `
+                            <span class="date">${date}</span>
+                            <span class="amount">${currencySymbol}${item.amount.toFixed(2)}</span>
+                            <span class="decision">${decisionText}</span>
+                        `;
+                        historyDiv.appendChild(historyItem);
+                    });
+                }
+                
+                historyDiv.style.display = 'block';
+            } else {
+                historyDiv.style.display = 'none';
+            }
+        }
+        
+        // Reserve fund functions
+        function showWithdrawFromReserveModal() {
+            const amount = prompt(`Enter amount to withdraw from Reserve Fund (Current: ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${rolloverData.reserveFund.toFixed(2)})`);
+            
+            if (amount !== null) {
+                const withdrawAmount = parseFloat(amount);
+                
+                if (isNaN(withdrawAmount) || withdrawAmount <= 0) {
+                    showNotification('Please enter a valid amount', 'error');
+                    return;
+                }
+                
+                if (withdrawAmount > rolloverData.reserveFund) {
+                    showNotification('Insufficient reserve funds', 'error');
+                    return;
+                }
+                
+                // Withdraw from reserve and add to budget
+                rolloverData.reserveFund -= withdrawAmount;
+                monthlyBudget += withdrawAmount;
+                
+                // Update storage
+                localStorage.setItem('monthlyBudget', monthlyBudget);
+                document.getElementById('monthlyBudget').value = monthlyBudget;
+                saveRolloverData();
+                
+                // Add to history
+                rolloverData.history.push({
+                    month: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                    year: new Date().getFullYear(),
+                    amount: withdrawAmount,
+                    decision: 'withdrawn_from_reserve',
+                    timestamp: Date.now()
+                });
+                
+                updateDashboard();
+                showNotification(`Withdrew ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${withdrawAmount.toFixed(2)} from Reserve Fund`, 'success');
+            }
+        }
+        
+        function showReserveFundHistory() {
+            const modal = document.getElementById('projectionModal');
+            const content = document.getElementById('projectionContent');
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            
+            // Filter history for reserve fund transactions
+            const reserveHistory = rolloverData.history.filter(item => 
+                item.decision === 'saved_to_reserve' || item.decision === 'withdrawn_from_reserve'
+            );
+            
+            let historyHtml = '<h3>Reserve Fund History</h3>';
+            
+            if (reserveHistory.length === 0) {
+                historyHtml += '<p style="text-align: center; color: var(--text-secondary);">No reserve fund transactions yet</p>';
+            } else {
+                historyHtml += '<div style="max-height: 400px; overflow-y: auto;">';
+                reserveHistory.reverse().forEach(item => {
+                    const date = new Date(item.timestamp).toLocaleDateString();
+                    const type = item.decision === 'saved_to_reserve' ? 'Deposit' : 'Withdrawal';
+                    const typeClass = item.decision === 'saved_to_reserve' ? 'success' : 'warning';
+                    
+                    historyHtml += `
+                        <div style="display: flex; justify-content: space-between; padding: 1rem; border-bottom: 1px solid var(--border-color);">
+                            <div>
+                                <strong>${date}</strong><br>
+                                <span class="badge badge-${typeClass}">${type}</span>
+                            </div>
+                            <div style="text-align: right;">
+                                <strong>${item.decision === 'saved_to_reserve' ? '+' : '-'}${currencySymbol}${item.amount.toFixed(2)}</strong><br>
+                                <small>${item.month}</small>
+                            </div>
+                        </div>
+                    `;
+                });
+                historyHtml += '</div>';
+            }
+            
+            historyHtml += `
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--primary-light); border-radius: var(--border-radius); text-align: center;">
+                    <strong>Current Balance: ${currencySymbol}${rolloverData.reserveFund.toFixed(2)}</strong>
+                </div>
+            `;
+            
+            content.innerHTML = historyHtml;
+            modal.style.display = 'block';
+        }
+        
+        // Rollover Settings Functions
+        function initializeRolloverSettings() {
+            // Load settings into UI
+            document.getElementById('autoRolloverToggle').checked = rolloverData.preferences.autoRollover;
+            document.getElementById('defaultRolloverAction').value = rolloverData.preferences.defaultAction;
+            
+            // Show/hide default action based on auto-rollover
+            updateAutoRolloverUI();
+        }
+        
+        function updateAutoRollover() {
+            const isEnabled = document.getElementById('autoRolloverToggle').checked;
+            rolloverData.preferences.autoRollover = isEnabled;
+            saveRolloverData();
+            updateAutoRolloverUI();
+        }
+        
+        function updateAutoRolloverUI() {
+            const isEnabled = document.getElementById('autoRolloverToggle').checked;
+            document.getElementById('defaultActionGroup').style.display = isEnabled ? 'block' : 'none';
+        }
+        
+        function updateDefaultRolloverAction() {
+            const action = document.getElementById('defaultRolloverAction').value;
+            rolloverData.preferences.defaultAction = action;
+            saveRolloverData();
+        }
+        
+        function showRolloverHistory() {
+            const modal = document.getElementById('projectionModal');
+            const content = document.getElementById('projectionContent');
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            
+            let historyHtml = '<h3>💰 Rollover History</h3>';
+            
+            if (rolloverData.history.length === 0) {
+                historyHtml += '<p style="text-align: center; color: var(--text-secondary);">No rollover history yet</p>';
+            } else {
+                historyHtml += '<div style="max-height: 400px; overflow-y: auto;">';
+                rolloverData.history.slice().reverse().forEach(item => {
+                    const date = new Date(item.timestamp).toLocaleDateString();
+                    const decisionText = item.decision.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                    
+                    historyHtml += `
+                        <div style="display: flex; justify-content: space-between; padding: 1rem; border-bottom: 1px solid var(--border-color);">
+                            <div>
+                                <strong>${item.month}</strong><br>
+                                <small>${date}</small>
+                            </div>
+                            <div style="text-align: center;">
+                                <strong>${currencySymbol}${item.amount.toFixed(2)}</strong><br>
+                                <span class="badge" style="background: var(--primary-light); color: var(--primary-dark);">${decisionText}</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    // Show allocation details if available
+                    if (item.allocations) {
+                        historyHtml += '<div style="padding: 0.5rem 1rem; background: var(--bg-secondary); font-size: 0.9rem;">';
+                        Object.entries(item.allocations).forEach(([category, amount]) => {
+                            historyHtml += `<div>${categoryIcons[category] || '📝'} ${category}: ${currencySymbol}${amount.toFixed(2)}</div>`;
+                        });
+                        historyHtml += '</div>';
+                    }
+                });
+                historyHtml += '</div>';
+            }
+            
+            // Summary stats
+            const totalRolledOver = rolloverData.history.reduce((sum, item) => sum + item.amount, 0);
+            const totalSaved = rolloverData.history
+                .filter(item => item.decision === 'saved_to_reserve')
+                .reduce((sum, item) => sum + item.amount, 0);
+            
+            historyHtml += `
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--success-light); border-radius: var(--border-radius);">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; text-align: center;">
+                        <div>
+                            <strong>Total Rolled Over</strong><br>
+                            <span style="font-size: 1.2rem;">${currencySymbol}${totalRolledOver.toFixed(2)}</span>
+                        </div>
+                        <div>
+                            <strong>Total Saved</strong><br>
+                            <span style="font-size: 1.2rem;">${currencySymbol}${totalSaved.toFixed(2)}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            content.innerHTML = historyHtml;
+            modal.style.display = 'block';
+        }
+        
+        function manualRolloverCheck() {
+            // Calculate previous month's balance
+            const now = new Date();
+            const previousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+            const previousMonthBalance = calculatePreviousMonthBalance(previousMonth);
+            
+            if (previousMonthBalance > 0) {
+                // Set up rollover data
+                rolloverData.currentRollover = {
+                    amount: previousMonthBalance,
+                    source: previousMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                    status: 'pending',
+                    decision: null,
+                    timestamp: Date.now()
+                };
+                saveRolloverData();
+                showRolloverModal();
+            } else {
+                showNotification('No leftover balance from previous month', 'info');
+            }
+        }
+        
+        // Rollover Modal Functions
+        function showRolloverModal() {
+            const modal = document.getElementById('rolloverModal');
+            const amountElement = document.getElementById('rolloverAmount');
+            const sourceElement = document.getElementById('rolloverSource');
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            
+            amountElement.textContent = `${currencySymbol}${rolloverData.currentRollover.amount.toFixed(2)}`;
+            sourceElement.textContent = rolloverData.currentRollover.source;
+            
+            modal.style.display = 'block';
+        }
+        
+        function closeRolloverModal() {
+            document.getElementById('rolloverModal').style.display = 'none';
+        }
+        
+        function handleRolloverDecision(decision) {
+            const rolloverAmount = rolloverData.currentRollover.amount;
+            
+            switch(decision) {
+                case 'add_to_budget':
+                    // Add to current month's budget
+                    monthlyBudget += rolloverAmount;
+                    localStorage.setItem('monthlyBudget', monthlyBudget);
+                    document.getElementById('monthlyBudget').value = monthlyBudget;
+                    
+                    // Update rollover data
+                    rolloverData.currentRollover.status = 'added';
+                    rolloverData.currentRollover.decision = 'add_to_budget';
+                    
+                    // Add to history
+                    rolloverData.history.push({
+                        month: rolloverData.currentRollover.source,
+                        year: new Date().getFullYear(),
+                        amount: rolloverAmount,
+                        decision: 'add_to_budget',
+                        allocatedTo: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+                        timestamp: Date.now()
+                    });
+                    
+                    saveRolloverData();
+                    updateDashboard();
+                    closeRolloverModal();
+                    showNotification(`Added ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${rolloverAmount.toFixed(2)} to this month's budget`, 'success');
+                    break;
+                    
+                case 'save':
+                    // Add to reserve fund
+                    rolloverData.reserveFund += rolloverAmount;
+                    rolloverData.currentRollover.status = 'saved';
+                    rolloverData.currentRollover.decision = 'save';
+                    
+                    // Add to history
+                    rolloverData.history.push({
+                        month: rolloverData.currentRollover.source,
+                        year: new Date().getFullYear(),
+                        amount: rolloverAmount,
+                        decision: 'saved_to_reserve',
+                        timestamp: Date.now()
+                    });
+                    
+                    saveRolloverData();
+                    updateDashboard();
+                    closeRolloverModal();
+                    showNotification(`Saved ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${rolloverAmount.toFixed(2)} to Reserve Fund`, 'success');
+                    break;
+                    
+                case 'allocate':
+                    // Show category allocation modal
+                    closeRolloverModal();
+                    showCategoryAllocationModal(rolloverAmount);
+                    break;
+                    
+                case 'carry_forward':
+                    // Keep as credit
+                    rolloverData.currentRollover.status = 'carried_forward';
+                    rolloverData.currentRollover.decision = 'carry_forward';
+                    
+                    // Add to history
+                    rolloverData.history.push({
+                        month: rolloverData.currentRollover.source,
+                        year: new Date().getFullYear(),
+                        amount: rolloverAmount,
+                        decision: 'carried_forward',
+                        timestamp: Date.now()
+                    });
+                    
+                    saveRolloverData();
+                    updateDashboard();
+                    closeRolloverModal();
+                    showNotification(`Carried forward ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${rolloverAmount.toFixed(2)} as credit`, 'success');
+                    break;
+            }
+        }
+        
+        function updateRolloverPreferences() {
+            const checkbox = document.getElementById('rememberRolloverChoice');
+            rolloverData.preferences.autoRollover = checkbox.checked;
+            
+            if (checkbox.checked && rolloverData.currentRollover.decision) {
+                rolloverData.preferences.defaultAction = rolloverData.currentRollover.decision;
+            }
+            
+            saveRolloverData();
+        }
+        
+        function showCategoryAllocationModal(amount) {
+            const modal = document.getElementById('categoryAllocationModal');
+            const totalElement = document.getElementById('totalToAllocate');
+            const remainingElement = document.getElementById('remainingToAllocate');
+            const listElement = document.getElementById('categoryAllocationList');
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            
+            totalElement.textContent = `${currencySymbol}${amount.toFixed(2)}`;
+            remainingElement.textContent = `${currencySymbol}${amount.toFixed(2)}`;
+            
+            // Get all categories (default + custom)
+            const allCategories = [...Object.keys(categoryIcons), ...customCategories];
+            
+            // Create allocation inputs
+            listElement.innerHTML = '';
+            allCategories.forEach(category => {
+                const item = document.createElement('div');
+                item.className = 'category-allocation-item';
+                item.innerHTML = `
+                    <label>
+                        <span>${categoryIcons[category] || '📝'}</span>
+                        <span>${category}</span>
+                    </label>
+                    <input type="number" min="0" step="0.01" value="0" data-category="${category}" 
+                           onchange="updateAllocationRemaining(${amount})">
+                    <span class="allocation-percentage">0%</span>
+                `;
+                listElement.appendChild(item);
+            });
+            
+            modal.style.display = 'block';
+        }
+        
+        function closeCategoryAllocationModal() {
+            document.getElementById('categoryAllocationModal').style.display = 'none';
+        }
+        
+        function updateAllocationRemaining(totalAmount) {
+            const inputs = document.querySelectorAll('#categoryAllocationList input[type="number"]');
+            let allocated = 0;
+            
+            inputs.forEach(input => {
+                const value = parseFloat(input.value) || 0;
+                allocated += value;
+                
+                // Update percentage
+                const percentage = totalAmount > 0 ? (value / totalAmount * 100).toFixed(1) : 0;
+                input.parentElement.querySelector('.allocation-percentage').textContent = `${percentage}%`;
+            });
+            
+            const remaining = totalAmount - allocated;
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            document.getElementById('remainingToAllocate').textContent = `${currencySymbol}${remaining.toFixed(2)}`;
+            
+            // Color code remaining amount
+            const remainingElement = document.getElementById('remainingToAllocate');
+            if (remaining < 0) {
+                remainingElement.style.color = 'var(--danger-color)';
+            } else if (remaining === 0) {
+                remainingElement.style.color = 'var(--success-color)';
+            } else {
+                remainingElement.style.color = 'var(--text-primary)';
+            }
+        }
+        
+        function confirmCategoryAllocation() {
+            const inputs = document.querySelectorAll('#categoryAllocationList input[type="number"]');
+            const allocations = {};
+            let total = 0;
+            
+            inputs.forEach(input => {
+                const value = parseFloat(input.value) || 0;
+                if (value > 0) {
+                    allocations[input.dataset.category] = value;
+                    total += value;
+                }
+            });
+            
+            if (Object.keys(allocations).length === 0) {
+                showNotification('Please allocate to at least one category', 'error');
+                return;
+            }
+            
+            // Save allocation data
+            rolloverData.currentRollover.status = 'allocated';
+            rolloverData.currentRollover.decision = 'allocate';
+            rolloverData.currentRollover.allocations = allocations;
+            
+            // Add to history
+            rolloverData.history.push({
+                month: rolloverData.currentRollover.source,
+                year: new Date().getFullYear(),
+                amount: rolloverData.currentRollover.amount,
+                decision: 'allocated_to_categories',
+                allocations: allocations,
+                timestamp: Date.now()
+            });
+            
+            saveRolloverData();
+            updateDashboard();
+            closeCategoryAllocationModal();
+            showNotification('Successfully allocated rollover balance to categories', 'success');
+        }
 
         // Set monthly budget
         function setBudget() {
@@ -8357,6 +9110,9 @@
             // Update upcoming recurring expenses
             updateUpcomingRecurringExpenses();
             
+            // Update rollover display
+            updateRolloverDisplay();
+            
             // Update new enhanced charts only if dashboard tab is active
             const dashboardTab = document.getElementById('dashboardTab');
             if (dashboardTab && dashboardTab.classList.contains('active')) {
@@ -8364,6 +9120,7 @@
                     updateSpendingTrendChart();
                     updateCategoryBudgetChart();
                     updateCashFlowSummary();
+                    updateRolloverAnalytics();
                     generateSmartInsights();
                 });
             }
@@ -14808,6 +15565,342 @@
         body {
             padding-bottom: 50px;
         }
+        
+        /* Rollover Modal Styles */
+        .rollover-modal {
+            max-width: 600px;
+            animation: slideInScale 0.3s ease-out;
+        }
+        
+        @keyframes slideInScale {
+            from {
+                transform: scale(0.9) translateY(-20px);
+                opacity: 0;
+            }
+            to {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+        }
+        
+        .rollover-amount-display {
+            background: var(--success-light);
+            color: var(--success-dark);
+            padding: 1.5rem;
+            border-radius: var(--border-radius);
+            text-align: center;
+            margin-bottom: 2rem;
+            font-size: 1.2rem;
+        }
+        
+        .rollover-amount-display strong {
+            font-size: 1.8rem;
+            display: inline-block;
+            margin: 0 0.5rem;
+        }
+        
+        .rollover-options {
+            margin-bottom: 2rem;
+        }
+        
+        .rollover-options h4 {
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+        }
+        
+        .rollover-option {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-color);
+            border-radius: var(--border-radius);
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .rollover-option:hover {
+            border-color: var(--primary-color);
+            background: var(--hover-bg);
+            transform: translateX(8px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .option-icon {
+            font-size: 2.5rem;
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .option-content h5 {
+            margin: 0 0 0.5rem 0;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+        
+        .option-content p {
+            margin: 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .rollover-preferences {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            margin-top: 1rem;
+        }
+        
+        .rollover-preferences label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            cursor: pointer;
+            color: var(--text-primary);
+        }
+        
+        .rollover-preferences input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+        
+        /* Category Allocation Modal */
+        .category-allocation-item {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.75rem;
+        }
+        
+        .category-allocation-item label {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+        
+        .category-allocation-item input[type="number"] {
+            width: 120px;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+        }
+        
+        .allocation-percentage {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            min-width: 50px;
+            text-align: right;
+        }
+        
+        /* Rollover Balance Display in Budget Overview */
+        .rollover-balance-section {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 2px solid var(--success-color);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .rollover-balance-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: var(--success-light);
+            border-radius: 50%;
+            transform: translate(30px, -30px);
+            opacity: 0.3;
+        }
+        
+        .rollover-balance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .rollover-balance-header h3 {
+            margin: 0;
+            color: var(--success-dark);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .rollover-badge {
+            background: var(--success-color);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            animation: pulse 2s infinite;
+        }
+        
+        .rollover-balance-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        
+        .rollover-stat {
+            padding: 1rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+        
+        .rollover-stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .rollover-stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+        
+        .rollover-history-toggle {
+            margin-top: 1rem;
+            text-align: center;
+        }
+        
+        .rollover-history-toggle button {
+            background: none;
+            border: none;
+            color: var(--primary-color);
+            cursor: pointer;
+            font-size: 0.9rem;
+            text-decoration: underline;
+        }
+        
+        .rollover-history {
+            margin-top: 1rem;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .rollover-history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem;
+            background: var(--bg-secondary);
+            border-radius: var(--border-radius);
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .rollover-history-item .date {
+            color: var(--text-secondary);
+        }
+        
+        .rollover-history-item .amount {
+            font-weight: 600;
+            color: var(--success-dark);
+        }
+        
+        .rollover-history-item .decision {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 0.25rem 0.5rem;
+            border-radius: var(--border-radius);
+            font-size: 0.8rem;
+        }
+        
+        /* Reserve Fund Section */
+        .reserve-fund-section {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            border: 2px solid var(--primary-color);
+        }
+        
+        .reserve-fund-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        
+        .reserve-fund-balance {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            text-align: center;
+            margin: 1rem 0;
+        }
+        
+        .reserve-fund-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+        
+        .reserve-fund-actions button {
+            flex: 1;
+        }
+        
+        /* Dark mode support for rollover features */
+        .dark-mode .rollover-option {
+            background: var(--card-bg);
+            border-color: var(--border-color);
+        }
+        
+        .dark-mode .rollover-option:hover {
+            background: var(--hover-bg);
+        }
+        
+        .dark-mode .option-icon {
+            background: var(--bg-secondary);
+        }
+        
+        .dark-mode .rollover-balance-section,
+        .dark-mode .reserve-fund-section {
+            background: var(--card-bg);
+        }
+        
+        /* Mobile responsiveness for rollover features */
+        @media (max-width: 768px) {
+            .rollover-modal {
+                margin: 1rem;
+            }
+            
+            .rollover-option {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .rollover-balance-content {
+                grid-template-columns: 1fr;
+            }
+            
+            .reserve-fund-actions {
+                flex-direction: column;
+            }
+        }
     </style>
     
     <!-- Complete Premium UI State Fix -->
@@ -14968,6 +16061,137 @@
             }
         };
 
+        // Update rollover analytics
+        function updateRolloverAnalytics() {
+            const analyticsCard = document.getElementById('rolloverAnalyticsCard');
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            
+            // Show card if there's rollover history
+            if (rolloverData.history.length > 0 || rolloverData.reserveFund > 0) {
+                analyticsCard.style.display = 'block';
+                
+                // Calculate statistics
+                const totalSaved = rolloverData.reserveFund + 
+                    rolloverData.history
+                        .filter(item => item.decision === 'saved_to_reserve')
+                        .reduce((sum, item) => sum + item.amount, 0);
+                
+                const avgRollover = rolloverData.history.length > 0 
+                    ? rolloverData.history.reduce((sum, item) => sum + item.amount, 0) / rolloverData.history.length 
+                    : 0;
+                
+                // Find best month
+                let bestMonth = '-';
+                let bestAmount = 0;
+                rolloverData.history.forEach(item => {
+                    if (item.amount > bestAmount) {
+                        bestAmount = item.amount;
+                        bestMonth = item.month;
+                    }
+                });
+                
+                // Calculate savings rate
+                const totalBudgeted = rolloverData.history.length * monthlyBudget;
+                const savingsRate = totalBudgeted > 0 
+                    ? (rolloverData.history.reduce((sum, item) => sum + item.amount, 0) / totalBudgeted * 100)
+                    : 0;
+                
+                // Update stats
+                document.getElementById('totalSavedStat').textContent = `${currencySymbol}${totalSaved.toFixed(2)}`;
+                document.getElementById('avgRolloverStat').textContent = `${currencySymbol}${avgRollover.toFixed(2)}`;
+                document.getElementById('bestMonthStat').textContent = bestMonth;
+                document.getElementById('savingsRateStat').textContent = `${savingsRate.toFixed(1)}%`;
+                
+                // Update trend chart
+                updateRolloverTrendChart();
+            } else {
+                analyticsCard.style.display = 'none';
+            }
+        }
+        
+        // Update rollover trend chart
+        function updateRolloverTrendChart() {
+            const ctx = document.getElementById('rolloverTrendChart').getContext('2d');
+            
+            // Prepare data for last 6 months
+            const months = [];
+            const rolloverAmounts = [];
+            const decisions = [];
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            
+            // Get last 6 months of data
+            const sortedHistory = rolloverData.history.slice(-6);
+            
+            sortedHistory.forEach(item => {
+                months.push(item.month);
+                rolloverAmounts.push(item.amount);
+                decisions.push(item.decision);
+            });
+            
+            // Destroy existing chart if any
+            if (window.rolloverTrendChart && typeof window.rolloverTrendChart.destroy === 'function') {
+                window.rolloverTrendChart.destroy();
+            }
+            
+            // Create new chart
+            window.rolloverTrendChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Rollover Amount',
+                        data: rolloverAmounts,
+                        backgroundColor: rolloverAmounts.map((_, index) => {
+                            const decision = decisions[index];
+                            if (decision === 'saved_to_reserve') return 'rgba(34, 197, 94, 0.8)';
+                            if (decision === 'add_to_budget') return 'rgba(59, 130, 246, 0.8)';
+                            if (decision === 'allocated_to_categories') return 'rgba(168, 85, 247, 0.8)';
+                            return 'rgba(156, 163, 175, 0.8)';
+                        }),
+                        borderColor: rolloverAmounts.map((_, index) => {
+                            const decision = decisions[index];
+                            if (decision === 'saved_to_reserve') return 'rgb(34, 197, 94)';
+                            if (decision === 'add_to_budget') return 'rgb(59, 130, 246)';
+                            if (decision === 'allocated_to_categories') return 'rgb(168, 85, 247)';
+                            return 'rgb(156, 163, 175)';
+                        }),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const decision = decisions[context.dataIndex];
+                                    const decisionText = decision.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                    return [
+                                        `Amount: ${currencySymbol}${context.parsed.y.toFixed(2)}`,
+                                        `Action: ${decisionText}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return currencySymbol + value.toFixed(0);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
         // Initialize Dashboard
         function initializeDashboard() {
             setupDashboardControls();
@@ -15993,6 +17217,84 @@ Browser: ${userAgent}
                         ❌ Cancel
                     </button>
                 </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rollover Modal -->
+    <div id="rolloverModal" class="modal">
+        <div class="modal-content rollover-modal">
+            <div class="modal-header">
+                <h3>💰 Previous Month's Balance</h3>
+                <span class="close-modal" onclick="closeRolloverModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="rollover-amount-display">
+                    <p>You have <strong id="rolloverAmount"></strong> left from <span id="rolloverSource"></span></p>
+                </div>
+                
+                <div class="rollover-options">
+                    <h4>What would you like to do with this balance?</h4>
+                    
+                    <div class="rollover-option" onclick="handleRolloverDecision('add_to_budget')">
+                        <div class="option-icon">💵</div>
+                        <div class="option-content">
+                            <h5>Add to Current Budget</h5>
+                            <p>Increase this month's budget by the leftover amount</p>
+                        </div>
+                    </div>
+                    
+                    <div class="rollover-option" onclick="handleRolloverDecision('save')">
+                        <div class="option-icon">🏦</div>
+                        <div class="option-content">
+                            <h5>Save as Reserve Fund</h5>
+                            <p>Put it aside for future use or emergencies</p>
+                        </div>
+                    </div>
+                    
+                    <div class="rollover-option" onclick="handleRolloverDecision('allocate')">
+                        <div class="option-icon">📊</div>
+                        <div class="option-content">
+                            <h5>Allocate to Categories</h5>
+                            <p>Split between different expense categories</p>
+                        </div>
+                    </div>
+                    
+                    <div class="rollover-option" onclick="handleRolloverDecision('carry_forward')">
+                        <div class="option-icon">📅</div>
+                        <div class="option-content">
+                            <h5>Carry Forward as Credit</h5>
+                            <p>Keep as a separate line item for tracking</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="rollover-preferences">
+                    <label>
+                        <input type="checkbox" id="rememberRolloverChoice" onchange="updateRolloverPreferences()">
+                        Remember my choice for automatic future rollovers
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Category Allocation Modal -->
+    <div id="categoryAllocationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📊 Allocate to Categories</h3>
+                <span class="close-modal" onclick="closeCategoryAllocationModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Total amount to allocate: <strong id="totalToAllocate"></strong></p>
+                <p>Remaining: <strong id="remainingToAllocate"></strong></p>
+                
+                <div id="categoryAllocationList">
+                    <!-- Populated dynamically -->
+                </div>
+                
+                <button class="btn" onclick="confirmCategoryAllocation()">Confirm Allocation</button>
             </div>
         </div>
     </div>
