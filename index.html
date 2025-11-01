@@ -7391,8 +7391,8 @@
             if (totalEl) totalEl.textContent = formatCurrencyAmount(currentTotal + nextTotal, mainCurrency);
         }
         
-        // Rollover data structure
-        let rolloverData = JSON.parse(localStorage.getItem('rolloverData')) || {
+        // Rollover data structure (safe loading)
+        let rolloverData = safeGetJSON('rolloverData', {
             currentRollover: {
                 amount: 0,
                 source: '',
@@ -7419,7 +7419,13 @@
         
         // Currency settings
         let mainCurrency = localStorage.getItem('mainCurrency') || detectDefaultCurrency();
-        let exchangeRates = JSON.parse(localStorage.getItem('exchangeRates')) || {};
+        let exchangeRates = safeGetJSON('exchangeRates', {});
+        // Ensure exchangeRates is always an object
+        if (typeof exchangeRates !== 'object' || Array.isArray(exchangeRates)) {
+            console.warn('Exchange rates was not an object, resetting');
+            exchangeRates = {};
+            safeSaveJSON('exchangeRates', exchangeRates);
+        }
         
         // i18n settings - Now LANGUAGES is available
         let currentLanguage = localStorage.getItem('appLanguage') || detectDefaultLanguage();
@@ -7840,13 +7846,29 @@
         // Run migration on load
         migrateExpenses();
         migrateRolloverData();
-        let recurringExpenses = JSON.parse(localStorage.getItem('recurringExpenses')) || [];
-        let trackerType = localStorage.getItem('trackerType') || 'personal';
-        let savingsGoal = parseFloat(localStorage.getItem('savingsGoal')) || 0;
         
-        // Function to save rollover data
+        // Recurring expenses (safe loading)
+        let recurringExpenses = safeGetJSON('recurringExpenses', []);
+        if (!Array.isArray(recurringExpenses)) {
+            console.warn('Recurring expenses was not an array, resetting');
+            recurringExpenses = [];
+            safeSaveJSON('recurringExpenses', recurringExpenses);
+        }
+        
+        let trackerType = localStorage.getItem('trackerType') || 'personal';
+        let savingsGoal = safeGetNumber('savingsGoal', 0);
+        
+        /**
+         * Function to save rollover data with error handling
+         * Prevents data loss from storage errors
+         */
         function saveRolloverData() {
-            localStorage.setItem('rolloverData', JSON.stringify(rolloverData));
+            const success = safeSaveJSON('rolloverData', rolloverData, (errorMsg) => {
+                showNotification(errorMsg || 'Failed to save rollover data', 'error');
+            });
+            if (!success) {
+                console.error('Failed to save rollover data');
+            }
         }
         
         // Month transition detection
@@ -8097,9 +8119,22 @@
         let totalFilteredExpenses = 0;
 
         // Travel tracker variables
-        let travelExpenses = JSON.parse(localStorage.getItem('travelExpenses')) || [];
-        let trips = JSON.parse(localStorage.getItem('trips')) || [];
-        let currentTrip = JSON.parse(localStorage.getItem('currentTrip')) || null;
+        // Travel tracker variables (safe loading)
+        let travelExpenses = safeGetJSON('travelExpenses', []);
+        if (!Array.isArray(travelExpenses)) {
+            console.warn('Travel expenses was not an array, resetting');
+            travelExpenses = [];
+            safeSaveJSON('travelExpenses', travelExpenses);
+        }
+        
+        let trips = safeGetJSON('trips', []);
+        if (!Array.isArray(trips)) {
+            console.warn('Trips was not an array, resetting');
+            trips = [];
+            safeSaveJSON('trips', trips);
+        }
+        
+        let currentTrip = safeGetJSON('currentTrip', null);
         let travelEditingId = null;
 
         // Initialize app
@@ -9760,11 +9795,11 @@
                         if (recurringIndex !== -1) {
                             recurringExpenses[recurringIndex] = createRecurringTemplate(expense);
                             
-                            // Batch localStorage writes
-                            try {
-                                localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses));
-                            } catch (e) {
-                                console.error('Failed to save recurring expenses:', e);
+                            // Batch localStorage writes with safe save
+                            const saved = safeSaveJSON('recurringExpenses', recurringExpenses, (errorMsg) => {
+                                throw new Error(errorMsg || 'Storage error: Failed to save recurring expenses');
+                            });
+                            if (!saved) {
                                 throw new Error('Storage error: Failed to save recurring expenses');
                             }
                         }
@@ -9781,14 +9816,18 @@
                         const recurringTemplate = createRecurringTemplate(expense);
                         recurringExpenses.push(recurringTemplate);
                         
-                        try {
-                            localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses));
-                        } catch (e) {
-                            console.error('Failed to save recurring expenses:', e);
-                            // Rollback the expense addition
+                        // Save recurring expenses with error handling
+                        const saved = safeSaveJSON('recurringExpenses', recurringExpenses, (errorMsg) => {
+                            // Rollback the expense addition on error
                             expenses.pop();
                             recurringExpenses.pop();
-                            throw new Error('Storage error: Failed to save recurring expenses');
+                            throw new Error(errorMsg || 'Storage error: Failed to save recurring expenses');
+                        });
+                        if (!saved) {
+                            // Rollback already done in callback, but ensure we don't continue
+                            expenses.pop();
+                            recurringExpenses.pop();
+                            return;
                         }
                         
                         showNotification(t('notifications.recurringCreated'), 'success');
@@ -9797,13 +9836,12 @@
                     }
                 }
                 
-                // Save expenses with error handling
-                try {
-                    localStorage.setItem('familyExpenses', JSON.stringify(expenses));
-                } catch (e) {
-                    console.error('Failed to save expenses:', e);
-                    showNotification('Storage error: Failed to save expense. Please check available storage.', 'error');
-                    return;
+                // Save expenses with error handling using safe save
+                const saved = safeSaveJSON('familyExpenses', expenses, (errorMsg) => {
+                    showNotification(errorMsg || 'Storage error: Failed to save expense. Please check available storage.', 'error');
+                });
+                if (!saved) {
+                    return; // Error already notified by safeSaveJSON
                 }
                 
                 filteredExpenses = [...expenses];
@@ -11875,8 +11913,17 @@
                 expenses = expenses.filter(e => e.id !== id);
                 filteredExpenses = filteredExpenses.filter(e => e.id !== id);
                 
-                // Save to localStorage
-                localStorage.setItem('familyExpenses', JSON.stringify(expenses));
+                // Save to localStorage with error handling
+                const saved = safeSaveJSON('familyExpenses', expenses, (errorMsg) => {
+                    showNotification(errorMsg || 'Failed to save after deletion. Data may not persist.', 'error');
+                });
+                if (!saved) {
+                    // Restore items on save failure
+                    expenses.push(expense);
+                    filteredExpenses.push(expense);
+                    showNotification('Failed to save deletion. Expense restored.', 'error');
+                    return;
+                }
                 
                 // Update display
                 updateDashboard();
