@@ -5062,30 +5062,30 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>?? <span data-i18n="app.title">Expense Tracker</span></h1>
+            <h1>💰 <span data-i18n="app.title">Expense Tracker</span></h1>
             <p class="subtitle" id="appSubtitle" data-i18n="app.subtitle">Track, manage, and optimize your expenses with smart insights</p>
             
             <!-- Tracker Type Selector -->
             <div class="tracker-type-selector">
                 <label for="trackerType" data-i18n="tracker.mode">Tracker Mode:</label>
                 <select id="trackerType" onchange="changeTrackerType()">
-                    <option value="personal" data-i18n="tracker.personal">?? Personal</option>
-                    <option value="family" data-i18n="tracker.family">??????????? Family</option>
-                    <option value="group" data-i18n="tracker.group">?? Group/Shared</option>
+                    <option value="personal" data-i18n="tracker.personal">👤 Personal</option>
+                    <option value="family" data-i18n="tracker.family">👨‍👩‍👧‍👦 Family</option>
+                    <option value="group" data-i18n="tracker.group">👥 Group/Shared</option>
                 </select>
             </div>
             
             <!-- Navigation Tabs -->
             <div class="nav-tabs">
-                <button class="nav-tab active" data-tab="main">?? <span data-i18n="nav.expenses">Expenses</span></button>
-                <button class="nav-tab" data-tab="travel">?? <span data-i18n="nav.trips">Trips</span></button>
-                <button class="nav-tab" data-tab="dashboard">?? <span data-i18n="nav.dashboard">Dashboard</span></button>
-                <button class="nav-tab" data-tab="settings">?? <span data-i18n="nav.settings">Settings</span></button>
+                <button class="nav-tab active" data-tab="main">💰 <span data-i18n="nav.expenses"Expenses</span></button>
+                <button class="nav-tab" data-tab="travel">✈️ <span data-i18n="nav.trips"Trips</span></button>
+                <button class="nav-tab" data-tab="dashboard">📊 <span data-i18n="nav.dashboard"Dashboard</span></button>
+                <button class="nav-tab" data-tab="settings">⚙️ <span data-i18n="nav.settings"Settings</span></button>
                 <button class="help-btn" id="helpBtn" data-i18n-title="help.needHelp">?</button>
             </div>
             
             <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 1rem; padding: 0.75rem; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px;">
-                <span style="font-size: 1rem;">??</span>
+                <span style="font-size: 1rem;">🌙</span>
                 <span style="font-size: 0.9rem; color: #333; font-weight: 500;" data-i18n="theme.dark">Dark Mode</span>
                 <label style="position: relative; display: inline-block; width: 50px; height: 28px;">
                     <input type="checkbox" id="darkModeToggle" onchange="toggleDarkMode()" style="opacity: 0; width: 0; height: 0;">
@@ -5211,20 +5211,20 @@
                                     <label for="category" data-i18n="expense.category">Category</label>
                                     <select id="category" required onchange="handleCategoryChange()">
                                         <option value="">Select category</option>
-                                        <option value="Rent">?? Rent</option>
-                                        <option value="Mortgage">?? Mortgage</option>
-                                        <option value="Utilities">?? Utilities</option>
-                                        <option value="Groceries">?? Groceries</option>
-                                        <option value="Transportation">?? Transportation</option>
-                                        <option value="Car Loan/Lease">?? Car Loan/Lease</option>
-                                        <option value="Healthcare">?? Healthcare</option>
-                                        <option value="Entertainment">?? Entertainment</option>
-                                        <option value="Dining">??? Dining</option>
-                                        <option value="Shopping">??? Shopping</option>
-                                        <option value="Education">?? Education</option>
-                                        <option value="Insurance">??? Insurance</option>
-                                        <option value="Other Loan">?? Other Loan</option>
-                                        <option value="Other">?? Other</option>
+                                        <option value="Rent">🏠 Rent</option>
+                                        <option value="Mortgage">🏠 Mortgage</option>
+                                        <option value="Utilities">💡 Utilities</option>
+                                        <option value="Groceries">🛒 Groceries</option>
+                                        <option value="Transportation">🚗 Transportation</option>
+                                        <option value="Car Loan/Lease">🚙 Car Loan/Lease</option>
+                                        <option value="Healthcare">🏥 Healthcare</option>
+                                        <option value="Entertainment">🎮 Entertainment</option>
+                                        <option value="Dining">🍽️ Dining</option>
+                                        <option value="Shopping">🛍️ Shopping</option>
+                                        <option value="Education">📚 Education</option>
+                                        <option value="Insurance">🛡️ Insurance</option>
+                                        <option value="Other Loan">💳 Other Loan</option>
+                                        <option value="Other">📦 Other</option>
                                         <option value="__ADD_NEW__">?? Add New Category</option>
                                     </select>
                                 </div>
@@ -5246,9 +5246,9 @@
                                     <label for="person" id="personLabel" data-i18n="expense.person">Person</label>
                                     <select id="person" required>
                                         <option value="">Select person</option>
-                                        <option value="You">?? You</option>
-                                        <option value="Partner">?? Partner</option>
-                                        <option value="Both">?? Both</option>
+                                        <option value="You">👤 You</option>
+                                        <option value="Partner">💑 Partner</option>
+                                        <option value="Both">👫 Both</option>
                                     </select>
                                 </div>
                                 
@@ -5329,10 +5329,10 @@
                                     <h2><span class="card-icon">??</span> <span id="expenseListTitle">Recent Expenses</span></h2>
                                 </div>
                                 <div class="expense-export-buttons">
-                                    <button class="btn btn-success" id="exportCSVBtn">?? <span data-i18n="buttons.exportCSV">Export CSV</span></button>
-                                    <button class="btn btn-success" id="exportJSONBtn">?? <span data-i18n="buttons.exportJSON">Export JSON</span></button>
-                                    <button class="btn btn-warning" id="exportExcelBtn" data-premium-feature="excel_export">?? <span data-i18n="buttons.exportExcel">Export Excel</span></button>
-                                    <button class="btn btn-warning" id="exportPDFBtn" data-premium-feature="pdf_export">?? <span data-i18n="buttons.exportPDF">Export PDF</span></button>
+                                    <button class="btn btn-success" id="exportCSVBtn">📄 <span data-i18n="buttons.exportCSV">Export CSV</span></button>
+                                    <button class="btn btn-success" id="exportJSONBtn">💾 <span data-i18n="buttons.exportJSON">Export JSON</span></button>
+                                    <button class="btn btn-warning" id="exportExcelBtn" data-premium-feature="excel_export">📊 <span data-i18n="buttons.exportExcel">Export Excel</span></button>
+                                    <button class="btn btn-warning" id="exportPDFBtn" data-premium-feature="pdf_export">📕 <span data-i18n="buttons.exportPDF">Export PDF</span></button>
                                 </div>
                             </div>
                             
@@ -5340,9 +5340,9 @@
                                 <!-- Smart Search Bar -->
                                 <div class="search-container">
                                     <div class="search-input-wrapper">
-                                        <span class="search-icon">??</span>
+                                        <span class="search-icon">🔍</span>
                                         <input type="text" id="searchInput" placeholder="Search expenses..." autocomplete="off">
-                                        <button id="clearSearch" style="display: none;">?</button>
+                                        <button id="clearSearch" style="display: none;">✖</button>
                                     </div>
                                     <div id="searchResults" class="search-results"></div>
                                 </div>
@@ -5364,29 +5364,29 @@
                                         <label>Filter by Category</label>
                                         <select id="categoryFilter" onchange="filterExpenses()">
                                             <option value="">All Categories</option>
-                                            <option value="Rent">?? Rent</option>
-                                            <option value="Mortgage">?? Mortgage</option>
-                                            <option value="Utilities">?? Utilities</option>
-                                            <option value="Groceries">?? Groceries</option>
-                                            <option value="Transportation">?? Transportation</option>
-                                            <option value="Car Loan/Lease">?? Car Loan/Lease</option>
-                                            <option value="Healthcare">?? Healthcare</option>
-                                            <option value="Entertainment">?? Entertainment</option>
-                                            <option value="Dining">??? Dining</option>
-                                            <option value="Shopping">??? Shopping</option>
-                                            <option value="Education">?? Education</option>
-                                            <option value="Insurance">??? Insurance</option>
-                                            <option value="Other Loan">?? Other Loan</option>
-                                            <option value="Other">?? Other</option>
+                                            <option value="Rent">🏠 Rent</option>
+                                            <option value="Mortgage">🏠 Mortgage</option>
+                                            <option value="Utilities">💡 Utilities</option>
+                                            <option value="Groceries">🛒 Groceries</option>
+                                            <option value="Transportation">🚗 Transportation</option>
+                                            <option value="Car Loan/Lease">🚙 Car Loan/Lease</option>
+                                            <option value="Healthcare">🏥 Healthcare</option>
+                                            <option value="Entertainment">🎮 Entertainment</option>
+                                            <option value="Dining">🍽️ Dining</option>
+                                            <option value="Shopping">🛍️ Shopping</option>
+                                            <option value="Education">📚 Education</option>
+                                            <option value="Insurance">🛡️ Insurance</option>
+                                            <option value="Other Loan">💳 Other Loan</option>
+                                            <option value="Other">📦 Other</option>
                                         </select>
                                     </div>
                                     <div class="filter-group" id="personFilterGroup">
                                         <label id="personFilterLabel">Filter by Person</label>
                                         <select id="personFilter" onchange="filterExpenses()">
                                             <option value="">All People</option>
-                                            <option value="You">?? You</option>
-                                            <option value="Partner">?? Partner</option>
-                                            <option value="Both">?? Both</option>
+                                            <option value="You">👤 You</option>
+                                            <option value="Partner">💑 Partner</option>
+                                            <option value="Both">👫 Both</option>
                                         </select>
                                     </div>
                                     
@@ -5411,9 +5411,9 @@
                                 <span id="paginationInfo">Showing 0 expenses</span>
                             </div>
                             <div class="pagination-controls">
-                                <button id="prevPageBtn" disabled>? <span data-i18n="common.previous">Previous</span></button>
+                                <button id="prevPageBtn" disabled>◀ <span data-i18n="common.previous">Previous</span></button>
                                 <span id="pageInfo">Page 1 of 1</span>
-                                <button id="nextPageBtn" disabled><span data-i18n="common.next">Next</span> ?</button>
+                                <button id="nextPageBtn" disabled><span data-i18n="common.next">Next</span> ▶</button>
                             </div>
                         </div>
                         
@@ -5446,7 +5446,7 @@
                             <div class="pagination-controls">
                                 <button id="prevPageBtnBottom">? <span data-i18n="common.previous">Previous</span></button>
                                 <span id="pageInfoBottom">Page 1 of 1</span>
-                                <button id="nextPageBtnBottom"><span data-i18n="common.next">Next</span> ?</button>
+                                <button id="nextPageBtnBottom"><span data-i18n="common.next">Next</span> ▶</button>
                             </div>
                         </div>
                     </div>
@@ -6002,7 +6002,7 @@
                                 <!-- Trip Search -->
                                 <div class="search-container">
                                     <div class="search-input-wrapper">
-                                        <span class="search-icon">??</span>
+                                        <span class="search-icon">🔍</span>
                                         <input type="text" id="travelSearchInput" placeholder="Search trip expenses..." autocomplete="off">
                                         <button id="clearTravelSearch" style="display: none;">??</button>
                                     </div>
@@ -13562,16 +13562,16 @@
                 // Family options
                 personSelect.innerHTML = `
                     <option value="">Select family member</option>
-                    <option value="You">?? You</option>
-                    <option value="Partner">?? Partner</option>
+                    <option value="You">👤 You</option>
+                    <option value="Partner">💑 Partner</option>
                     <option value="Child1">?? Child 1</option>
                     <option value="Child2">?? Child 2</option>
                     <option value="Family">?? Whole Family</option>
                 `;
                 personFilter.innerHTML = `
                     <option value="">All Family Members</option>
-                    <option value="You">?? You</option>
-                    <option value="Partner">?? Partner</option>
+                    <option value="You">👤 You</option>
+                    <option value="Partner">💑 Partner</option>
                     <option value="Child1">?? Child 1</option>
                     <option value="Child2">?? Child 2</option>
                     <option value="Family">?? Whole Family</option>
@@ -13586,7 +13586,7 @@
                 // Group options
                 personSelect.innerHTML = `
                     <option value="">Select group member</option>
-                    <option value="You">?? You</option>
+                    <option value="You">👤 You</option>
                     <option value="Member1">?? Member 1</option>
                     <option value="Member2">?? Member 2</option>
                     <option value="Member3">?? Member 3</option>
@@ -13594,7 +13594,7 @@
                 `;
                 personFilter.innerHTML = `
                     <option value="">All Group Members</option>
-                    <option value="You">?? You</option>
+                    <option value="You">👤 You</option>
                     <option value="Member1">?? Member 1</option>
                     <option value="Member2">?? Member 2</option>
                     <option value="Member3">?? Member 3</option>
