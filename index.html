@@ -29,13 +29,13 @@
     <meta name="msapplication-tap-highlight" content="no">
     
     <!-- Manifest -->
-    <link rel="manifest" href="/tracker/manifest.json">
+    <link rel="manifest" href="/manifest.json">
     
     <!-- Icons -->
-    <link rel="icon" type="image/svg+xml" sizes="32x32" href="/tracker/icons/favicon-32x32.svg">
-    <link rel="icon" type="image/svg+xml" sizes="16x16" href="/tracker/icons/favicon-16x16.svg">
-    <link rel="apple-touch-icon" href="/tracker/icons/apple-touch-icon.svg">
-    <link rel="mask-icon" href="/tracker/icons/safari-pinned-tab.svg" color="#6366f1">
+    <link rel="icon" type="image/svg+xml" sizes="32x32" href="/icons/favicon-32x32.svg">
+    <link rel="icon" type="image/svg+xml" sizes="16x16" href="/icons/favicon-16x16.svg">
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg">
+    <link rel="mask-icon" href="/icons/safari-pinned-tab.svg" color="#6366f1">
     
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -5160,7 +5160,7 @@
                     <span data-i18n="quickActions.groceries">Quick Groceries</span>
                 </div>
                 <div class="quick-action" data-action="quick-form" data-category="Utilities">
-                    <span>?</span>
+                    <span>??</span>
                     <span data-i18n="quickActions.utilities">Quick Utilities</span>
                 </div>
                 <div class="quick-action" data-action="quick-form" data-category="Transportation">
@@ -5213,19 +5213,19 @@
                                         <option value="">Select category</option>
                                         <option value="Rent">?? Rent</option>
                                         <option value="Mortgage">?? Mortgage</option>
-                                        <option value="Utilities">? Utilities</option>
+                                        <option value="Utilities">?? Utilities</option>
                                         <option value="Groceries">?? Groceries</option>
                                         <option value="Transportation">?? Transportation</option>
                                         <option value="Car Loan/Lease">?? Car Loan/Lease</option>
                                         <option value="Healthcare">?? Healthcare</option>
                                         <option value="Entertainment">?? Entertainment</option>
-                                        <option value="Dining">?? Dining</option>
-                                        <option value="Shopping">?? Shopping</option>
+                                        <option value="Dining">??? Dining</option>
+                                        <option value="Shopping">??? Shopping</option>
                                         <option value="Education">?? Education</option>
                                         <option value="Insurance">??? Insurance</option>
                                         <option value="Other Loan">?? Other Loan</option>
                                         <option value="Other">?? Other</option>
-                                        <option value="__ADD_NEW__">? Add New Category</option>
+                                        <option value="__ADD_NEW__">?? Add New Category</option>
                                     </select>
                                 </div>
                                 
@@ -5285,7 +5285,7 @@
                                                 <label for="recurringFrequency" data-i18n="recurring.frequency">Frequency</label>
                                                 <select id="recurringFrequency">
                                                     <option value="weekly">?? Weekly</option>
-                                                    <option value="biweekly">?? Bi-weekly</option>
+                                                    <option value="biweekly">??? Bi-weekly</option>
                                                     <option value="monthly" selected>?? Monthly</option>
                                                     <option value="quarterly">?? Quarterly</option>
                                                     <option value="yearly">?? Yearly</option>
@@ -5313,7 +5313,7 @@
                             </div>
                             
                             <div class="btn-actions">
-                                <button type="button" id="cancelEdit" style="display: none;" class="btn btn-secondary">?? <span data-i18n="common.cancel">Cancel</span></button>
+                                <button type="button" id="cancelEdit" style="display: none;" class="btn btn-secondary">? <span data-i18n="common.cancel">Cancel</span></button>
                                 <button type="submit" class="btn bounce-in">?? <span data-i18n="buttons.saveExpense">Save Expense</span></button>
                             </div>
                         </form>
@@ -5366,7 +5366,7 @@
                                             <option value="">All Categories</option>
                                             <option value="Rent">?? Rent</option>
                                             <option value="Mortgage">?? Mortgage</option>
-                                            <option value="Utilities">? Utilities</option>
+                                            <option value="Utilities">?? Utilities</option>
                                             <option value="Groceries">?? Groceries</option>
                                             <option value="Transportation">?? Transportation</option>
                                             <option value="Car Loan/Lease">?? Car Loan/Lease</option>
@@ -5457,7 +5457,7 @@
             <div class="expense-summary-panel" id="expenseSummaryPanel" role="region" aria-label="Expense Summary Panel">
                 <div class="panel-header">
                     <h2 class="panel-title">
-                        <span aria-hidden="true">??</span>
+                        <span aria-hidden="true">?</span>
                         All Expenses
                     </h2>
                     <div class="panel-controls">
@@ -5610,7 +5610,7 @@
                     </div>
                 </div>
                 <div class="metric-card">
-                    <div class="metric-icon">???</div>
+                    <div class="metric-icon">??</div>
                     <div class="metric-content">
                         <div class="metric-value" id="transactionCountMetric">0</div>
                         <div class="metric-label" data-i18n="metrics.transactions">Transactions</div>
@@ -5789,7 +5789,7 @@
                     <div class="stat-label" data-i18n="stats.topCategory">Top Category</div>
                 </div>
                 <div class="stat-card-enhanced">
-                    <span class="stat-icon">?</span>
+                    <span class="stat-icon">??</span>
                     <div class="stat-value" id="daysLeft">0</div>
                     <div class="stat-label" data-i18n="stats.daysLeft">Days Left</div>
                 </div>
@@ -5881,7 +5881,7 @@
                     <div class="travel-form-panel">
                         <!-- Project Expense Form -->
                         <div class="travel-expense-form card-enhanced">
-                            <h3><span class="card-icon">?</span> Add Trip Expense</h3>
+                            <h3><span class="card-icon">??</span> Add Trip Expense</h3>
                             <form id="travelExpenseForm">
                                 <div class="form-grid">
                                     <div class="input-group">
@@ -5903,13 +5903,13 @@
                                         <label for="travelCategory" data-i18n="expense.category">Category</label>
                                         <select id="travelCategory" required>
                                             <option value="">Select category</option>
-                                            <option value="?? Food & Dining">?? Food & Dining</option>
+                                            <option value="??? Food & Dining">??? Food & Dining</option>
                                             <option value="?? Accommodation">?? Accommodation</option>
                                             <option value="?? Transportation">?? Transportation</option>
                                             <option value="?? Supplies">?? Supplies & Materials</option>
                                             <option value="?? Events/Activities">?? Events & Activities</option>
                                             <option value="?? Services">?? Professional Services</option>
-                                            <option value="? Fuel">? Fuel & Gas</option>
+                                            <option value="? Fuel">?? Fuel & Gas</option>
                                             <option value="?? Flight">?? Flights</option>
                                             <option value="?? Taxi/Uber">?? Taxi/Rideshare</option>
                                             <option value="?? Shopping">?? Shopping</option>
@@ -6020,7 +6020,7 @@
                                             <option value="?? Supplies">?? Supplies</option>
                                             <option value="?? Events/Activities">?? Events/Activities</option>
                                             <option value="?? Services">?? Services</option>
-                                            <option value="? Fuel">? Fuel</option>
+                                            <option value="? Fuel">?? Fuel</option>
                                             <option value="?? Flight">?? Flights</option>
                                             <option value="?? Taxi/Uber">?? Taxi/Uber</option>
                                             <option value="?? Shopping">?? Shopping</option>
@@ -6067,7 +6067,7 @@
                         <form id="newTripForm">
                             <div class="form-grid">
                                 <div class="input-group">
-                                    <span class="input-icon">???</span>
+                                    <span class="input-icon">??</span>
                                     <label for="newTripName" data-i18n="travel.tripName">Trip Name</label>
                                     <input type="text" id="newTripName" required placeholder="e.g., Paris Vacation 2024">
                                 </div>
@@ -6455,7 +6455,7 @@
                 </div>
 
                 <div style="margin-top: 2rem;">
-                    <h3>??? <span data-i18n="settings.dataManagement">Data Management</span></h3>
+                    <h3>?? <span data-i18n="settings.dataManagement">Data Management</span></h3>
                     <div style="display: flex; gap: 1rem; margin-top: 1rem; flex-wrap: wrap;">
                         <button class="btn btn-warning" id="exportAllDataBtn">?? <span data-i18n="buttons.exportData">Export All Data</span></button>
                         <button class="btn btn-danger" id="clearAllDataBtn">??? <span data-i18n="buttons.clearData">Clear All Data</span></button>
@@ -6489,7 +6489,7 @@
     
     <!-- Floating Action Button -->
     <button class="fab" id="fabScrollBtn" title="Add New Expense" aria-label="Add New Expense">
-        <span class="fab-icon">?</span>
+        <span class="fab-icon">??</span>
         <span class="fab-label">Add Expense</span>
     </button>
     
@@ -7489,17 +7489,15 @@
         
         // Get base path for the app
         function getBasePath() {
-            const path = window.location.pathname;
-            if (path.includes('/tracker/')) {
-                return '/tracker/';
-            }
+            // Always use root path for resources since they're located at root level
             return '/';
         }
         
         // i18n translation functions
         async function loadTranslations(lang) {
             try {
-                const basePath = getBasePath();
+                // Always use root path for locales since they're at /locales/
+                const basePath = '/';
                 // Always load English as fallback
                 if (!window.enTranslations) {
                     const enResponse = await fetch(`${basePath}locales/en.json`);
@@ -13568,7 +13566,7 @@
                     <option value="Partner">?? Partner</option>
                     <option value="Child1">?? Child 1</option>
                     <option value="Child2">?? Child 2</option>
-                    <option value="Family">??????????? Whole Family</option>
+                    <option value="Family">?? Whole Family</option>
                 `;
                 personFilter.innerHTML = `
                     <option value="">All Family Members</option>
@@ -13576,7 +13574,7 @@
                     <option value="Partner">?? Partner</option>
                     <option value="Child1">?? Child 1</option>
                     <option value="Child2">?? Child 2</option>
-                    <option value="Family">??????????? Whole Family</option>
+                    <option value="Family">?? Whole Family</option>
                 `;
             } else if (trackerType === 'group') {
                 appSubtitle.textContent = 'Track, manage, and optimize your group\'s shared spending';
@@ -16946,7 +16944,7 @@
             notification.className = 'update-notification success';
             notification.innerHTML = `
                 <div class="update-content">
-                    <span class="update-icon">?</span>
+                    <span class="update-icon">??</span>
                     <div class="update-text">
                         <strong>Updated Successfully!</strong>
                         <span>Expense Tracker has been updated to v${version}</span>

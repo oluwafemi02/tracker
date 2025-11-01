@@ -3,12 +3,12 @@
   "short_name": "ExpenseTracker",
   "description": "Track, manage, and optimize your expenses with smart insights and analytics",
   "version": "2.2.0",
-  "start_url": "/tracker/",
+  "start_url": "/",
   "display": "standalone",
   "background_color": "#f8fafc",
   "theme_color": "#667eea",
   "orientation": "portrait-primary",
-  "scope": "/tracker/",
+  "scope": "/",
   "id": "com.expensetracker.pwa",
   "categories": ["finance", "productivity", "utilities"],
   "lang": "en",
@@ -70,7 +70,7 @@
       "name": "Add Expense",
       "short_name": "Add",
       "description": "Quickly add a new expense",
-      "url": "/tracker/?action=add",
+      "url": "/?action=add",
       "icons": [
         {
           "src": "icons/shortcut-add.svg",
@@ -83,7 +83,7 @@
       "name": "Dashboard",
       "short_name": "Stats",
       "description": "View spending analytics",
-      "url": "/tracker/?tab=dashboard",
+      "url": "/?tab=dashboard",
       "icons": [
         {
           "src": "icons/shortcut-dashboard.svg",
@@ -96,7 +96,7 @@
       "name": "Budget Settings",
       "short_name": "Budget",
       "description": "Manage your budget",
-      "url": "/tracker/?tab=settings",
+      "url": "/?tab=settings",
       "icons": [
         {
           "src": "icons/shortcut-settings.svg",
@@ -109,7 +109,7 @@
       "name": "Recurring Expenses",
       "short_name": "Recurring",
       "description": "Manage recurring payments",
-      "url": "/tracker/?action=recurring",
+      "url": "/?action=recurring",
       "icons": [
         {
           "src": "icons/shortcut-recurring.svg",
@@ -124,7 +124,7 @@
   "prefer_related_applications": false,
   
   "share_target": {
-    "action": "/tracker/",
+    "action": "/",
     "method": "GET",
     "params": {
       "title": "title",
