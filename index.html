@@ -7294,6 +7294,28 @@
         let expenseChart = null;
         let filteredExpenses = [...expenses];
         let customCategories = JSON.parse(localStorage.getItem('customCategories')) || [];
+        // Keep a sorted cache to avoid re-sorting on every pagination change
+        let sortedFilteredExpenses = [...filteredExpenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        // Normalise expense access so downstream code never crashes when storage is empty
+        function getExpenses() {
+            return Array.isArray(expenses) ? expenses : [];
+        }
+
+        // Helper to access recurring expenses with optional filters (active by default)
+        function getRecurringExpenses({ activeOnly = true } = {}) {
+            if (!Array.isArray(recurringExpenses)) {
+                return [];
+            }
+            return activeOnly ? recurringExpenses.filter(expense => expense?.isActive !== false) : [...recurringExpenses];
+        }
+
+        // Ensure all monetary math uses the same rounding to avoid float drift
+        function roundToCurrency(value, precision = 2) {
+            const numericValue = Number(value) || 0;
+            const factor = 10 ** precision;
+            return Math.round((numericValue + Number.EPSILON) * factor) / factor;
+        }
         
         // Function to update expense summary panel
         function updateExpenseSummaryPanel() {
@@ -7303,6 +7325,7 @@
                 return;
             }
             
+            // Pull a safe copy so summary math never mutates the master list
             const expenses = getExpenses();
             const currentMonth = new Date().getMonth();
             const currentYear = new Date().getFullYear();
@@ -7314,13 +7337,15 @@
                        expenseDate.getFullYear() === currentYear;
             });
             
-            const currentTotal = currentMonthExpenses.reduce((sum, expense) => 
-                sum + getAmountInMainCurrency(expense), 0);
+            const currentTotal = roundToCurrency(
+                currentMonthExpenses.reduce((sum, expense) => sum + getAmountInMainCurrency(expense), 0)
+            );
             
             // Calculate next month's recurring expenses
             const recurringExpenses = getRecurringExpenses();
-            const nextTotal = recurringExpenses.reduce((sum, recurring) => 
-                sum + getAmountInMainCurrency(recurring), 0);
+            const nextTotal = roundToCurrency(
+                recurringExpenses.reduce((sum, recurring) => sum + getAmountInMainCurrency(recurring), 0)
+            );
             
             // Update panel values
             const currentEl = document.getElementById('currentExpenseTotal');
@@ -7827,7 +7852,7 @@
                 if (rolloverData.reserveFund >= Math.abs(monthBalance)) {
                     if (confirm(`You overspent by ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${Math.abs(monthBalance).toFixed(2)} in ${monthName}. Deduct from Reserve Fund?`)) {
                         rolloverData.reserveFund += monthBalance; // monthBalance is negative
-                        rolloverData.history.push({
+                        appendToRolloverHistory({
                             month: monthName,
                             year: monthDate.getFullYear(),
                             amount: Math.abs(monthBalance),
@@ -7843,8 +7868,11 @@
             }
             
             // Handle positive balance
-            if (monthBalance > 0 && (rolloverData.currentRollover.status !== 'pending' || 
-                rolloverData.currentRollover.source !== monthName)) {
+            // Only raise a new rollover if we do not already have a pending decision for this month
+            const alreadyPendingForMonth = rolloverData.currentRollover.source === monthName &&
+                rolloverData.currentRollover.status === 'pending';
+            
+            if (monthBalance > 0 && !alreadyPendingForMonth) {
                 // Set up rollover data
                 rolloverData.currentRollover = {
                     amount: monthBalance,
@@ -8717,9 +8745,11 @@
                 expenses = [];
                 monthlyBudget = 0;
                 filteredExpenses = [];
+                sortedFilteredExpenses = [];
                 document.getElementById('monthlyBudget').value = '';
                 updateDashboard();
-                renderExpensesList();
+                // Re-run filter to reset pagination state and list rendering
+                filterAndRenderExpenses();
                 showNotification('All data cleared successfully', 'success');
             }
         }
@@ -8728,7 +8758,6 @@
         function updateRolloverDisplay() {
             const rolloverSection = document.getElementById('rolloverBalanceSection');
             const reserveSection = document.getElementById('reserveFundSection');
-            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
             
             // Show/hide rollover section based on status
             if (rolloverData.currentRollover.amount > 0 || rolloverData.history.length > 0 || rolloverData.reserveFund > 0) {
@@ -8736,11 +8765,11 @@
                 
                 // Update rollover amount
                 document.getElementById('rolloverStatAmount').textContent = 
-                    `${currencySymbol}${rolloverData.currentRollover.amount.toFixed(2)}`;
+                    formatCurrencyAmount(rolloverData.currentRollover.amount, mainCurrency);
                 
                 // Update reserve fund amount
                 document.getElementById('reserveFundAmount').textContent = 
-                    `${currencySymbol}${rolloverData.reserveFund.toFixed(2)}`;
+                    formatCurrencyAmount(rolloverData.reserveFund, mainCurrency);
                 
                 // Update badge
                 const badge = document.getElementById('rolloverBadge');
@@ -8774,7 +8803,7 @@
             if (rolloverData.reserveFund > 0) {
                 reserveSection.style.display = 'block';
                 document.getElementById('reserveFundBalance').textContent = 
-                    `${currencySymbol}${rolloverData.reserveFund.toFixed(2)}`;
+                    formatCurrencyAmount(rolloverData.reserveFund, mainCurrency);
             } else {
                 reserveSection.style.display = 'none';
             }
@@ -8787,7 +8816,6 @@
             
             if (!isVisible) {
                 // Populate history
-                const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
                 historyDiv.innerHTML = '';
                 
                 if (rolloverData.history.length === 0) {
@@ -8801,7 +8829,7 @@
                         historyItem.className = 'rollover-history-item';
                         historyItem.innerHTML = `
                             <span class="date">${date}</span>
-                            <span class="amount">${currencySymbol}${item.amount.toFixed(2)}</span>
+                            <span class="amount">${formatCurrencyAmount(item.amount, mainCurrency)}</span>
                             <span class="decision">${decisionText}</span>
                         `;
                         historyDiv.appendChild(historyItem);
@@ -8816,12 +8844,12 @@
         
         // Reserve fund functions
         function showWithdrawFromReserveModal() {
-            const amount = prompt(`Enter amount to withdraw from Reserve Fund (Current: ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${rolloverData.reserveFund.toFixed(2)})`);
+            const amount = prompt(`Enter amount to withdraw from Reserve Fund (Current: ${formatCurrencyAmount(rolloverData.reserveFund, mainCurrency)})`);
             
             if (amount !== null) {
-                const withdrawAmount = parseFloat(amount);
+                const withdrawAmount = roundToCurrency(parseFloat(amount));
                 
-                if (isNaN(withdrawAmount) || withdrawAmount <= 0) {
+                if (!Number.isFinite(withdrawAmount) || withdrawAmount <= 0) {
                     showNotification('Please enter a valid amount', 'error');
                     return;
                 }
@@ -8831,17 +8859,17 @@
                     return;
                 }
                 
-                // Withdraw from reserve and add to budget
-                rolloverData.reserveFund -= withdrawAmount;
-                monthlyBudget += withdrawAmount;
+                // Normalise the withdrawal so reserve and budget stay in lockstep
+                rolloverData.reserveFund = roundToCurrency(rolloverData.reserveFund - withdrawAmount);
+                monthlyBudget = roundToCurrency(monthlyBudget + withdrawAmount);
                 
                 // Update storage
-                localStorage.setItem('monthlyBudget', monthlyBudget);
+                localStorage.setItem('monthlyBudget', monthlyBudget.toString());
                 document.getElementById('monthlyBudget').value = monthlyBudget;
                 saveRolloverData();
                 
                 // Add to history
-                rolloverData.history.push({
+                appendToRolloverHistory({
                     month: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
                     year: new Date().getFullYear(),
                     amount: withdrawAmount,
@@ -8850,7 +8878,7 @@
                 });
                 
                 updateDashboard();
-                showNotification(`Withdrew ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${withdrawAmount.toFixed(2)} from Reserve Fund`, 'success');
+                showNotification(`Withdrew ${formatCurrencyAmount(withdrawAmount, mainCurrency)} from Reserve Fund`, 'success');
             }
         }
         
@@ -9021,9 +9049,8 @@
             const modal = document.getElementById('rolloverModal');
             const amountElement = document.getElementById('rolloverAmount');
             const sourceElement = document.getElementById('rolloverSource');
-            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
             
-            amountElement.textContent = `${currencySymbol}${rolloverData.currentRollover.amount.toFixed(2)}`;
+            amountElement.textContent = formatCurrencyAmount(rolloverData.currentRollover.amount, mainCurrency);
             sourceElement.textContent = rolloverData.currentRollover.source;
             
             modal.style.display = 'block';
@@ -9033,14 +9060,24 @@
             document.getElementById('rolloverModal').style.display = 'none';
         }
         
+        // Keep rollover history bounded so it does not grow without limit
+        function appendToRolloverHistory(entry) {
+            rolloverData.history.push(entry);
+            if (rolloverData.history.length > 24) {
+                rolloverData.history = rolloverData.history.slice(-24);
+            }
+        }
+
         function handleRolloverDecision(decision) {
-            const rolloverAmount = rolloverData.currentRollover.amount;
+            // Normalise rollover amount once so every branch works with the same rounded value
+            const rolloverAmount = roundToCurrency(rolloverData.currentRollover.amount);
+            rolloverData.currentRollover.amount = rolloverAmount;
             
             switch(decision) {
                 case 'add_to_budget':
                     // Add to current month's budget
-                    monthlyBudget += rolloverAmount;
-                    localStorage.setItem('monthlyBudget', monthlyBudget);
+                    monthlyBudget = roundToCurrency(monthlyBudget + rolloverAmount);
+                    localStorage.setItem('monthlyBudget', monthlyBudget.toString());
                     document.getElementById('monthlyBudget').value = monthlyBudget;
                     
                     // Update rollover data
@@ -9048,7 +9085,7 @@
                     rolloverData.currentRollover.decision = 'add_to_budget';
                     
                     // Add to history
-                    rolloverData.history.push({
+                    appendToRolloverHistory({
                         month: rolloverData.currentRollover.source,
                         year: new Date().getFullYear(),
                         amount: rolloverAmount,
@@ -9060,17 +9097,17 @@
                     saveRolloverData();
                     updateDashboard();
                     closeRolloverModal();
-                    showNotification(`Added ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${rolloverAmount.toFixed(2)} to this month's budget`, 'success');
+                    showNotification(`Added ${formatCurrencyAmount(rolloverAmount, mainCurrency)} to this month's budget`, 'success');
                     break;
                     
                 case 'save':
                     // Add to reserve fund
-                    rolloverData.reserveFund += rolloverAmount;
+                    rolloverData.reserveFund = roundToCurrency(rolloverData.reserveFund + rolloverAmount);
                     rolloverData.currentRollover.status = 'saved';
                     rolloverData.currentRollover.decision = 'save';
                     
                     // Add to history
-                    rolloverData.history.push({
+                    appendToRolloverHistory({
                         month: rolloverData.currentRollover.source,
                         year: new Date().getFullYear(),
                         amount: rolloverAmount,
@@ -9081,7 +9118,7 @@
                     saveRolloverData();
                     updateDashboard();
                     closeRolloverModal();
-                    showNotification(`Saved ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${rolloverAmount.toFixed(2)} to Reserve Fund`, 'success');
+                    showNotification(`Saved ${formatCurrencyAmount(rolloverAmount, mainCurrency)} to Reserve Fund`, 'success');
                     break;
                     
                 case 'allocate':
@@ -9096,7 +9133,7 @@
                     rolloverData.currentRollover.decision = 'carry_forward';
                     
                     // Add to history
-                    rolloverData.history.push({
+                    appendToRolloverHistory({
                         month: rolloverData.currentRollover.source,
                         year: new Date().getFullYear(),
                         amount: rolloverAmount,
@@ -9107,7 +9144,7 @@
                     saveRolloverData();
                     updateDashboard();
                     closeRolloverModal();
-                    showNotification(`Carried forward ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${rolloverAmount.toFixed(2)} as credit`, 'success');
+                    showNotification(`Carried forward ${formatCurrencyAmount(rolloverAmount, mainCurrency)} as credit`, 'success');
                     break;
             }
         }
@@ -9212,7 +9249,7 @@
             rolloverData.currentRollover.allocations = allocations;
             
             // Add to history
-            rolloverData.history.push({
+            appendToRolloverHistory({
                 month: rolloverData.currentRollover.source,
                 year: new Date().getFullYear(),
                 amount: rolloverData.currentRollover.amount,
@@ -9238,7 +9275,7 @@
             }
             
             monthlyBudget = budget;
-            localStorage.setItem('monthlyBudget', monthlyBudget);
+            localStorage.setItem('monthlyBudget', monthlyBudget.toString());
             updateDashboard();
             showNotification(t('notifications.budgetUpdated'), 'success');
         }
@@ -9420,12 +9457,16 @@
         
         function formatCurrencyAmount(amount, currency) {
             const symbol = CURRENCIES[currency]?.symbol || currency;
-            return `${symbol}${amount.toFixed(2)}`;
+            // Round before formatting to avoid floating point artefacts in the UI
+            return `${symbol}${roundToCurrency(amount).toFixed(2)}`;
         }
         
         function getConvertedAmount(amount, fromCurrency, toCurrency, rate) {
-            if (fromCurrency === toCurrency) return amount;
-            return amount * rate;
+            if (fromCurrency === toCurrency) {
+                return roundToCurrency(amount);
+            }
+            // Return normalised values so we never persist long floating fractions
+            return roundToCurrency(amount * rate);
         }
         
         // Get the amount in main currency for calculations
@@ -9472,14 +9513,16 @@
         function handleExpenseSubmit(e) {
             e.preventDefault();
             
-            const amount = parseFloat(document.getElementById('amount').value);
+            const amountInputValue = parseFloat(document.getElementById('amount').value);
+            // Normalise the amount up-front so the same value flows through summaries and storage
+            const amount = roundToCurrency(amountInputValue);
             const category = document.getElementById('category').value;
             const person = document.getElementById('person').value;
             const description = document.getElementById('description').value;
             const date = document.getElementById('date').value;
             const currency = document.getElementById('currency').value;
             
-            if (amount <= 0) {
+            if (!Number.isFinite(amount) || amount <= 0) {
                 showNotification('Amount must be greater than 0', 'error');
                 return;
             }
@@ -9785,17 +9828,19 @@
             });
             
             // Calculate total including recurring expenses that should be deducted
-            const recurringTotal = calculateMonthlyRecurringTotal(currentMonth, currentYear);
-            const expenseTotal = monthlyExpenses.reduce((total, expense) => total + getAmountInMainCurrency(expense), 0);
-            const monthlyTotal = expenseTotal + recurringTotal;
+            // Normalise dashboard totals once so charts and summaries stay in sync
+            const recurringTotal = roundToCurrency(calculateMonthlyRecurringTotal(currentMonth, currentYear));
+            const expenseTotal = roundToCurrency(monthlyExpenses.reduce((total, expense) => total + getAmountInMainCurrency(expense), 0));
+            const monthlyTotal = roundToCurrency(expenseTotal + recurringTotal);
+            const normalizedBudget = roundToCurrency(monthlyBudget);
             
             // Update budget display
             const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
-            document.getElementById('budgetAmount').textContent = `${currencySymbol}${monthlyBudget.toFixed(2)}`;
+            document.getElementById('budgetAmount').textContent = formatCurrencyAmount(normalizedBudget, mainCurrency);
             
             // Make monthly total clickable
             const monthlyTotalElement = document.getElementById('monthlyTotal');
-            monthlyTotalElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">${currencySymbol}${monthlyTotal.toFixed(2)}</span>`;
+            monthlyTotalElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">${formatCurrencyAmount(monthlyTotal, mainCurrency)}</span>`;
             monthlyTotalElement.title = "Click to see detailed breakdown of spent amount";
             
             // Show breakdown if there are recurring expenses - make clickable
@@ -9804,7 +9849,7 @@
                 expenseCountElement.innerHTML = `
                     <span style="cursor: pointer; text-decoration: underline;" onclick="showExpenseDetailsModal()">${monthlyExpenses.length} expense${monthlyExpenses.length !== 1 ? 's' : ''}</span><br>
                     <span style="font-size: 0.8em; color: var(--text-secondary);">
-                        Regular: ${currencySymbol}${expenseTotal.toFixed(2)} | Recurring: ${currencySymbol}${recurringTotal.toFixed(2)}
+                        Regular: ${formatCurrencyAmount(expenseTotal, mainCurrency)} | Recurring: ${formatCurrencyAmount(recurringTotal, mainCurrency)}
                     </span>
                 `;
             } else {
@@ -9823,13 +9868,13 @@
                 budgetFill.style.width = `${percentage}%`;
                 progressText.textContent = `${Math.round(percentage)}%`;
                 
-                const remaining = monthlyBudget - monthlyTotal;
+                const remaining = roundToCurrency(normalizedBudget - monthlyTotal);
                 if (remaining >= 0) {
-                    budgetStatus.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">?${remaining.toFixed(2)} remaining</span>`;
+                    budgetStatus.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">${formatCurrencyAmount(remaining, mainCurrency)} remaining</span>`;
                     budgetStatus.title = "Click to see remaining budget breakdown and upcoming recurring expenses";
                     budgetCard.classList.remove('budget-warning');
                 } else {
-                    budgetStatus.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">?${Math.abs(remaining).toFixed(2)} over budget</span>`;
+                    budgetStatus.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">${formatCurrencyAmount(Math.abs(remaining), mainCurrency)} over budget</span>`;
                     budgetStatus.title = "Click to see budget analysis and upcoming expenses";
                     budgetCard.classList.add('budget-warning');
                 }
@@ -9840,17 +9885,17 @@
             }
             
             // Update statistics
-            const avgDaily = monthlyExpenses.length > 0 ? monthlyTotal / new Date().getDate() : 0;
-            document.getElementById('avgDaily').textContent = `?${avgDaily.toFixed(2)}`;
+            const avgDaily = monthlyExpenses.length > 0 ? roundToCurrency(monthlyTotal / new Date().getDate()) : 0;
+            document.getElementById('avgDaily').textContent = formatCurrencyAmount(avgDaily, mainCurrency);
             
             // Calculate weekly average
-            const weeklyAvg = monthlyExpenses.length > 0 ? monthlyTotal / (new Date().getDate() / 7) : 0;
-            document.getElementById('weeklyAvg').textContent = `?${weeklyAvg.toFixed(2)}`;
+            const weeklyAvg = monthlyExpenses.length > 0 ? roundToCurrency(monthlyTotal / (new Date().getDate() / 7)) : 0;
+            document.getElementById('weeklyAvg').textContent = formatCurrencyAmount(weeklyAvg, mainCurrency);
             
             // Calculate top category
             const categoryTotals = {};
             monthlyExpenses.forEach(expense => {
-                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + expense.amount;
+                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + getAmountInMainCurrency(expense);
             });
             
             let topCategory = '-';
@@ -9872,7 +9917,7 @@
             const projectedElement = document.getElementById('projectedSpend');
             const projectionCard = document.getElementById('projectionCard');
             
-            projectedElement.textContent = `?${projection.totalProjected.toFixed(2)}`;
+            projectedElement.textContent = formatCurrencyAmount(projection.totalProjected, mainCurrency);
             
             // Color code based on budget status
             if (monthlyBudget > 0) {
@@ -10208,11 +10253,21 @@
             const projection = calculateBudgetProjection();
             const content = document.getElementById('projectionContent');
             
-            const budgetStatus = monthlyBudget > 0 ? 
+            const normalizedBudget = roundToCurrency(monthlyBudget);
+            const budgetStatus = normalizedBudget > 0 ? 
                 projection.budgetRemaining >= 0 ? 
-                    `? Under budget by ?${projection.budgetRemaining.toFixed(2)}` :
-                    `?? Over budget by ?${Math.abs(projection.budgetRemaining).toFixed(2)}` :
+                    `? Under budget by ${formatCurrencyAmount(projection.budgetRemaining, mainCurrency)}` :
+                    `?? Over budget by ${formatCurrencyAmount(Math.abs(projection.budgetRemaining), mainCurrency)}` :
                 'No budget set';
+
+            // Pre-format monetary values once so the template stays tidy
+            const formattedCurrentSpent = formatCurrencyAmount(projection.currentSpent, mainCurrency);
+            const formattedProjectedRegular = formatCurrencyAmount(projection.projectedRegular, mainCurrency);
+            const formattedRemainingRecurring = formatCurrencyAmount(projection.remainingRecurring, mainCurrency);
+            const formattedTotalProjected = formatCurrencyAmount(projection.totalProjected, mainCurrency);
+            const formattedDailyAverage = formatCurrencyAmount(projection.dailyAverage, mainCurrency);
+            const recommendedDaily = normalizedBudget > 0 ? roundToCurrency((normalizedBudget - projection.currentSpent - projection.remainingRecurring) / Math.max(1, projection.daysRemaining)) : null;
+            const formattedRecommendedDaily = recommendedDaily !== null ? formatCurrencyAmount(recommendedDaily, mainCurrency) : 'N/A';
                 
             content.innerHTML = `
                 <div style="display: grid; gap: 1.5rem;">
@@ -10221,20 +10276,20 @@
                         <div style="display: grid; gap: 1rem; margin-top: 1rem;">
                             <div class="projection-row">
                                 <span>?? Current Spending:</span>
-                                <strong>?${projection.currentSpent.toFixed(2)}</strong>
+                                <strong>${formattedCurrentSpent}</strong>
                             </div>
                             <div class="projection-row">
                                 <span>?? Projected Regular:</span>
-                                <strong>?${projection.projectedRegular.toFixed(2)}</strong>
+                                <strong>${formattedProjectedRegular}</strong>
                             </div>
                             <div class="projection-row">
                                 <span>?? Remaining Recurring:</span>
-                                <strong>?${projection.remainingRecurring.toFixed(2)}</strong>
+                                <strong>${formattedRemainingRecurring}</strong>
                             </div>
                             <hr style="border: 1px solid var(--border-color); margin: 0.5rem 0;">
                             <div class="projection-row" style="font-size: 1.1rem; font-weight: 600;">
                                 <span>?? Total Projected:</span>
-                                <strong>?${projection.totalProjected.toFixed(2)}</strong>
+                                <strong>${formattedTotalProjected}</strong>
                             </div>
                             <div class="projection-row" style="color: ${projection.budgetRemaining >= 0 ? 'var(--success-color)' : 'var(--danger-color)'};">
                                 <span>?? Budget Status:</span>
@@ -10246,8 +10301,8 @@
                     <div class="projection-insights">
                         <h3>?? Smart Insights</h3>
                         <ul style="margin: 1rem 0; padding-left: 1.5rem; color: var(--text-secondary);">
-                            <li>Daily average: ?${projection.dailyAverage.toFixed(2)} (${projection.daysRemaining} days left)</li>
-                            <li>Recommended daily budget: ?${monthlyBudget > 0 ? ((monthlyBudget - projection.currentSpent - projection.remainingRecurring) / Math.max(1, projection.daysRemaining)).toFixed(2) : 'N/A'}</li>
+                            <li>Daily average: ${formattedDailyAverage} (${projection.daysRemaining} days left)</li>
+                            <li>Recommended daily budget: ${formattedRecommendedDaily}</li>
                             <li>Track your spending to stay on budget!</li>
                         </ul>
                     </div>
@@ -11035,16 +11090,18 @@
                 dailyAverage = currentSpent / dayOfMonth;
             }
             
-            const totalProjected = currentSpent + projectedRegular + remainingRecurring;
+            // Normalise projection outputs to keep UI and summary logic aligned
+            const totalProjected = roundToCurrency(currentSpent + projectedRegular + remainingRecurring);
+            const budgetRemaining = roundToCurrency(monthlyBudget - totalProjected);
             
             return {
-                currentSpent,
-                projectedRegular,
-                remainingRecurring,
+                currentSpent: roundToCurrency(currentSpent),
+                projectedRegular: roundToCurrency(projectedRegular),
+                remainingRecurring: roundToCurrency(remainingRecurring),
                 totalProjected,
                 daysRemaining: daysInMonth - dayOfMonth,
-                dailyAverage,
-                budgetRemaining: monthlyBudget - totalProjected,
+                dailyAverage: roundToCurrency(dailyAverage),
+                budgetRemaining,
                 confidence: dayOfMonth / daysInMonth // Confidence increases as month progresses
             };
         }
@@ -11065,7 +11122,7 @@
         // Uses Document Fragment for better performance
         function renderExpensesList(expensesToRender = null) {
             const expensesList = document.getElementById('expensesList');
-            const expenses = expensesToRender || filteredExpenses;
+            const expenses = Array.isArray(expensesToRender) ? expensesToRender : sortedFilteredExpenses;
             
             if (expenses.length === 0) {
                 let message = 'No expenses found';
@@ -11084,14 +11141,12 @@
                 return;
             }
             
-            // Sort expenses by date (newest first)
-            const sortedExpenses = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
-            
             // Use Document Fragment for better performance (batch DOM updates)
             const fragment = document.createDocumentFragment();
             
             // Create expense items securely
-            sortedExpenses.forEach(expense => {
+            // Data is already sorted upstream, so we can render in order without additional copies
+            expenses.forEach(expense => {
                 try {
                     const expenseElement = createExpenseElement(expense);
                     fragment.appendChild(expenseElement);
@@ -11275,21 +11330,19 @@
         // Render expenses table
         function renderExpensesTable(expensesToRender = null) {
             const expensesTableBody = document.getElementById('expensesTableBody');
-            const expenses = expensesToRender || filteredExpenses;
+            const expenses = Array.isArray(expensesToRender) ? expensesToRender : sortedFilteredExpenses;
             
             if (expenses.length === 0) {
                 expensesTableBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 2rem;">No expenses found</td></tr>';
                 return;
             }
             
-            // Sort expenses by date (newest first)
-            const sortedExpenses = [...expenses].sort((a, b) => new Date(b.date) - new Date(a.date));
-            
             // Clear existing content
             expensesTableBody.innerHTML = '';
             
             // Create table rows
-            sortedExpenses.forEach(expense => {
+            // Data is already sorted upstream for consistency between views
+            expenses.forEach(expense => {
                 const row = createExpenseTableRow(expense);
                 expensesTableBody.appendChild(row);
             });
@@ -11435,7 +11488,7 @@
             
             // Re-render expenses in the new view
             if (style === 'table') {
-                renderExpensesTable(filteredExpenses);
+                renderExpensesTable(sortedFilteredExpenses);
             } else {
                 renderExpensesWithPagination();
             }
@@ -12608,26 +12661,31 @@
             });
             
             // Calculate total using converted amounts for foreign currencies
-            const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + getAmountInMainCurrency(expense), 0);
-            const remaining = monthlyBudget - monthlyTotal;
+            // Round totals once to keep downstream formatting consistent
+            const monthlyTotal = roundToCurrency(
+                monthlyExpenses.reduce((total, expense) => total + getAmountInMainCurrency(expense), 0)
+            );
+            // Normalise stored budget value in case it was persisted with extra decimals
+            const normalizedBudget = roundToCurrency(monthlyBudget);
+            // Keep remaining in sync with the rounded totals so UI + calculations align
+            const remaining = roundToCurrency(normalizedBudget - monthlyTotal);
             
             // Update main page elements with clickable amounts
-            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
-            document.getElementById('budgetAmountMain').textContent = `${currencySymbol}${monthlyBudget.toFixed(2)}`;
+            document.getElementById('budgetAmountMain').textContent = formatCurrencyAmount(normalizedBudget, mainCurrency);
             
             // Make spent amount clickable
             const spentElement = document.getElementById('spentAmountMain');
-            spentElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">${currencySymbol}${monthlyTotal.toFixed(2)}</span>`;
+            spentElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">${formatCurrencyAmount(monthlyTotal, mainCurrency)}</span>`;
             spentElement.title = "Click to see detailed breakdown of spent amount";
             
             // Make remaining amount clickable
             const remainingElement = document.getElementById('remainingAmountMain');
-            remainingElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">${currencySymbol}${remaining.toFixed(2)}</span>`;
+            remainingElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">${formatCurrencyAmount(remaining, mainCurrency)}</span>`;
             remainingElement.title = "Click to see remaining budget breakdown and upcoming recurring expenses";
             
             // Make monthly total clickable too
             const monthlyTotalMainElement = document.getElementById('monthlyTotalMain');
-            monthlyTotalMainElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">?${monthlyTotal.toFixed(2)}</span>`;
+            monthlyTotalMainElement.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showSpentBreakdownModal()">${formatCurrencyAmount(monthlyTotal, mainCurrency)}</span>`;
             monthlyTotalMainElement.title = "Click to see detailed breakdown of this month's expenses";
             
             // Make main page expense count clickable
@@ -12647,11 +12705,11 @@
                 budgetTextMain.textContent = `${Math.round(percentage)}%`;
                 
                 if (remaining >= 0) {
-                    budgetStatusMain.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">${currencySymbol}${remaining.toFixed(2)} remaining this month</span>`;
+                    budgetStatusMain.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">${formatCurrencyAmount(remaining, mainCurrency)} remaining this month</span>`;
                     budgetStatusMain.title = "Click to see remaining budget breakdown and upcoming recurring expenses";
                     budgetSummary.classList.remove('warning-budget');
                 } else {
-                    budgetStatusMain.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">${currencySymbol}${Math.abs(remaining).toFixed(2)} over budget this month</span>`;
+                    budgetStatusMain.innerHTML = `<span style="cursor: pointer; text-decoration: underline;" onclick="showRemainingBreakdownModal()">${formatCurrencyAmount(Math.abs(remaining), mainCurrency)} over budget this month</span>`;
                     budgetStatusMain.title = "Click to see budget analysis and upcoming expenses";
                     budgetSummary.classList.add('warning-budget');
                 }
@@ -12663,8 +12721,8 @@
             }
             
             // Update quick stats
-            const avgDaily = monthlyExpenses.length > 0 ? monthlyTotal / new Date().getDate() : 0;
-            document.getElementById('avgDailyMain').textContent = `${currencySymbol}${avgDaily.toFixed(2)}`;
+            const avgDaily = monthlyExpenses.length > 0 ? roundToCurrency(monthlyTotal / new Date().getDate()) : 0;
+            document.getElementById('avgDailyMain').textContent = formatCurrencyAmount(avgDaily, mainCurrency);
             
             // Calculate top category for main page
             const categoryTotals = {};
@@ -12830,25 +12888,36 @@
                 return categoryMatch && personMatch && searchMatch;
             });
             
-            totalFilteredExpenses = filteredExpenses.length;
+            // Cache a sorted projection once so pagination changes do not repeat the sort work
+            sortedFilteredExpenses = filteredExpenses
+                .slice()
+                .sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            totalFilteredExpenses = sortedFilteredExpenses.length;
             renderExpensesWithPagination();
         }
 
         // Pagination Functions
+        // Helper keeps pagination math centralised and consistent
+        function getTotalPages(totalCount = totalFilteredExpenses) {
+            return totalCount <= 0 ? 1 : Math.ceil(totalCount / itemsPerPage);
+        }
+
         function renderExpensesWithPagination() {
             // For table view, show all expenses without pagination
             if (currentViewStyle === 'table') {
-                renderExpensesTable(filteredExpenses);
+                renderExpensesTable(sortedFilteredExpenses);
                 // Hide pagination in table view
                 document.getElementById('paginationTop').style.display = 'none';
                 document.getElementById('paginationBottom').style.display = 'none';
                 return;
             }
             
-            const totalPages = Math.ceil(totalFilteredExpenses / itemsPerPage);
+            const totalPages = getTotalPages();
+            // Clamp currentPage so deleting items does not leave us on an empty slice
+            currentPage = Math.min(Math.max(currentPage, 1), totalPages);
             const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = startIndex + itemsPerPage;
-            const paginatedExpenses = filteredExpenses.slice(startIndex, endIndex);
+            const paginatedExpenses = sortedFilteredExpenses.slice(startIndex, startIndex + itemsPerPage);
             
             // Update pagination controls
             updatePaginationControls(totalPages);
@@ -12890,7 +12959,7 @@
         }
 
         function changePage(direction) {
-            const totalPages = Math.ceil(totalFilteredExpenses / itemsPerPage);
+            const totalPages = getTotalPages();
             const newPage = currentPage + direction;
             
             if (newPage >= 1 && newPage <= totalPages) {
