@@ -7310,11 +7310,45 @@
             return activeOnly ? recurringExpenses.filter(expense => expense?.isActive !== false) : [...recurringExpenses];
         }
 
-        // Ensure all monetary math uses the same rounding to avoid float drift
+        /**
+         * Currency rounding function with robust floating-point handling
+         * Ensures consistent rounding across all monetary calculations to prevent accumulation errors
+         * 
+         * @param {number|string} value - The value to round
+         * @param {number} precision - Decimal places (default: 2 for currency)
+         * @returns {number} Rounded value with specified precision
+         * 
+         * Improvements:
+         * - Handles NaN and Infinity cases safely
+         * - Uses proper epsilon handling for floating-point precision
+         * - Validates input to prevent calculation errors
+         */
         function roundToCurrency(value, precision = 2) {
-            const numericValue = Number(value) || 0;
-            const factor = 10 ** precision;
-            return Math.round((numericValue + Number.EPSILON) * factor) / factor;
+            // Validate input - handle null, undefined, empty strings, and invalid numbers
+            if (value === null || value === undefined || value === '') {
+                return 0;
+            }
+            
+            const numericValue = Number(value);
+            
+            // Handle invalid numbers (NaN, Infinity) safely
+            if (!isFinite(numericValue)) {
+                console.warn('roundToCurrency: Invalid number provided:', value);
+                return 0;
+            }
+            
+            // Ensure precision is a valid integer
+            const validPrecision = Math.max(0, Math.min(precision, 10)); // Limit precision to 0-10
+            
+            // Calculate rounding factor
+            const factor = Math.pow(10, validPrecision);
+            
+            // Use proper epsilon scaling for floating-point precision
+            // Scale epsilon based on the magnitude of the value
+            const scaledEpsilon = Number.EPSILON * Math.max(1, Math.abs(numericValue));
+            
+            // Round with proper handling of negative values
+            return Math.round((numericValue + (numericValue >= 0 ? scaledEpsilon : -scaledEpsilon)) * factor) / factor;
         }
         
         // Function to update expense summary panel
@@ -7842,80 +7876,192 @@
             localStorage.setItem('lastCheckedMonth', currentMonthKey);
         }
         
+        /**
+         * Process rollover for a single completed month
+         * Handles month-end surplus (positive balance) and deficit (negative balance)
+         * 
+         * @param {Date} monthDate - Date representing the completed month
+         * 
+         * Improvements:
+         * - Validates month balance before processing
+         * - Prevents duplicate rollover prompts for same month
+         * - Ensures all amounts are rounded before storage
+         * - Tracks cumulative rollover totals correctly
+         */
         function processSingleMonthRollover(monthDate) {
-            const monthName = monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-            const monthBalance = calculatePreviousMonthBalance(monthDate);
-            
-            // Handle negative balance (overspending)
-            if (monthBalance < 0 && monthlyBudget > 0) {
-                // Offer to deduct from current month or reserve fund
-                if (rolloverData.reserveFund >= Math.abs(monthBalance)) {
-                    if (confirm(`You overspent by ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${Math.abs(monthBalance).toFixed(2)} in ${monthName}. Deduct from Reserve Fund?`)) {
-                        rolloverData.reserveFund += monthBalance; // monthBalance is negative
-                        appendToRolloverHistory({
-                            month: monthName,
-                            year: monthDate.getFullYear(),
-                            amount: Math.abs(monthBalance),
-                            decision: 'overspent_deducted_from_reserve',
-                            timestamp: Date.now()
-                        });
-                        saveRolloverData();
-                        updateDashboard();
-                        showNotification(`Deducted ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${Math.abs(monthBalance).toFixed(2)} from Reserve Fund`, 'warning');
-                    }
-                }
+            // Validate input
+            if (!monthDate || !(monthDate instanceof Date) || isNaN(monthDate.getTime())) {
+                console.error('processSingleMonthRollover: Invalid date provided', monthDate);
                 return;
             }
             
-            // Handle positive balance
-            // Only raise a new rollover if we do not already have a pending decision for this month
-            const alreadyPendingForMonth = rolloverData.currentRollover.source === monthName &&
-                rolloverData.currentRollover.status === 'pending';
+            const monthName = monthDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+            const monthKey = `${monthDate.getFullYear()}-${monthDate.getMonth()}`;
             
-            if (monthBalance > 0 && !alreadyPendingForMonth) {
-                // Set up rollover data
-                rolloverData.currentRollover = {
-                    amount: monthBalance,
-                    source: monthName,
-                    status: 'pending',
-                    decision: null,
-                    timestamp: Date.now()
-                };
-                saveRolloverData();
+            // Calculate month-end balance (rounded to prevent floating-point errors)
+            const monthBalance = roundToCurrency(calculatePreviousMonthBalance(monthDate));
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            
+            // Handle negative balance (overspending / deficit)
+            if (monthBalance < 0) {
+                const overspentAmount = roundToCurrency(Math.abs(monthBalance));
                 
-                // Check if auto-rollover is enabled
-                if (rolloverData.preferences.autoRollover && rolloverData.preferences.defaultAction !== 'prompt') {
-                    handleAutoRollover();
-                } else {
-                    // Show rollover modal after a slight delay
-                    setTimeout(() => showRolloverModal(), 1000);
+                // If reserve fund exists and has sufficient balance, offer deduction
+                const reserveFundAmount = roundToCurrency(rolloverData.reserveFund || 0);
+                if (reserveFundAmount >= overspentAmount && monthlyBudget > 0) {
+                    // Ask user if they want to deduct overspending from reserve fund
+                    const confirmMessage = `You overspent by ${currencySymbol}${overspentAmount.toFixed(2)} in ${monthName}. Deduct from Reserve Fund?`;
+                    
+                    if (confirm(confirmMessage)) {
+                        // Deduct overspending from reserve fund (monthBalance is already negative)
+                        rolloverData.reserveFund = roundToCurrency(reserveFundAmount + monthBalance);
+                        
+                        // Record this decision in history
+                        appendToRolloverHistory({
+                            month: monthName,
+                            monthKey: monthKey, // Store key for duplicate detection
+                            year: monthDate.getFullYear(),
+                            monthIndex: monthDate.getMonth(),
+                            amount: overspentAmount,
+                            decision: 'overspent_deducted_from_reserve',
+                            timestamp: Date.now(),
+                            previousReserveFund: reserveFundAmount,
+                            newReserveFund: rolloverData.reserveFund
+                        });
+                        
+                        saveRolloverData();
+                        updateDashboard();
+                        showNotification(
+                            `Deducted ${currencySymbol}${overspentAmount.toFixed(2)} from Reserve Fund`, 
+                            'warning'
+                        );
+                    }
+                }
+                // If overspending but no reserve fund or insufficient funds, just record it
+                else {
+                    appendToRolloverHistory({
+                        month: monthName,
+                        monthKey: monthKey,
+                        year: monthDate.getFullYear(),
+                        monthIndex: monthDate.getMonth(),
+                        amount: overspentAmount,
+                        decision: 'overspent_no_action',
+                        timestamp: Date.now()
+                    });
+                    saveRolloverData();
+                }
+                return; // Exit after handling overspending
+            }
+            
+            // Handle positive balance (surplus / money left over)
+            // Only process if there's actually a surplus (balance > 0)
+            if (monthBalance > 0) {
+                // Check if we already processed this month to prevent duplicate prompts
+                // Check both by name and by key to handle edge cases
+                const alreadyPendingForMonth = rolloverData.currentRollover.source === monthName &&
+                    rolloverData.currentRollover.status === 'pending';
+                
+                // Also check history to avoid reprocessing
+                const alreadyProcessed = rolloverData.history.some(entry => 
+                    entry.monthKey === monthKey || entry.month === monthName
+                );
+                
+                // Only proceed if this month hasn't been processed yet
+                if (!alreadyPendingForMonth && !alreadyProcessed) {
+                    const roundedBalance = roundToCurrency(monthBalance);
+                    
+                    // Set up rollover data with rounded amount
+                    rolloverData.currentRollover = {
+                        amount: roundedBalance,
+                        source: monthName,
+                        monthKey: monthKey, // Store key for duplicate detection
+                        year: monthDate.getFullYear(),
+                        monthIndex: monthDate.getMonth(),
+                        status: 'pending',
+                        decision: null,
+                        timestamp: Date.now()
+                    };
+                    saveRolloverData();
+                    
+                    // Check if auto-rollover is enabled
+                    if (rolloverData.preferences.autoRollover && rolloverData.preferences.defaultAction !== 'prompt') {
+                        handleAutoRollover();
+                    } else {
+                        // Show rollover modal after a slight delay to let UI settle
+                        setTimeout(() => showRolloverModal(), 1000);
+                    }
                 }
             }
         }
         
+        /**
+         * Calculate month-end balance for a specific month
+         * Used for rollover calculations to determine surplus or deficit
+         * 
+         * @param {Date} monthDate - Date representing the month to calculate balance for
+         * @returns {number} Balance (positive = surplus, negative = deficit), rounded to 2 decimals
+         * 
+         * Improvements:
+         * - Ensures all calculations use rounded currency values
+         * - Validates all expense amounts before summing
+         * - Handles missing or invalid data gracefully
+         * - Returns rounded result to prevent floating-point accumulation errors
+         */
         function calculatePreviousMonthBalance(monthDate) {
+            // Validate input date
+            if (!monthDate || !(monthDate instanceof Date) || isNaN(monthDate.getTime())) {
+                console.error('calculatePreviousMonthBalance: Invalid date provided', monthDate);
+                return 0;
+            }
+            
             const month = monthDate.getMonth();
             const year = monthDate.getFullYear();
             
-            // Get expenses for the previous month
+            // Filter expenses for the specific month/year
+            // Use strict date comparison to avoid timezone issues
             const monthlyExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate.getMonth() === month && expenseDate.getFullYear() === year;
+                if (!expense || !expense.date) return false;
+                
+                try {
+                    const expenseDate = new Date(expense.date);
+                    // Ensure valid date
+                    if (isNaN(expenseDate.getTime())) return false;
+                    
+                    // Match month and year exactly
+                    return expenseDate.getMonth() === month && 
+                           expenseDate.getFullYear() === year;
+                } catch (e) {
+                    console.warn('calculatePreviousMonthBalance: Error processing expense date', expense, e);
+                    return false;
+                }
             });
             
-            // Calculate total expenses with proper currency conversion
-            const totalExpenses = monthlyExpenses.reduce((total, expense) => {
-                const amount = getAmountInMainCurrency(expense);
-                // Validate amount is a number
-                return total + (isNaN(amount) ? 0 : amount);
-            }, 0);
+            // Calculate total expenses with proper currency conversion and rounding
+            // Sum each expense amount individually and round to prevent accumulation errors
+            let totalExpenses = 0;
+            for (const expense of monthlyExpenses) {
+                try {
+                    const amount = getAmountInMainCurrency(expense);
+                    // Validate amount before adding
+                    if (isNaN(amount) || !isFinite(amount)) {
+                        console.warn('calculatePreviousMonthBalance: Invalid amount in expense', expense);
+                        continue;
+                    }
+                    // Round each addition to maintain precision
+                    totalExpenses = roundToCurrency(totalExpenses + amount);
+                } catch (e) {
+                    console.error('calculatePreviousMonthBalance: Error processing expense', expense, e);
+                }
+            }
             
-            // Calculate budget for that month (assume same as current if not stored separately)
-            const monthBudget = monthlyBudget; // In a real implementation, you might store monthly budgets
+            // Get budget for that month
+            // TODO: In future, store monthly budgets separately for historical accuracy
+            // For now, use current monthly budget as fallback
+            const monthBudget = roundToCurrency(monthlyBudget || 0);
             
-            // Return actual balance (positive for surplus, negative for deficit)
-            // Changed from Math.max(0, ...) to allow negative balances to be tracked
-            const balance = monthBudget - totalExpenses;
+            // Calculate and return rounded balance
+            // Positive = surplus (money left over), Negative = deficit (overspending)
+            const balance = roundToCurrency(monthBudget - totalExpenses);
             return balance;
         }
         
@@ -9469,44 +9615,76 @@
             return roundToCurrency(amount * rate);
         }
         
-        // Get the amount in main currency for calculations
+        /**
+         * Get expense amount converted to main currency for calculations
+         * Ensures all monetary calculations use consistent currency base
+         * 
+         * @param {Object} expense - Expense object with amount and optional currency
+         * @returns {number} Amount in main currency, rounded to 2 decimals
+         * 
+         * Improvements:
+         * - Always rounds result to prevent accumulation of floating-point errors
+         * - Validates all inputs thoroughly
+         * - Prioritizes pre-converted amounts when available
+         * - Handles edge cases (negative amounts, zero amounts, missing data)
+         */
         function getAmountInMainCurrency(expense) {
-            // Validate expense object
-            if (!expense || typeof expense !== 'object') {
+            // Validate expense object structure
+            if (!expense || typeof expense !== 'object' || Array.isArray(expense)) {
                 console.error('Invalid expense object passed to getAmountInMainCurrency', expense);
                 return 0;
             }
             
-            // Validate amount exists and is a number
+            // Validate amount exists and is a valid number
             const amount = parseFloat(expense.amount);
-            if (isNaN(amount)) {
-                console.error('Invalid amount in expense:', expense);
+            if (isNaN(amount) || !isFinite(amount)) {
+                console.error('Invalid or non-finite amount in expense:', expense);
                 return 0;
             }
             
-            // If no currency specified or same as main currency, return the amount
+            // If no currency specified or same as main currency, return rounded amount
+            // Always round to ensure consistency even for same-currency amounts
             if (!expense.currency || expense.currency === mainCurrency) {
-                return amount;
+                return roundToCurrency(amount);
             }
             
-            // If converted amount exists, validate and use it
+            // Priority 1: Use pre-calculated converted amount if available and valid
             if (expense.convertedAmount !== undefined && expense.convertedAmount !== null) {
                 const converted = parseFloat(expense.convertedAmount);
-                if (!isNaN(converted)) {
-                    return converted;
+                if (!isNaN(converted) && isFinite(converted)) {
+                    return roundToCurrency(converted);
                 }
-                console.warn('Invalid convertedAmount, falling back to original with warning', expense);
+                console.warn('Invalid convertedAmount found, attempting recalculation', expense);
             }
             
-            // If exchange rate exists, calculate conversion
-            if (expense.exchangeRate && !isNaN(parseFloat(expense.exchangeRate))) {
+            // Priority 2: Calculate using exchange rate if available
+            if (expense.exchangeRate !== undefined && expense.exchangeRate !== null) {
                 const rate = parseFloat(expense.exchangeRate);
-                return amount * rate;
+                if (!isNaN(rate) && isFinite(rate) && rate > 0) {
+                    const calculated = amount * rate;
+                    return roundToCurrency(calculated);
+                }
+                console.warn('Invalid exchange rate found', expense);
             }
             
-            // Last resort: use original amount but log warning
-            console.warn(`No valid conversion found for expense with currency ${expense.currency}, using original amount`, expense);
-            return amount;
+            // Priority 3: Try to get rate from exchangeRates cache
+            if (exchangeRates && exchangeRates[expense.currency] && exchangeRates[mainCurrency]) {
+                try {
+                    // Calculate cross-rate if both currencies are in cache
+                    const sourceRate = parseFloat(exchangeRates[expense.currency]);
+                    const targetRate = parseFloat(exchangeRates[mainCurrency]);
+                    if (!isNaN(sourceRate) && !isNaN(targetRate) && sourceRate > 0 && targetRate > 0) {
+                        const calculated = (amount / sourceRate) * targetRate;
+                        return roundToCurrency(calculated);
+                    }
+                } catch (e) {
+                    console.warn('Error calculating from exchange rate cache:', e);
+                }
+            }
+            
+            // Last resort: use original amount but log warning for debugging
+            console.warn(`No valid conversion found for expense with currency ${expense.currency}, using original amount. This may cause calculation inconsistencies.`, expense);
+            return roundToCurrency(amount); // Still round even when using original
         }
         
         // Handle expense form submission
@@ -11002,73 +11180,142 @@
             document.getElementById('expenseDetailsModal').style.display = 'none';
         }
 
-        // Smart budget projection - predict monthly spending based on current trends
+        /**
+         * Smart budget projection - predicts monthly spending based on current trends
+         * Uses spending velocity, recurring expenses, and day-of-week patterns
+         * 
+         * @returns {Object} Projection object with current spending, projections, and recommendations
+         * 
+         * Improvements:
+         * - All monetary calculations use rounded values
+         * - Handles edge cases (start of month, no expenses, etc.)
+         * - Validates inputs before calculations
+         * - Provides confidence score based on data availability
+         */
         function calculateBudgetProjection() {
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
             const today = new Date();
+            const currentMonth = today.getMonth();
+            const currentYear = today.getFullYear();
             const dayOfMonth = today.getDate();
             const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
             
-            // Calculate current month's spending with proper currency conversion
+            // Validate we have valid date information
+            if (dayOfMonth < 1 || dayOfMonth > daysInMonth) {
+                console.warn('calculateBudgetProjection: Invalid day of month', dayOfMonth);
+                return {
+                    currentSpent: 0,
+                    projectedRegular: 0,
+                    remainingRecurring: 0,
+                    totalProjected: 0,
+                    daysRemaining: daysInMonth,
+                    dailyAverage: 0,
+                    budgetRemaining: roundToCurrency(monthlyBudget || 0),
+                    confidence: 0
+                };
+            }
+            
+            // Filter expenses for current month with proper date validation
             const monthlyExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
-            });
-            
-            const currentSpent = monthlyExpenses.reduce((total, expense) => {
-                return total + getAmountInMainCurrency(expense);
-            }, 0);
-            
-            // Calculate remaining recurring expenses for the month (optimized)
-            let remainingRecurring = 0;
-            const monthEnd = new Date(currentYear, currentMonth + 1, 0);
-            
-            recurringExpenses.forEach(recurring => {
-                if (!recurring.isActive) return;
+                if (!expense || !expense.date) return false;
                 
-                // Get the next due date
-                const baseDate = recurring.lastProcessedDate || recurring.startDate || recurring.date;
-                if (!baseDate) return;
-                
-                let nextDue = calculateNextDueDate(baseDate, recurring.frequency);
-                
-                // Count all remaining occurrences in current month
-                const maxIterations = 100; // Safety limit
-                let iterations = 0;
-                
-                while (nextDue.getMonth() === currentMonth && 
-                       nextDue.getFullYear() === currentYear && 
-                       nextDue > today && 
-                       nextDue <= monthEnd &&
-                       iterations < maxIterations) {
-                    remainingRecurring += recurring.amount;
-                    nextDue = calculateNextDueDate(nextDue.toISOString().split('T')[0], recurring.frequency);
-                    iterations++;
+                try {
+                    const expenseDate = new Date(expense.date);
+                    if (isNaN(expenseDate.getTime())) return false;
+                    
+                    return expenseDate.getMonth() === currentMonth && 
+                           expenseDate.getFullYear() === currentYear;
+                } catch (e) {
+                    return false;
                 }
             });
             
-            // Improved projection that considers spending patterns
+            // Calculate current month's spending with proper currency conversion and rounding
+            // Use iterative sum with rounding to prevent floating-point accumulation errors
+            let currentSpent = 0;
+            for (const expense of monthlyExpenses) {
+                const amount = getAmountInMainCurrency(expense);
+                if (isNaN(amount) || !isFinite(amount)) continue;
+                currentSpent = roundToCurrency(currentSpent + amount);
+            }
+            
+            // Calculate remaining recurring expenses for the month (optimized with rounding)
+            let remainingRecurring = 0;
+            const monthEnd = new Date(currentYear, currentMonth + 1, 0);
+            
+            // Iterate through active recurring expenses and calculate remaining occurrences
+            recurringExpenses.forEach(recurring => {
+                if (!recurring.isActive) return;
+                
+                // Get the next due date (use most reliable date source)
+                const baseDate = recurring.lastProcessedDate || recurring.startDate || recurring.date;
+                if (!baseDate) return;
+                
+                try {
+                    let nextDue = calculateNextDueDate(baseDate, recurring.frequency);
+                    const recurringAmount = roundToCurrency(recurring.amount || 0);
+                    
+                    // Count all remaining occurrences in current month
+                    const maxIterations = 100; // Safety limit to prevent infinite loops
+                    let iterations = 0;
+                    
+                    while (nextDue.getMonth() === currentMonth && 
+                           nextDue.getFullYear() === currentYear && 
+                           nextDue > today && 
+                           nextDue <= monthEnd &&
+                           iterations < maxIterations) {
+                        // Round each addition to prevent floating-point accumulation
+                        remainingRecurring = roundToCurrency(remainingRecurring + recurringAmount);
+                        nextDue = calculateNextDueDate(nextDue.toISOString().split('T')[0], recurring.frequency);
+                        iterations++;
+                    }
+                    
+                    if (iterations >= maxIterations) {
+                        console.warn('calculateBudgetProjection: Hit iteration limit for recurring expense', recurring);
+                    }
+                } catch (e) {
+                    console.error('calculateBudgetProjection: Error processing recurring expense', recurring, e);
+                }
+            });
+            
+            // Improved projection that considers spending patterns (weekday vs weekend)
+            // Only calculate if we have some data (not at start of month)
             let dailyAverage = 0;
             let projectedRegular = 0;
             
-            if (dayOfMonth > 0) {
-                // Calculate weekday vs weekend spending patterns
-                const weekdaySpending = monthlyExpenses.filter(e => {
-                    const day = new Date(e.date).getDay();
-                    return day !== 0 && day !== 6; // Not Sunday or Saturday
-                }).reduce((sum, e) => sum + getAmountInMainCurrency(e), 0);
+            if (dayOfMonth > 0 && monthlyExpenses.length > 0) {
+                // Calculate weekday vs weekend spending patterns with proper rounding
+                let weekdaySpending = 0;
+                let weekdayCount = 0;
+                let weekendCount = 0;
                 
-                const weekendSpending = currentSpent - weekdaySpending;
+                // Separate weekday and weekend expenses with rounded calculations
+                monthlyExpenses.forEach(expense => {
+                    try {
+                        const expenseDate = new Date(expense.date);
+                        if (isNaN(expenseDate.getTime())) return;
+                        
+                        const day = expenseDate.getDay();
+                        const amount = getAmountInMainCurrency(expense);
+                        
+                        if (isNaN(amount) || !isFinite(amount)) return;
+                        
+                        // Sunday (0) or Saturday (6) = weekend, otherwise weekday
+                        if (day === 0 || day === 6) {
+                            weekendCount++;
+                        } else {
+                            weekdaySpending = roundToCurrency(weekdaySpending + amount);
+                            weekdayCount++;
+                        }
+                    } catch (e) {
+                        console.warn('calculateBudgetProjection: Error processing expense for pattern analysis', expense, e);
+                    }
+                });
                 
-                const weekdaysElapsed = monthlyExpenses.filter(e => {
-                    const day = new Date(e.date).getDay();
-                    return day !== 0 && day !== 6;
-                }).length;
+                // Calculate weekend spending as difference (rounded)
+                const weekendSpending = roundToCurrency(currentSpent - weekdaySpending);
+                const weekendsElapsed = dayOfMonth - weekdayCount;
                 
-                const weekendsElapsed = dayOfMonth - weekdaysElapsed;
-                
-                // Calculate remaining weekdays and weekends
+                // Calculate remaining weekdays and weekends in the month
                 let remainingWeekdays = 0;
                 let remainingWeekends = 0;
                 
@@ -11082,17 +11329,44 @@
                     }
                 }
                 
-                // Project based on pattern
-                const weekdayAvg = weekdaysElapsed > 0 ? weekdaySpending / weekdaysElapsed : currentSpent / dayOfMonth;
-                const weekendAvg = weekendsElapsed > 0 ? weekendSpending / weekendsElapsed : currentSpent / dayOfMonth;
+                // Calculate averages and projections with proper rounding
+                // Use fallback to overall average if no specific pattern data available
+                let weekdayAvg = 0;
+                let weekendAvg = 0;
                 
-                projectedRegular = (weekdayAvg * remainingWeekdays) + (weekendAvg * remainingWeekends);
-                dailyAverage = currentSpent / dayOfMonth;
+                if (weekdayCount > 0 && weekendsElapsed > 0) {
+                    // Both patterns available - use specific averages
+                    weekdayAvg = roundToCurrency(weekdaySpending / weekdayCount);
+                    weekendAvg = roundToCurrency(weekendSpending / weekendsElapsed);
+                } else if (dayOfMonth > 0) {
+                    // Fallback to overall daily average
+                    const overallAvg = roundToCurrency(currentSpent / dayOfMonth);
+                    weekdayAvg = overallAvg;
+                    weekendAvg = overallAvg;
+                }
+                
+                // Project future spending based on pattern averages (rounded)
+                const weekdayProjection = roundToCurrency(weekdayAvg * remainingWeekdays);
+                const weekendProjection = roundToCurrency(weekendAvg * remainingWeekends);
+                projectedRegular = roundToCurrency(weekdayProjection + weekendProjection);
+                
+                // Calculate overall daily average (rounded)
+                dailyAverage = dayOfMonth > 0 ? roundToCurrency(currentSpent / dayOfMonth) : 0;
             }
             
-            // Normalise projection outputs to keep UI and summary logic aligned
-            const totalProjected = roundToCurrency(currentSpent + projectedRegular + remainingRecurring);
-            const budgetRemaining = roundToCurrency(monthlyBudget - totalProjected);
+            // Calculate final projections with all values rounded
+            // Ensure no floating-point accumulation errors in final totals
+            const totalProjected = roundToCurrency(
+                roundToCurrency(currentSpent) + 
+                roundToCurrency(projectedRegular) + 
+                roundToCurrency(remainingRecurring)
+            );
+            const normalizedBudget = roundToCurrency(monthlyBudget || 0);
+            const budgetRemaining = roundToCurrency(normalizedBudget - totalProjected);
+            
+            // Calculate confidence score (higher as month progresses, max 1.0)
+            // Confidence is higher when we have more historical data
+            const confidence = Math.min(1.0, dayOfMonth / daysInMonth);
             
             return {
                 currentSpent: roundToCurrency(currentSpent),
@@ -11102,7 +11376,7 @@
                 daysRemaining: daysInMonth - dayOfMonth,
                 dailyAverage: roundToCurrency(dailyAverage),
                 budgetRemaining,
-                confidence: dayOfMonth / daysInMonth // Confidence increases as month progresses
+                confidence: roundToCurrency(confidence * 100) / 100 // Round to 2 decimals
             };
         }
 
@@ -11607,11 +11881,18 @@
                 // Update display
                 updateDashboard();
                 
-                // Adjust current page if needed
-                const totalPages = Math.ceil(filteredExpenses.length / itemsPerPage);
+                // Adjust current page if needed after deletion
+                // Use getTotalPages helper for consistency
+                const totalPages = getTotalPages(filteredExpenses.length);
                 if (currentPage > totalPages && totalPages > 0) {
+                    // If current page exceeds total pages (e.g., deleted last item on last page),
+                    // move to the last available page
                     currentPage = totalPages;
+                } else if (totalPages === 0) {
+                    // If no items left, reset to page 1
+                    currentPage = 1;
                 } else {
+                    // Otherwise maintain current page position
                     currentPage = savedPage;
                 }
                 
@@ -12897,89 +13178,240 @@
             renderExpensesWithPagination();
         }
 
-        // Pagination Functions
-        // Helper keeps pagination math centralised and consistent
+        /**
+         * Pagination Helper Functions
+         * Centralized pagination logic with robust edge case handling
+         */
+        
+        /**
+         * Calculate total number of pages for given item count
+         * Always returns at least 1 to prevent division errors
+         * 
+         * @param {number} totalCount - Total number of items to paginate
+         * @returns {number} Total pages (minimum 1)
+         * 
+         * Improvements:
+         * - Handles zero/negative counts safely
+         * - Ensures minimum page count of 1
+         * - Validates itemsPerPage is valid positive number
+         */
         function getTotalPages(totalCount = totalFilteredExpenses) {
-            return totalCount <= 0 ? 1 : Math.ceil(totalCount / itemsPerPage);
+            // Validate inputs - ensure itemsPerPage is valid
+            const validItemsPerPage = itemsPerPage > 0 ? itemsPerPage : 15; // Default fallback
+            const validTotalCount = Math.max(0, Math.floor(totalCount || 0)); // Ensure non-negative integer
+            
+            // Always return at least 1 page, even for empty lists
+            // This prevents UI errors when displaying "Page 0 of 0"
+            return validTotalCount <= 0 ? 1 : Math.ceil(validTotalCount / validItemsPerPage);
         }
 
+        /**
+         * Render expenses with pagination controls
+         * Handles view mode differences and edge cases gracefully
+         * 
+         * Improvements:
+         * - Validates page numbers before rendering
+         * - Adjusts page if out of bounds (e.g., after deletions)
+         * - Handles empty expense lists correctly
+         * - Separates concerns between table and card views
+         */
         function renderExpensesWithPagination() {
-            // For table view, show all expenses without pagination
+            // Table view shows all expenses without pagination
             if (currentViewStyle === 'table') {
                 renderExpensesTable(sortedFilteredExpenses);
-                // Hide pagination in table view
-                document.getElementById('paginationTop').style.display = 'none';
-                document.getElementById('paginationBottom').style.display = 'none';
+                // Hide pagination controls in table view
+                const paginationTop = document.getElementById('paginationTop');
+                const paginationBottom = document.getElementById('paginationBottom');
+                if (paginationTop) paginationTop.style.display = 'none';
+                if (paginationBottom) paginationBottom.style.display = 'none';
                 return;
             }
             
+            // Calculate total pages and validate current page
             const totalPages = getTotalPages();
-            // Clamp currentPage so deleting items does not leave us on an empty slice
-            currentPage = Math.min(Math.max(currentPage, 1), totalPages);
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const paginatedExpenses = sortedFilteredExpenses.slice(startIndex, startIndex + itemsPerPage);
             
-            // Update pagination controls
+            // Ensure currentPage is within valid bounds
+            // This handles cases where items are deleted and current page exceeds available pages
+            if (totalPages > 0) {
+                currentPage = Math.max(1, Math.min(currentPage, totalPages));
+            } else {
+                currentPage = 1; // Reset to first page if no items
+            }
+            
+            // Calculate slice indices for pagination
+            // Ensure indices are valid non-negative integers
+            const startIndex = Math.max(0, (currentPage - 1) * itemsPerPage);
+            const endIndex = Math.min(sortedFilteredExpenses.length, startIndex + itemsPerPage);
+            
+            // Slice expenses array safely
+            // Always get a valid array even if indices are out of bounds
+            const paginatedExpenses = sortedFilteredExpenses.slice(startIndex, endIndex);
+            
+            // Update pagination UI controls
             updatePaginationControls(totalPages);
             
-            // Render expenses
+            // Render the paginated expense list
             renderExpensesList(paginatedExpenses);
             
-            // Show/hide pagination based on total items
-            const showPagination = totalFilteredExpenses > itemsPerPage;
-            document.getElementById('paginationTop').style.display = showPagination ? 'flex' : 'none';
-            document.getElementById('paginationBottom').style.display = showPagination ? 'flex' : 'none';
+            // Show/hide pagination controls based on whether pagination is needed
+            // Only show if there are more items than fit on one page
+            const showPagination = totalFilteredExpenses > itemsPerPage && totalFilteredExpenses > 0;
+            const paginationTop = document.getElementById('paginationTop');
+            const paginationBottom = document.getElementById('paginationBottom');
+            
+            if (paginationTop) {
+                paginationTop.style.display = showPagination ? 'flex' : 'none';
+            }
+            if (paginationBottom) {
+                paginationBottom.style.display = showPagination ? 'flex' : 'none';
+            }
         }
 
+        /**
+         * Update pagination control UI elements
+         * Synchronizes page info and button states across all pagination controls
+         * 
+         * @param {number} totalPages - Total number of pages
+         * 
+         * Improvements:
+         * - Validates DOM elements exist before accessing
+         * - Calculates item ranges accurately (handles empty lists)
+         * - Synchronizes top and bottom controls
+         * - Handles edge cases (single page, empty list)
+         */
         function updatePaginationControls(totalPages) {
+            // Get all pagination UI elements safely
             const prevBtn = document.getElementById('prevPageBtn');
             const nextBtn = document.getElementById('nextPageBtn');
             const pageInfo = document.getElementById('pageInfo');
             const pageInfoBottom = document.getElementById('pageInfoBottom');
             const paginationInfo = document.getElementById('paginationInfo');
             
-            // Update page info
-            pageInfo.textContent = t('pagination.pageInfo', { current: currentPage, total: totalPages || 1 });
-            pageInfoBottom.textContent = t('pagination.pageInfo', { current: currentPage, total: totalPages || 1 });
+            // Ensure totalPages is valid (at least 1)
+            const validTotalPages = Math.max(1, totalPages || 1);
             
-            // Update pagination info
-            const startItem = totalFilteredExpenses === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
-            const endItem = Math.min(currentPage * itemsPerPage, totalFilteredExpenses);
-            paginationInfo.textContent = t('pagination.showingExpenses', { start: startItem, end: endItem, total: totalFilteredExpenses });
+            // Update page information display (top and bottom)
+            const pageInfoText = t('pagination.pageInfo', { current: currentPage, total: validTotalPages });
+            if (pageInfo) {
+                pageInfo.textContent = pageInfoText;
+            }
+            if (pageInfoBottom) {
+                pageInfoBottom.textContent = pageInfoText;
+            }
             
-            // Update button states
-            prevBtn.disabled = currentPage <= 1;
-            nextBtn.disabled = currentPage >= totalPages;
+            // Calculate and display item range information
+            // Examples: "Showing 1-15 of 42" or "Showing 0 of 0"
+            const totalItems = totalFilteredExpenses || 0;
             
-            // Update bottom pagination buttons
+            // Calculate start and end item numbers for current page
+            // Handle empty list case (totalItems === 0)
+            let startItem = 0;
+            let endItem = 0;
+            
+            if (totalItems > 0) {
+                startItem = (currentPage - 1) * itemsPerPage + 1; // 1-indexed for display
+                endItem = Math.min(currentPage * itemsPerPage, totalItems);
+            }
+            
+            // Update pagination info text if element exists
+            if (paginationInfo) {
+                try {
+                    paginationInfo.textContent = t('pagination.showingExpenses', { 
+                        start: startItem, 
+                        end: endItem, 
+                        total: totalItems 
+                    });
+                } catch (e) {
+                    // Fallback if translation key doesn't exist
+                    paginationInfo.textContent = `Showing ${startItem}-${endItem} of ${totalItems}`;
+                }
+            }
+            
+            // Update navigation button states
+            // Disable previous button on first page, next button on last page
+            const isFirstPage = currentPage <= 1;
+            const isLastPage = currentPage >= validTotalPages;
+            
+            if (prevBtn) {
+                prevBtn.disabled = isFirstPage;
+                prevBtn.setAttribute('aria-disabled', isFirstPage);
+            }
+            if (nextBtn) {
+                nextBtn.disabled = isLastPage;
+                nextBtn.setAttribute('aria-disabled', isLastPage);
+            }
+            
+            // Update bottom pagination buttons (if they exist)
             const bottomPrevBtn = document.querySelector('#paginationBottom button:first-child');
             const bottomNextBtn = document.querySelector('#paginationBottom button:last-child');
-            bottomPrevBtn.disabled = currentPage <= 1;
-            bottomNextBtn.disabled = currentPage >= totalPages;
+            
+            if (bottomPrevBtn) {
+                bottomPrevBtn.disabled = isFirstPage;
+                bottomPrevBtn.setAttribute('aria-disabled', isFirstPage);
+            }
+            if (bottomNextBtn) {
+                bottomNextBtn.disabled = isLastPage;
+                bottomNextBtn.setAttribute('aria-disabled', isLastPage);
+            }
         }
 
+        /**
+         * Change to next or previous page
+         * Validates page bounds before changing and provides smooth scrolling
+         * 
+         * @param {number} direction - Positive for next page, negative for previous page
+         * 
+         * Improvements:
+         * - Validates page bounds before navigation
+         * - Provides smooth scroll to expense list after page change
+         * - Handles edge cases (first/last page navigation)
+         */
         function changePage(direction) {
+            // Validate direction is a valid number
+            if (typeof direction !== 'number' || isNaN(direction)) {
+                console.warn('changePage: Invalid direction provided:', direction);
+                return;
+            }
+            
+            // Calculate total pages and validate bounds
             const totalPages = getTotalPages();
             const newPage = currentPage + direction;
             
-            if (newPage >= 1 && newPage <= totalPages) {
+            // Only change page if new page is within valid bounds
+            // This prevents navigation beyond first/last page
+            if (newPage >= 1 && newPage <= totalPages && newPage !== currentPage) {
                 currentPage = newPage;
                 renderExpensesWithPagination();
                 
-                // Improved scroll behavior with offset to prevent header overlap
+                // Smooth scroll to expense list after page change
+                // This ensures user sees the new page content without manual scrolling
                 const expenseListHeader = document.querySelector('.expense-list-header');
                 const expensesList = document.getElementById('expensesList');
                 
                 if (expensesList) {
-                    // Calculate offset for sticky header
-                    const headerHeight = expenseListHeader ? expenseListHeader.offsetHeight : 0;
-                    const scrollPosition = expensesList.getBoundingClientRect().top + window.pageYOffset - headerHeight - 20;
-                    
-                    // Use smooth scroll with proper positioning
-                    window.scrollTo({
-                        top: scrollPosition,
-                        behavior: 'smooth'
+                    // Request animation frame for smooth rendering
+                    requestAnimationFrame(() => {
+                        // Calculate scroll position accounting for sticky header
+                        const headerHeight = expenseListHeader ? expenseListHeader.offsetHeight : 0;
+                        const listRect = expensesList.getBoundingClientRect();
+                        const currentScrollY = window.pageYOffset || document.documentElement.scrollTop;
+                        
+                        // Calculate target position with offset for header and padding
+                        const scrollPosition = listRect.top + currentScrollY - headerHeight - 20;
+                        
+                        // Smooth scroll to expense list
+                        window.scrollTo({
+                            top: Math.max(0, scrollPosition), // Ensure non-negative
+                            behavior: 'smooth'
+                        });
                     });
+                }
+            } else {
+                // Log navigation attempt that was blocked
+                if (newPage < 1) {
+                    console.debug('changePage: Already on first page');
+                } else if (newPage > totalPages) {
+                    console.debug('changePage: Already on last page');
                 }
             }
         }
