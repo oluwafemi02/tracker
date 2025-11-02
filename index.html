@@ -550,7 +550,9 @@
         /* Table View Styles */
         .expenses-table-container {
             overflow-x: auto;
+            overflow-y: auto;
             margin-top: 1rem;
+            max-height: calc(100vh - 400px);
         }
 
         .expenses-table {
@@ -653,18 +655,46 @@
             background: var(--hover-bg);
         }
 
-        /* Make expense list container scrollable */
+        /* Remove scroll from container - let content scroll instead */
         .expense-list {
+            display: flex;
+            flex-direction: column;
             max-height: calc(100vh - 200px);
-            overflow-y: auto;
         }
 
-        /* Ensure sticky header works with scroll */
+        /* Ensure header stays fixed at top */
         .expense-list-header {
-            position: sticky;
-            top: 0;
+            flex-shrink: 0;
             background: var(--card-bg);
             z-index: 100;
+        }
+
+        /* Make expenses list scrollable */
+        #expensesList {
+            overflow-y: auto;
+            overflow-x: hidden;
+            flex: 1;
+            min-height: 0;
+            padding-right: 0.5rem;
+        }
+
+        /* Smooth scrolling */
+        #expensesList::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #expensesList::-webkit-scrollbar-track {
+            background: var(--bg-secondary);
+            border-radius: 4px;
+        }
+
+        #expensesList::-webkit-scrollbar-thumb {
+            background: var(--border-color);
+            border-radius: 4px;
+        }
+
+        #expensesList::-webkit-scrollbar-thumb:hover {
+            background: var(--text-secondary);
         }
 
         /* Responsive table styles */
