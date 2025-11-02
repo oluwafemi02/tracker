@@ -6993,6 +6993,17 @@
     
     <!-- Option 1: Privacy-First Analytics (Default) -->
     <script>
+        // Security: Helper function to safely set object properties and prevent prototype pollution
+        function safeSetProperty(obj, key, value) {
+            // Block dangerous property names that could pollute prototypes
+            if (key === '__proto__' || key === 'constructor' || key === 'prototype') {
+                console.warn('Blocked potentially dangerous property assignment:', key);
+                return false;
+            }
+            obj[key] = value;
+            return true;
+        }
+        
         // Enhanced privacy-focused analytics with conversion tracking
         class PrivacyAnalytics {
             constructor() {
@@ -7028,10 +7039,18 @@
                 this.trackCampaignData();
             }
 
+            // Generate cryptographically secure random string
+            generateSecureId(prefix) {
+                const array = new Uint8Array(12);
+                crypto.getRandomValues(array);
+                const randomStr = Array.from(array, byte => byte.toString(36)).join('').substr(0, 9);
+                return `${prefix}_${Date.now()}_${randomStr}`;
+            }
+
             getSessionId() {
                 let sessionId = sessionStorage.getItem('session_id');
                 if (!sessionId) {
-                    sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    sessionId = this.generateSecureId('session');
                     sessionStorage.setItem('session_id', sessionId);
                 }
                 return sessionId;
@@ -7040,7 +7059,7 @@
             getAnonymousUserId() {
                 let userId = localStorage.getItem('anonymous_user_id');
                 if (!userId) {
-                    userId = `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    userId = this.generateSecureId('user');
                     localStorage.setItem('anonymous_user_id', userId);
                 }
                 return userId;
@@ -9198,8 +9217,14 @@
             
             inputs.forEach(input => {
                 const value = parseFloat(input.value) || 0;
-                if (value > 0) {
-                    allocations[input.dataset.category] = value;
+                const category = input.dataset.category;
+                
+                // Prevent prototype pollution by blocking dangerous keys
+                if (value > 0 && category && 
+                    category !== '__proto__' && 
+                    category !== 'constructor' && 
+                    category !== 'prototype') {
+                    allocations[category] = value;
                     total += value;
                 }
             });
@@ -10196,10 +10221,11 @@
                 .sort(([,a], [,b]) => b - a)
                 .forEach(([category, amount]) => {
                     const icon = categoryIcons[category] || '??';
+                    const safeCategory = escapeHtml(category);
                     const percentage = ((amount / total) * 100).toFixed(1);
                     categoryHtml += `
                         <div class="category-row">
-                            <span>${icon} ${category}</span>
+                            <span>${icon} ${safeCategory}</span>
                             <strong>?${amount.toFixed(2)} (${percentage}%)</strong>
                         </div>
                     `;
@@ -10210,6 +10236,11 @@
                 const icon = categoryIcons[expense.category] || '??';
                 const date = new Date(expense.date).toLocaleDateString();
                 const isRecurring = expense.isRecurring || expense.parentRecurringId;
+                
+                // Escape all user-supplied data to prevent XSS
+                const safeDescription = escapeHtml(expense.description);
+                const safeCategory = escapeHtml(expense.category);
+                const safePerson = escapeHtml(expense.person);
                 
                 const expenseDiv = document.createElement('div');
                 expenseDiv.className = `expense-item ${isRecurring ? 'recurring-expense-item' : ''}`;
@@ -10223,11 +10254,11 @@
                 expenseDiv.innerHTML = `
                     <div class="expense-info">
                         <div class="expense-description">
-                            ${icon} ${escapeHtml(expense.description)}
+                            ${icon} ${safeDescription}
                             ${isRecurring ? ' <span style="font-size: 0.8em; color: var(--primary-color);">??</span>' : ''}
                         </div>
                         <div class="expense-details">
-                            ${expense.category} ? ${expense.person} ? ${date}
+                            ${safeCategory} ? ${safePerson} ? ${date}
                         </div>
                     </div>
                     <div class="expense-amount">?${expense.amount.toFixed(2)}</div>
@@ -15264,26 +15295,36 @@
             Object.entries(expensesByPayer)
                 .sort(([,a], [,b]) => b.total - a.total)
                 .forEach(([payer, data]) => {
+                    // Escape HTML to prevent XSS
+                    const safePayer = escapeHtml(payer);
                     payerBreakdown += `
                         <div class="payer-breakdown">
-                            <h4>?? ${payer}: ?${data.total.toFixed(2)} (${data.expenses.length} expenses)</h4>
+                            <h4>?? ${safePayer}: ?${data.total.toFixed(2)} (${data.expenses.length} expenses)</h4>
                             <div class="payer-expenses">
-                                ${data.expenses.map(e => `
-                                    <div class="payer-expense-item">
-                                        ${e.category} - ?${e.amount.toFixed(2)} 
-                                        <span style="color: var(--text-secondary);">(${new Date(e.date).toLocaleDateString()})</span>
-                                    </div>
-                                `).join('')}
+                                ${data.expenses.map(e => {
+                                    const safeCategory = escapeHtml(e.category);
+                                    return `
+                                        <div class="payer-expense-item">
+                                            ${safeCategory} - ?${e.amount.toFixed(2)} 
+                                            <span style="color: var(--text-secondary);">(${new Date(e.date).toLocaleDateString()})</span>
+                                        </div>
+                                    `;
+                                }).join('')}
                             </div>
                         </div>
                     `;
                 });
 
+            // Escape all user-supplied data to prevent XSS
+            const safeTripName = escapeHtml(trip.name);
+            const safeTripDestination = escapeHtml(trip.destination);
+            const safeTripId = escapeHtml(trip.id);
+            
             const modalContent = `
                 <div style="max-height: 60vh; overflow-y: auto;">
                     <div style="margin-bottom: 1.5rem;">
-                        <h3>?? ${trip.name}</h3>
-                        <p><strong>?? Destination:</strong> ${trip.destination}</p>
+                        <h3>?? ${safeTripName}</h3>
+                        <p><strong>?? Destination:</strong> ${safeTripDestination}</p>
                         <p><strong>?? Dates:</strong> ${new Date(trip.startDate).toLocaleDateString()} - ${trip.endDate ? new Date(trip.endDate).toLocaleDateString() : 'Ongoing'}</p>
                         <p><strong>?? Total Spent:</strong> ?${total.toFixed(2)}</p>
                         <p><strong>?? Status:</strong> ${trip.status === 'completed' ? '? Completed' : '?? Active'}</p>
@@ -15299,8 +15340,8 @@
                     
                     <div class="trip-actions" style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;">
                         ${trip.status === 'completed' ? 
-                            `<button class="btn btn-primary" onclick="reopenTrip('${trip.id}'); closeTripDetailsModal();">?? Reopen Trip</button>` :
-                            `<button class="btn btn-success" onclick="completeTrip('${trip.id}'); closeTripDetailsModal();">? Complete Trip</button>`
+                            `<button class="btn btn-primary" onclick="reopenTrip('${safeTripId}'); closeTripDetailsModal();">?? Reopen Trip</button>` :
+                            `<button class="btn btn-success" onclick="completeTrip('${safeTripId}'); closeTripDetailsModal();">? Complete Trip</button>`
                         }
                         <button class="btn btn-secondary" onclick="closeTripDetailsModal()">Close</button>
                     </div>
