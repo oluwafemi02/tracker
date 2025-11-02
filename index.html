@@ -174,7 +174,7 @@
 
         .main-grid {
             display: grid;
-            grid-template-columns: 1fr 400px;
+            grid-template-columns: 1fr 2fr;
             gap: 2rem;
             margin-bottom: 2rem;
         }
@@ -190,6 +190,7 @@
             flex-direction: column;
             gap: 2rem;
         }
+            min-width: 0;
 
         .dashboard {
             display: grid;
@@ -3170,7 +3171,7 @@
         }
 
         /* Adjust main content area to make space for floating panel */
-        .right-panel {
+        .right-panel.with-floating-panel {
             margin-right: 360px;
             transition: margin-right 0.3s ease;
         }
