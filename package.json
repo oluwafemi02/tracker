@@ -1,7 +1,7 @@
 {
   "name": "expense-tracker-pwa",
-  "version": "0.3.9",
-  "description": "A Progressive Web App for tracking personal expenses",
+  "version": "2.2.1",
+  "description": "A Progressive Web App for tracking personal expenses - Enhanced Edition",
   "author": "ExpenseTracker Team",
   "license": "MIT",
   "keywords": [
@@ -9,6 +9,30 @@
     "pwa",
     "progressive-web-app",
     "budget",
-    "finance"
-  ]
+    "finance",
+    "rollover",
+    "calculations"
+  ],
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "e2e": "cypress run",
+    "test:all": "npm test && npm run e2e",
+    "serve": "http-server -p 8080",
+    "dev": "http-server -p 8080 -o"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/user-event": "^14.5.1",
+    "cypress": "^13.6.2",
+    "http-server": "^14.1.1",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0"
+  },
+  "jest": {
+    "testEnvironment": "jsdom"
+  }
 }
