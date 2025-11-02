@@ -5058,6 +5058,72 @@
                 grid-template-columns: 1fr;
             }
         }
+        
+        /* Deficit Warning Section */
+        .deficit-warning-section {
+            background: linear-gradient(135deg, #fee 0%, #fdd 100%);
+            border: 2px solid #f44;
+            border-radius: var(--border-radius);
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: var(--shadow-md);
+            animation: pulse-warning 2s infinite;
+        }
+        
+        @keyframes pulse-warning {
+            0%, 100% { box-shadow: var(--shadow-md); }
+            50% { box-shadow: 0 0 20px rgba(244, 67, 68, 0.4); }
+        }
+        
+        .deficit-warning-header h3 {
+            margin: 0 0 1rem 0;
+            color: var(--danger);
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .deficit-warning-content {
+            text-align: center;
+        }
+        
+        .deficit-amount {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--danger);
+            margin: 0.5rem 0;
+        }
+        
+        .deficit-source {
+            color: var(--text-secondary);
+            margin: 0.5rem 0 1.5rem 0;
+        }
+        
+        .deficit-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        @media (max-width: 768px) {
+            .deficit-warning-section {
+                padding: 1rem;
+            }
+            
+            .deficit-amount {
+                font-size: 2rem;
+            }
+            
+            .deficit-actions {
+                flex-direction: column;
+            }
+            
+            .deficit-actions button {
+                width: 100%;
+            }
+        }
     </style>
 </head>
 <body>
@@ -5672,6 +5738,21 @@
                     <h2><span class="card-icon">📊</span> This Month's Total</h2>
                     <div class="total-display" id="monthlyTotal">€0</div>
                     <div id="expenseCount">0 expenses</div>
+                
+                <!-- Deficit Warning Section -->
+                <div class="deficit-warning-section" id="deficitWarningSection" style="display: none;">
+                    <div class="deficit-warning-header">
+                        <h3>⚠️ Tracked Deficit</h3>
+                    </div>
+                    <div class="deficit-warning-content">
+                        <div class="deficit-amount" id="deficitWarningAmount">€0</div>
+                        <p class="deficit-source" id="deficitWarningSource">From previous month</p>
+                        <div class="deficit-actions">
+                            <button class="btn btn-warning" onclick="showPayOffDeficitModal()">💳 Pay Off Deficit</button>
+                            <button class="btn btn-secondary" onclick="showDeficitDetails()">📊 View Details</button>
+                        </div>
+                    </div>
+                </div>
                 </div>
 
                 <div class="card">
@@ -7344,6 +7425,12 @@
             },
             history: [],
             reserveFund: 0,
+            currentDeficit: {
+                amount: 0,
+                source: null,
+                timestamp: null,
+                status: null
+            },
             preferences: {
                 autoRollover: false,
                 defaultAction: 'prompt' // prompt, add_to_budget, save, carry_forward, allocate
@@ -7824,21 +7911,26 @@
             
             // Handle negative balance (overspending)
             if (monthBalance < 0 && monthlyBudget > 0) {
-                // Offer to deduct from current month or reserve fund
-                if (rolloverData.reserveFund >= Math.abs(monthBalance)) {
-                    if (confirm(`You overspent by ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${Math.abs(monthBalance).toFixed(2)} in ${monthName}. Deduct from Reserve Fund?`)) {
-                        rolloverData.reserveFund += monthBalance; // monthBalance is negative
-                        rolloverData.history.push({
-                            month: monthName,
-                            year: monthDate.getFullYear(),
-                            amount: Math.abs(monthBalance),
-                            decision: 'overspent_deducted_from_reserve',
-                            timestamp: Date.now()
-                        });
-                        saveRolloverData();
-                        updateDashboard();
-                        showNotification(`Deducted ${CURRENCIES[mainCurrency]?.symbol || mainCurrency}${Math.abs(monthBalance).toFixed(2)} from Reserve Fund`, 'warning');
-                    }
+                const deficit = Math.abs(monthBalance);
+                
+                // Set up deficit data
+                rolloverData.currentDeficit = {
+                    amount: deficit,
+                    source: monthName,
+                    timestamp: Date.now(),
+                    status: 'pending'
+                };
+                
+                // Check if we have reserve fund to cover
+                if (rolloverData.reserveFund > 0) {
+                    const coverableAmount = Math.min(rolloverData.reserveFund, deficit);
+                    const remainingDeficit = deficit - coverableAmount;
+                    
+                    // Show deficit resolution modal instead of confirm()
+                    setTimeout(() => showDeficitModal(deficit, coverableAmount, remainingDeficit, monthName), 1000);
+                } else {
+                    // No reserve fund - show deficit modal with other options
+                    setTimeout(() => showDeficitModal(deficit, 0, deficit, monthName), 1000);
                 }
                 return;
             }
@@ -7865,6 +7957,7 @@
                 }
             }
         }
+        }
         
         function calculatePreviousMonthBalance(monthDate) {
             const month = monthDate.getMonth();
@@ -7883,7 +7976,7 @@
             const monthBudget = monthlyBudget; // In a real implementation, you might store monthly budgets
             
             // Return leftover balance
-            return Math.max(0, monthBudget - totalExpenses);
+            return monthBudget - totalExpenses;
         }
         
         function handleAutoRollover() {
@@ -8740,6 +8833,18 @@
             } else {
                 reserveSection.style.display = 'none';
             }
+            
+            // Show/hide deficit warning section
+            const deficitSection = document.getElementById('deficitWarningSection');
+            if (rolloverData.currentDeficit && (rolloverData.currentDeficit.status === 'tracked' || rolloverData.currentDeficit.status === 'partial') && rolloverData.currentDeficit.amount > 0) {
+                deficitSection.style.display = 'block';
+                document.getElementById('deficitWarningAmount').textContent = 
+                    `${currencySymbol}${rolloverData.currentDeficit.amount.toFixed(2)}`;
+                document.getElementById('deficitWarningSource').textContent = 
+                    rolloverData.currentDeficit.source ? `From ${rolloverData.currentDeficit.source}` : 'Carried deficit';
+            } else {
+                deficitSection.style.display = 'none';
+            }
         }
         
         // Toggle rollover history
@@ -8995,6 +9100,332 @@
             document.getElementById('rolloverModal').style.display = 'none';
         }
         
+        // Deficit Modal Functions
+        function showDeficitModal(deficitAmount, coverableAmount, remainingDeficit, monthName) {
+            const modal = document.getElementById('deficitModal');
+            const amountElement = document.getElementById('deficitAmount');
+            const sourceElement = document.getElementById('deficitSource');
+            const optionsContainer = document.getElementById('deficitOptionsContainer');
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            
+            amountElement.textContent = `${currencySymbol}${deficitAmount.toFixed(2)}`;
+            sourceElement.textContent = `From ${monthName}`;
+            
+            // Build options based on available funds
+            let optionsHtml = '<div class="rollover-options"><h4>How would you like to handle this deficit?</h4>';
+            
+            // Option 1: Deduct from reserve fund (if available)
+            if (coverableAmount > 0) {
+                if (remainingDeficit === 0) {
+                    optionsHtml += `
+                        <div class="rollover-option" onclick="handleDeficitDecision('deduct_from_reserve', ${deficitAmount}, ${coverableAmount}, ${remainingDeficit})">
+                            <div class="option-icon">🏦</div>
+                            <div class="option-content">
+                                <h5>Deduct from Reserve Fund</h5>
+                                <p>Cover the full ${currencySymbol}${deficitAmount.toFixed(2)} from your reserve (${currencySymbol}${rolloverData.reserveFund.toFixed(2)} available)</p>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    optionsHtml += `
+                        <div class="rollover-option" onclick="handleDeficitDecision('partial_reserve', ${deficitAmount}, ${coverableAmount}, ${remainingDeficit})">
+                            <div class="option-icon">🏦</div>
+                            <div class="option-content">
+                                <h5>Partial Deduct from Reserve</h5>
+                                <p>Cover ${currencySymbol}${coverableAmount.toFixed(2)} from reserve (${currencySymbol}${remainingDeficit.toFixed(2)} will remain as deficit)</p>
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+            
+            // Option 2: Deduct from current month's budget
+            optionsHtml += `
+                <div class="rollover-option" onclick="handleDeficitDecision('deduct_current', ${deficitAmount}, ${coverableAmount}, ${remainingDeficit})">
+                    <div class="option-icon">📉</div>
+                    <div class="option-content">
+                        <h5>Deduct from Current Budget</h5>
+                        <p>Reduce this month's budget by ${currencySymbol}${deficitAmount.toFixed(2)}</p>
+                    </div>
+                </div>
+            `;
+            
+            // Option 3: Track as debt (carry forward)
+            optionsHtml += `
+                <div class="rollover-option" onclick="handleDeficitDecision('track_debt', ${deficitAmount}, ${coverableAmount}, ${remainingDeficit})">
+                    <div class="option-icon">📋</div>
+                    <div class="option-content">
+                        <h5>Track as Carried Debt</h5>
+                        <p>Keep visible in dashboard until paid off</p>
+                    </div>
+                </div>
+            `;
+            
+            // Option 4: Acknowledge and continue
+            optionsHtml += `
+                <div class="rollover-option" onclick="handleDeficitDecision('acknowledge', ${deficitAmount}, ${coverableAmount}, ${remainingDeficit})">
+                    <div class="option-icon">✓</div>
+                    <div class="option-content">
+                        <h5>Acknowledge & Continue</h5>
+                        <p>Record the overspending and move forward</p>
+                    </div>
+                </div>
+            `;
+            
+            optionsHtml += '</div>';
+            optionsContainer.innerHTML = optionsHtml;
+            
+            modal.style.display = 'block';
+        }
+        
+        function closeDeficitModal() {
+            document.getElementById('deficitModal').style.display = 'none';
+        }
+        
+        function handleDeficitDecision(decision, deficitAmount, coverableAmount, remainingDeficit) {
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            const deficitData = rolloverData.currentDeficit;
+            
+            switch(decision) {
+                case 'deduct_from_reserve':
+                    // Full deduction from reserve fund
+                    rolloverData.reserveFund -= deficitAmount;
+                    rolloverData.history.push({
+                        month: deficitData.source,
+                        year: new Date().getFullYear(),
+                        amount: deficitAmount,
+                        decision: 'deficit_covered_by_reserve',
+                        timestamp: Date.now()
+                    });
+                    rolloverData.currentDeficit.status = 'resolved';
+                    rolloverData.currentDeficit.amount = 0;
+                    saveRolloverData();
+                    updateDashboard();
+                    closeDeficitModal();
+                    showNotification(`Deducted ${currencySymbol}${deficitAmount.toFixed(2)} from Reserve Fund`, 'success');
+                    break;
+                    
+                case 'partial_reserve':
+                    // Partial deduction from reserve, track remaining
+                    rolloverData.reserveFund -= coverableAmount;
+                    rolloverData.currentDeficit.amount = remainingDeficit;
+                    rolloverData.currentDeficit.status = 'partial';
+                    rolloverData.history.push({
+                        month: deficitData.source,
+                        year: new Date().getFullYear(),
+                        amount: coverableAmount,
+                        decision: 'deficit_partially_covered',
+                        remainingDeficit: remainingDeficit,
+                        timestamp: Date.now()
+                    });
+                    saveRolloverData();
+                    updateDashboard();
+                    closeDeficitModal();
+                    showNotification(`Deducted ${currencySymbol}${coverableAmount.toFixed(2)} from reserve. ${currencySymbol}${remainingDeficit.toFixed(2)} tracked as deficit.`, 'warning');
+                    break;
+                    
+                case 'deduct_current':
+                    // Deduct from current month's budget
+                    monthlyBudget -= deficitAmount;
+                    if (monthlyBudget < 0) monthlyBudget = 0; // Don't go negative
+                    localStorage.setItem('monthlyBudget', monthlyBudget);
+                    document.getElementById('monthlyBudget').value = monthlyBudget;
+                    
+                    rolloverData.history.push({
+                        month: deficitData.source,
+                        year: new Date().getFullYear(),
+                        amount: deficitAmount,
+                        decision: 'deficit_deducted_from_current',
+                        timestamp: Date.now()
+                    });
+                    rolloverData.currentDeficit.status = 'resolved';
+                    rolloverData.currentDeficit.amount = 0;
+                    saveRolloverData();
+                    updateDashboard();
+                    closeDeficitModal();
+                    showNotification(`Reduced current budget by ${currencySymbol}${deficitAmount.toFixed(2)}`, 'success');
+                    break;
+                    
+                case 'track_debt':
+                    // Keep as tracked debt
+                    rolloverData.currentDeficit.status = 'tracked';
+                    rolloverData.history.push({
+                        month: deficitData.source,
+                        year: new Date().getFullYear(),
+                        amount: deficitAmount,
+                        decision: 'deficit_tracked_as_debt',
+                        timestamp: Date.now()
+                    });
+                    saveRolloverData();
+                    updateDashboard();
+                    closeDeficitModal();
+                    showNotification(`Tracking ${currencySymbol}${deficitAmount.toFixed(2)} as carried debt`, 'info');
+                    break;
+                    
+                case 'acknowledge':
+                    // Just acknowledge and record
+                    rolloverData.history.push({
+                        month: deficitData.source,
+                        year: new Date().getFullYear(),
+                        amount: deficitAmount,
+                        decision: 'deficit_acknowledged',
+                        timestamp: Date.now()
+                    });
+                    rolloverData.currentDeficit.status = 'acknowledged';
+                    rolloverData.currentDeficit.amount = 0;
+                    saveRolloverData();
+                    updateDashboard();
+                    closeDeficitModal();
+                    showNotification(`Overspending of ${currencySymbol}${deficitAmount.toFixed(2)} recorded`, 'info');
+                    break;
+            }
+        }
+        
+        
+        // Pay off deficit functions
+        function showPayOffDeficitModal() {
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            const deficitAmount = rolloverData.currentDeficit.amount;
+            
+            const modal = document.getElementById('projectionModal');
+            const content = document.getElementById('projectionContent');
+            
+            content.innerHTML = `
+                <h3>💳 Pay Off Deficit</h3>
+                <div style="background: var(--hover-bg); padding: 1.5rem; border-radius: var(--border-radius); margin: 1.5rem 0;">
+                    <p style="margin-bottom: 1rem;">Current deficit: <strong style="color: var(--danger);">${currencySymbol}${deficitAmount.toFixed(2)}</strong></p>
+                    <p style="margin-bottom: 1rem;">Reserve Fund available: <strong>${currencySymbol}${rolloverData.reserveFund.toFixed(2)}</strong></p>
+                </div>
+                
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    ${rolloverData.reserveFund >= deficitAmount ? `
+                        <button class="btn btn-success" onclick="payOffDeficitFromReserve()">
+                            🏦 Pay from Reserve Fund
+                        </button>
+                    ` : rolloverData.reserveFund > 0 ? `
+                        <button class="btn btn-warning" onclick="payOffDeficitFromReserve()">
+                            🏦 Partial Pay from Reserve (${currencySymbol}${rolloverData.reserveFund.toFixed(2)})
+                        </button>
+                    ` : ''}
+                    
+                    <button class="btn" onclick="payOffDeficitFromCurrent()">
+                        📉 Deduct from Current Budget
+                    </button>
+                    
+                    <button class="btn btn-secondary" onclick="closeProjectionModal()">
+                        ❌ Cancel
+                    </button>
+                </div>
+            `;
+            
+            modal.style.display = 'block';
+        }
+        
+        function payOffDeficitFromReserve() {
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            const deficitAmount = rolloverData.currentDeficit.amount;
+            const payAmount = Math.min(rolloverData.reserveFund, deficitAmount);
+            const remaining = deficitAmount - payAmount;
+            
+            rolloverData.reserveFund -= payAmount;
+            
+            if (remaining > 0) {
+                // Partial payment
+                rolloverData.currentDeficit.amount = remaining;
+                showNotification(`Paid ${currencySymbol}${payAmount.toFixed(2)} from reserve. ${currencySymbol}${remaining.toFixed(2)} remaining.`, 'success');
+            } else {
+                // Full payment
+                rolloverData.currentDeficit.amount = 0;
+                rolloverData.currentDeficit.status = 'resolved';
+                showNotification(`Deficit of ${currencySymbol}${deficitAmount.toFixed(2)} paid off from reserve!`, 'success');
+            }
+            
+            rolloverData.history.push({
+                month: rolloverData.currentDeficit.source || 'Unknown',
+                year: new Date().getFullYear(),
+                amount: payAmount,
+                decision: 'deficit_paid_from_reserve',
+                timestamp: Date.now()
+            });
+            
+            saveRolloverData();
+            updateDashboard();
+            closeProjectionModal();
+        }
+        
+        function payOffDeficitFromCurrent() {
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            const deficitAmount = rolloverData.currentDeficit.amount;
+            
+            monthlyBudget -= deficitAmount;
+            if (monthlyBudget < 0) monthlyBudget = 0;
+            localStorage.setItem('monthlyBudget', monthlyBudget);
+            document.getElementById('monthlyBudget').value = monthlyBudget;
+            
+            rolloverData.currentDeficit.amount = 0;
+            rolloverData.currentDeficit.status = 'resolved';
+            
+            rolloverData.history.push({
+                month: rolloverData.currentDeficit.source || 'Unknown',
+                year: new Date().getFullYear(),
+                amount: deficitAmount,
+                decision: 'deficit_paid_from_current',
+                timestamp: Date.now()
+            });
+            
+            saveRolloverData();
+            updateDashboard();
+            closeProjectionModal();
+            showNotification(`Deficit paid by reducing current budget by ${currencySymbol}${deficitAmount.toFixed(2)}`, 'success');
+        }
+        
+        function showDeficitDetails() {
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            const modal = document.getElementById('projectionModal');
+            const content = document.getElementById('projectionContent');
+            
+            const deficitHistory = rolloverData.history.filter(item => 
+                item.decision && item.decision.includes('deficit')
+            );
+            
+            let historyHtml = '<h3>📊 Deficit History</h3>';
+            
+            if (deficitHistory.length === 0) {
+                historyHtml += '<p style="text-align: center; color: var(--text-secondary);">No deficit history</p>';
+            } else {
+                historyHtml += '<div style="max-height: 400px; overflow-y: auto;">';
+                deficitHistory.reverse().forEach(item => {
+                    const icon = item.decision.includes('paid') || item.decision.includes('covered') ? '✅' : '⚠️';
+                    historyHtml += `
+                        <div style="padding: 1rem; border-bottom: 1px solid var(--border-color);">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <strong>${icon} ${item.month}</strong><br>
+                                    <small style="color: var(--text-secondary);">${new Date(item.timestamp).toLocaleDateString()}</small>
+                                </div>
+                                <div style="text-align: right;">
+                                    <strong style="color: var(--danger);">${currencySymbol}${item.amount.toFixed(2)}</strong><br>
+                                    <small style="color: var(--text-secondary);">${item.decision.replace(/_/g, ' ')}</small>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                historyHtml += '</div>';
+            }
+            
+            // Add current deficit if exists
+            if (rolloverData.currentDeficit && rolloverData.currentDeficit.amount > 0) {
+                historyHtml += `
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: var(--danger-light); border-radius: var(--border-radius); text-align: center;">
+                        <strong>Current Deficit: ${currencySymbol}${rolloverData.currentDeficit.amount.toFixed(2)}</strong>
+                    </div>
+                `;
+            }
+            
+            content.innerHTML = historyHtml;
+            modal.style.display = 'block';
+        }
         function handleRolloverDecision(decision) {
             const rolloverAmount = rolloverData.currentRollover.amount;
             
@@ -17987,6 +18418,32 @@ Browser: ${userAgent}
                     <div class="rollover-option" onclick="handleRolloverDecision('add_to_budget')">
                         <div class="option-icon">💵</div>
                         <div class="option-content">
+        
+        <!-- Deficit Resolution Modal -->
+        <div id="deficitModal" class="modal">
+            <div class="modal-content">
+                <span class="close" onclick="closeDeficitModal()">&times;</span>
+                <h2>⚠️ Budget Deficit Detected</h2>
+                
+                <div style="background: linear-gradient(135deg, #fee 0%, #fdd 100%); padding: 1.5rem; border-radius: var(--border-radius); margin: 1.5rem 0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                        <h3 style="margin: 0;">Overspent Amount:</h3>
+                        <h2 style="margin: 0; color: var(--danger);" id="deficitAmount">€0</h2>
+                    </div>
+                    <p style="margin: 0; color: var(--text-secondary);" id="deficitSource">From previous month</p>
+                </div>
+                
+                <div id="deficitOptionsContainer">
+                    <!-- Options will be inserted here dynamically -->
+                </div>
+                
+                <div style="margin-top: 1.5rem; padding: 1rem; background: var(--hover-bg); border-radius: var(--border-radius);">
+                    <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">
+                        💡 <strong>Tip:</strong> Managing deficits helps you stay on track with your budget goals.
+                    </p>
+                </div>
+            </div>
+        </div>
                             <h5>Add to Current Budget</h5>
                             <p>Increase this month's budget by the leftover amount</p>
                         </div>
