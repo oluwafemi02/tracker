@@ -2,6 +2,7 @@
   "name": "Expense Tracker",
   "short_name": "ExpenseTracker",
   "description": "Track, manage, and optimize your expenses with smart insights and analytics",
+  "version": "0.3.11",
   "version": "0.3.10",
   "start_url": "/tracker/",
   "display": "standalone",
@@ -125,12 +126,13 @@
   "prefer_related_applications": false,
   "share_target": {
     "action": "/tracker/",
-    "method": "GET",
+    "method": "POST",
     "params": {
       "title": "title",
       "text": "text",
       "url": "url"
-    }
+    },
+    "enctype": "multipart/form-data"
   },
   "display_override": [
     "window-controls-overlay",

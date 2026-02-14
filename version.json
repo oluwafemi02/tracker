@@ -1,4 +1,7 @@
 {
+  "version": "0.3.11",
+  "releaseDate": "2026-02-14",
+  "description": "Fix missing helper functions, align PWA share_target settings, and stabilize runtime initialization."
   "version": "0.3.10",
   "releaseDate": "2026-02-14",
   "description": "Fix rollover modal markup, stabilize analytics calls, and harden service worker caching."

@@ -1,3 +1,4 @@
+const APP_VERSION = '0.3.11';
 const APP_VERSION = '0.3.10';
 const CACHE_NAME = `expense-tracker-v${APP_VERSION}`;
 const SCOPE_URL = new URL(self.registration.scope);
