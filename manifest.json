@@ -3,6 +3,7 @@
   "short_name": "ExpenseTracker",
   "description": "Track, manage, and optimize your expenses with smart insights and analytics",
   "version": "0.3.11",
+  "version": "0.3.10",
   "start_url": "/tracker/",
   "display": "standalone",
   "background_color": "#f8fafc",

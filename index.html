@@ -29,13 +29,13 @@
     <meta name="msapplication-tap-highlight" content="no">
     
     <!-- Manifest -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/tracker/manifest.json">
     
     <!-- Icons -->
-    <link rel="icon" type="image/svg+xml" sizes="32x32" href="icons/favicon-32x32.svg">
-    <link rel="icon" type="image/svg+xml" sizes="16x16" href="icons/favicon-16x16.svg">
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
-    <link rel="mask-icon" href="icons/safari-pinned-tab.svg" color="#6366f1">
+    <link rel="icon" type="image/svg+xml" sizes="32x32" href="/tracker/icons/favicon-32x32.svg">
+    <link rel="icon" type="image/svg+xml" sizes="16x16" href="/tracker/icons/favicon-16x16.svg">
+    <link rel="apple-touch-icon" href="/tracker/icons/apple-touch-icon.svg">
+    <link rel="mask-icon" href="/tracker/icons/safari-pinned-tab.svg" color="#6366f1">
     
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -7462,14 +7462,6 @@
         let expenseChart = null;
         let filteredExpenses = [...expenses];
         let customCategories = JSON.parse(localStorage.getItem('customCategories')) || [];
-
-        function getExpenses() {
-            return Array.isArray(expenses) ? expenses : [];
-        }
-
-        function getRecurringExpenses() {
-            return Array.isArray(recurringExpenses) ? recurringExpenses.filter(item => item && item.isActive !== false) : [];
-        }
         
         // Function to update expense summary panel
         function updateExpenseSummaryPanel() {
@@ -10285,9 +10277,7 @@
                     updateSpendingTrendChart();
                     updateCategoryBudgetChart();
                     updateCashFlowSummary();
-                    if (typeof updateRolloverAnalytics === 'function') {
-                        updateRolloverAnalytics();
-                    }
+                    updateRolloverAnalytics();
                     generateSmartInsights();
                 });
             }
@@ -16597,6 +16587,2940 @@
                     </div>
                 </div>
             `;
+                    </div>
+                `;
+            }).join('');
+
+            // Add savings goal display if applicable
+            if (monthlyBudget > 0 && expenses.length > 0) {
+                const remaining = monthlyBudget - expenses.filter(expense => {
+                    const expenseDate = new Date(expense.date);
+                    const now = new Date();
+                    return expenseDate.getMonth() === now.getMonth() && expenseDate.getFullYear() === now.getFullYear();
+                }).reduce((total, expense) => total + expense.amount, 0);
+
+                if (remaining > 0) {
+                    const recommendedSavings = Math.max(remaining * 0.2, 10);
+                    suggestionsContent.innerHTML += `
+                        <div class="savings-goal">
+                            <div class="savings-amount">💰 €${recommendedSavings.toFixed(2)}</div>
+                            <div data-i18n="suggestions.recommendedSavings">Recommended monthly savings from remaining budget</div>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        // Enhanced updateMainBudgetSummary to include suggestions
+        const originalUpdateMainBudgetSummary = updateMainBudgetSummary;
+        updateMainBudgetSummary = function() {
+            // Call original function
+            originalUpdateMainBudgetSummary();
+            
+            // Generate and render suggestions
+            renderSmartSuggestions();
+        };
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const insightsModal = document.getElementById('insightsModal');
+            const recurringModal = document.getElementById('recurringModal');
+            
+            if (event.target === insightsModal) {
+                closeInsights();
+            } else if (event.target === recurringModal) {
+                closeRecurringModal();
+            }
+        };
+
+        // PWA Installation and Notification Management
+        let deferredPrompt;
+        let swRegistration = null;
+        let notificationPermission = 'default';
+
+        // Register Service Worker and setup PWA features with aggressive updates
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', async () => {
+                try {
+                    swRegistration = await navigator.serviceWorker.register('/tracker/sw.js');
+                    console.log('✅ Service Worker registered:', swRegistration);
+                    
+                    // Force immediate update check
+                    swRegistration.update();
+                    
+                    // Check for updates
+                    swRegistration.addEventListener('updatefound', () => {
+                        const newWorker = swRegistration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed') {
+                                if (navigator.serviceWorker.controller) {
+                                    // New version available - force immediate reload
+                                    console.log('🔄 New app version detected, force reloading...');
+                                    showNotification('App updated! Reloading to get latest features...', 'success');
+                                    setTimeout(() => {
+                                        window.location.reload(true);
+                                    }, 1500);
+                                } else {
+                                    // First install
+                                    console.log('✅ App installed and ready to use offline');
+                                }
+                            }
+                        });
+                    });
+                    
+                    // Also listen for controller changes
+                    navigator.serviceWorker.addEventListener('controllerchange', () => {
+                        console.log('🔄 Service Worker updated, reloading for latest version...');
+                        window.location.reload(true);
+                    });
+                    
+                } catch (error) {
+                    console.error('❌ Service Worker registration failed:', error);
+                }
+            });
+        }
+
+        // PWA Install prompt
+        window.addEventListener('beforeinstallprompt', (e) => {
+            console.log('💾 PWA install prompt available');
+            e.preventDefault();
+            deferredPrompt = e;
+            showInstallButton();
+        });
+
+        // Handle successful PWA installation
+        window.addEventListener('appinstalled', () => {
+            console.log('✅ PWA installed successfully');
+            hideInstallButton();
+            showNotification('App installed! You can now use Expense Tracker offline.', 'success');
+        });
+
+        // Show/hide install button
+        function showInstallButton() {
+            // Create install button if it doesn't exist
+            if (!document.getElementById('installButton')) {
+                const installBtn = document.createElement('button');
+                installBtn.id = 'installButton';
+                installBtn.className = 'btn btn-primary install-button';
+                installBtn.textContent = '📱 Install App';
+                installBtn.addEventListener('click', installPWA);
+                installBtn.style.cssText = `
+                    position: fixed;
+                    bottom: 100px;
+                    right: 20px;
+                    z-index: 998;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.5rem;
+                    box-shadow: var(--shadow-lg);
+                    animation: bounce 2s infinite;
+                `;
+                document.body.appendChild(installBtn);
+            }
+        }
+
+        function hideInstallButton() {
+            const installBtn = document.getElementById('installButton');
+            if (installBtn) {
+                installBtn.remove();
+            }
+        }
+
+        // Install PWA
+        async function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                
+                if (outcome === 'accepted') {
+                    console.log('✅ User accepted PWA install');
+                } else {
+                    console.log('❌ User declined PWA install');
+                }
+                
+                deferredPrompt = null;
+                hideInstallButton();
+            }
+        }
+
+        // Notification Permission Management
+        async function requestNotificationPermission() {
+            if (!('Notification' in window)) {
+                console.log('❌ This browser does not support notifications');
+                return false;
+            }
+
+            if (Notification.permission === 'granted') {
+                return true;
+            }
+
+            if (Notification.permission === 'denied') {
+                showNotification('Notifications are blocked. Please enable them in your browser settings.', 'error');
+                return false;
+            }
+
+            try {
+                const permission = await Notification.requestPermission();
+                notificationPermission = permission;
+                
+                if (permission === 'granted') {
+                    console.log('✅ Notification permission granted');
+                    setupPushNotifications();
+                    return true;
+                } else {
+                    console.log('❌ Notification permission denied');
+                    return false;
+                }
+            } catch (error) {
+                console.error('❌ Error requesting notification permission:', error);
+                return false;
+            }
+        }
+
+        // Setup Push Notifications
+        async function setupPushNotifications() {
+            if (!swRegistration) {
+                console.log('❌ Service Worker not registered');
+                return;
+            }
+
+            try {
+                // Setup local notifications
+                setupLocalNotifications();
+                
+            } catch (error) {
+                console.error('❌ Error setting up push notifications:', error);
+            }
+        }
+
+        // Setup local notifications for budget alerts and reminders
+        function setupLocalNotifications() {
+            // Check budget status daily
+            setInterval(checkBudgetAndNotify, 24 * 60 * 60 * 1000); // 24 hours
+            
+            // Check for recurring expense reminders every hour
+            setInterval(checkRecurringReminders, 60 * 60 * 1000); // 1 hour
+            
+            // Also check immediately when app loads
+            setTimeout(checkRecurringReminders, 5000); // 5 seconds after load
+            
+            console.log('🔔 Notification system initialized - will check recurring expenses every hour');
+        }
+
+        // Check budget and send notification if needed
+        function checkBudgetAndNotify() {
+            if (Notification.permission !== 'granted') return;
+
+            const currentMonth = new Date().getMonth();
+            const currentYear = new Date().getFullYear();
+            const monthlyExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
+            });
+
+            const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
+            const budgetUsedPercentage = monthlyBudget > 0 ? (monthlyTotal / monthlyBudget) * 100 : 0;
+
+            if (budgetUsedPercentage >= 80 && budgetUsedPercentage < 100) {
+                new Notification(t('notifications.budgetAlert'), {
+                    body: t('notifications.budgetUsedPercent', { percentage: Math.round(budgetUsedPercentage) }),
+                    icon: '/icons/icon-192x192.png',
+                    tag: 'budget-warning'
+                });
+            } else if (budgetUsedPercentage >= 100) {
+                new Notification('Budget Exceeded!', {
+                    body: `You've exceeded your monthly budget by €${Math.abs(monthlyBudget - monthlyTotal).toFixed(2)}.`,
+                    icon: '/icons/icon-192x192.png',
+                    tag: 'budget-exceeded'
+                });
+            }
+        }
+
+        // Check recurring expenses and send reminders
+        function checkRecurringReminders() {
+            if (Notification.permission !== 'granted') {
+                console.log('📵 Notifications not permitted - cannot send reminders');
+                return;
+            }
+
+            if (!recurringExpenses || recurringExpenses.length === 0) {
+                console.log('📝 No recurring expenses to check');
+                return;
+            }
+
+            const today = new Date();
+            const todayDateString = today.toDateString();
+            
+            // Get or initialize notification tracking
+            let notificationHistory = JSON.parse(localStorage.getItem('notificationHistory') || '{}');
+            
+            console.log(`🔍 Checking ${recurringExpenses.length} recurring expenses for reminders...`);
+
+            recurringExpenses.forEach(recurring => {
+                if (!recurring.isActive) return;
+
+                const nextDueDate = calculateNextDueDate(recurring.lastProcessedDate, recurring.frequency);
+                const daysUntilDue = Math.ceil((nextDueDate - today) / (1000 * 60 * 60 * 24));
+                
+                const expenseId = recurring.id;
+                const nextDueDateString = nextDueDate.toDateString();
+                
+                // Create unique keys for 3-day and 1-day reminders
+                const reminder3DayKey = `${expenseId}_3day_${nextDueDateString}`;
+                const reminder1DayKey = `${expenseId}_1day_${nextDueDateString}`;
+                
+                // Check for 3-day reminder
+                if (daysUntilDue === 3 && !notificationHistory[reminder3DayKey]) {
+                    const icon = categoryIcons[recurring.category] || '📝';
+                    
+                    new Notification('Upcoming Expense Reminder', {
+                        body: `${icon} ${recurring.category} (€${recurring.amount.toFixed(2)}) is due in 3 days on ${nextDueDate.toLocaleDateString()}`,
+                        icon: '/icons/icon-192x192.png',
+                        badge: '/icons/badge-72x72.png',
+                        tag: `recurring-3day-${expenseId}`,
+                        requireInteraction: false,
+                        actions: [
+                            {
+                                action: 'add-expense',
+                                title: 'Add Now'
+                            },
+                            {
+                                action: 'view-recurring',
+                                title: 'View Details'
+                            }
+                        ],
+                        data: {
+                            type: 'recurring-reminder',
+                            recurringId: expenseId,
+                            daysUntilDue: 3,
+                            category: recurring.category,
+                            amount: recurring.amount
+                        }
+                    });
+                    
+                    // Mark as sent
+                    notificationHistory[reminder3DayKey] = {
+                        sent: true,
+                        timestamp: Date.now(),
+                        type: '3-day-reminder'
+                    };
+                    
+                    console.log(`📱 Sent 3-day reminder for: ${recurring.category} (€${recurring.amount})`);
+                }
+                
+                // Check for 1-day reminder
+                if (daysUntilDue === 1 && !notificationHistory[reminder1DayKey]) {
+                    const icon = categoryIcons[recurring.category] || '📝';
+                    
+                    new Notification('Expense Due Tomorrow!', {
+                        body: `${icon} ${recurring.category} (€${recurring.amount.toFixed(2)}) is due tomorrow!`,
+                        icon: '/icons/icon-192x192.png',
+                        badge: '/icons/badge-72x72.png',
+                        tag: `recurring-1day-${expenseId}`,
+                        requireInteraction: true, // More urgent
+                        actions: [
+                            {
+                                action: 'add-expense',
+                                title: 'Add Now'
+                            },
+                            {
+                                action: 'remind-later',
+                                title: 'Remind Later'
+                            }
+                        ],
+                        data: {
+                            type: 'recurring-reminder',
+                            recurringId: expenseId,
+                            daysUntilDue: 1,
+                            category: recurring.category,
+                            amount: recurring.amount
+                        }
+                    });
+                    
+                    // Mark as sent
+                    notificationHistory[reminder1DayKey] = {
+                        sent: true,
+                        timestamp: Date.now(),
+                        type: '1-day-reminder'
+                    };
+                    
+                    console.log(`📱 Sent 1-day reminder for: ${recurring.category} (€${recurring.amount})`);
+                }
+                
+                // Check for overdue expenses
+                if (daysUntilDue < 0) {
+                    const overdueDays = Math.abs(daysUntilDue);
+                    const overdueKey = `${expenseId}_overdue_${nextDueDateString}`;
+                    
+                    if (!notificationHistory[overdueKey]) {
+                        const icon = categoryIcons[recurring.category] || '📝';
+                        
+                        new Notification('Overdue Expense!', {
+                            body: `${icon} ${recurring.category} (€${recurring.amount.toFixed(2)}) is overdue by ${overdueDays} day${overdueDays > 1 ? 's' : ''}!`,
+                            icon: '/icons/icon-192x192.png',
+                            badge: '/icons/badge-72x72.png',
+                            tag: `recurring-overdue-${expenseId}`,
+                            requireInteraction: true,
+                            actions: [
+                                {
+                                    action: 'add-expense',
+                                    title: 'Add Now'
+                                },
+                                {
+                                    action: 'view-recurring',
+                                    title: 'Manage'
+                                }
+                            ],
+                            data: {
+                                type: 'recurring-overdue',
+                                recurringId: expenseId,
+                                daysOverdue: overdueDays,
+                                category: recurring.category,
+                                amount: recurring.amount
+                            }
+                        });
+                        
+                        notificationHistory[overdueKey] = {
+                            sent: true,
+                            timestamp: Date.now(),
+                            type: 'overdue-reminder'
+                        };
+                        
+                        console.log(`📱 Sent overdue reminder for: ${recurring.category} (€${recurring.amount}) - ${overdueDays} days overdue`);
+                    }
+                }
+            });
+            
+            // Clean up old notification history (older than 30 days)
+            const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+            Object.keys(notificationHistory).forEach(key => {
+                if (notificationHistory[key].timestamp < thirtyDaysAgo) {
+                    delete notificationHistory[key];
+                }
+            });
+            
+            // Save updated notification history
+            localStorage.setItem('notificationHistory', JSON.stringify(notificationHistory));
+            
+            console.log('✅ Recurring expense reminder check completed');
+        }
+
+        // Test notification function
+        function testNotification() {
+            if (Notification.permission !== 'granted') {
+                requestNotificationPermission().then(() => {
+                    if (Notification.permission === 'granted') {
+                        sendTestNotification();
+                    }
+                });
+            } else {
+                sendTestNotification();
+            }
+        }
+
+        function sendTestNotification() {
+            new Notification('Test Notification 📱', {
+                body: 'Notifications are working! You will receive reminders for recurring expenses.',
+                icon: '/icons/icon-192x192.png',
+                badge: '/icons/badge-72x72.png',
+                tag: 'test-notification',
+                requireInteraction: false,
+                actions: [
+                    {
+                        action: 'view',
+                        title: 'View App'
+                    },
+                    {
+                        action: 'dismiss',
+                        title: 'Dismiss'
+                    }
+                ]
+            });
+            
+            showNotification('Test notification sent! 📱', 'success');
+            updateNotificationStatus();
+        }
+        // Update notification status display
+        function updateNotificationStatus() {
+            const statusDiv = document.getElementById('notificationStatus');
+            if (!statusDiv) return;
+
+            const permission = Notification.permission;
+            let statusText = '';
+            let statusClass = '';
+
+            if (permission === 'granted') {
+                statusText = '✅ Notifications enabled - You will receive reminders for recurring expenses';
+                statusClass = 'status-success';
+                statusDiv.style.backgroundColor = 'var(--success-light, #d4edda)';
+                statusDiv.style.color = 'var(--success-dark, #155724)';
+                statusDiv.style.borderColor = 'var(--success-color, #28a745)';
+            } else if (permission === 'denied') {
+                statusText = '❌ Notifications blocked - Please enable in browser settings to receive reminders';
+                statusClass = 'status-error';
+                statusDiv.style.backgroundColor = 'var(--danger-light, #f8d7da)';
+                statusDiv.style.color = 'var(--danger-dark, #721c24)';
+                statusDiv.style.borderColor = 'var(--danger-color, #dc3545)';
+            } else {
+                statusText = '⚠️ Notifications not enabled - Click "Test Notification" to enable reminders';
+                statusClass = 'status-warning';
+                statusDiv.style.backgroundColor = 'var(--warning-light, #fff3cd)';
+                statusDiv.style.color = 'var(--warning-dark, #856404)';
+                statusDiv.style.borderColor = 'var(--warning-color, #ffc107)';
+            }
+
+            statusDiv.textContent = statusText;
+            statusDiv.className = statusClass;
+
+            // Show reminder count if there are active recurring expenses
+            const activeRecurring = recurringExpenses.filter(r => r.isActive);
+            if (activeRecurring.length > 0 && permission === 'granted') {
+                statusDiv.textContent += ` (${activeRecurring.length} recurring expense${activeRecurring.length > 1 ? 's' : ''} being monitored)`;
+                         }
+         }
+
+         // Interactive Guide System
+         function getGuideSteps() {
+             return [
+            {
+                title: t('guide.step1.title'),
+                content: `
+                    <p>${t('guide.step1.intro')}</p>
+                    <p><strong>🌟 ${t('guide.step1.featuresTitle')}</strong></p>
+                    <ul>
+                        <li>💰 ${t('guide.step1.feature1')}</li>
+                        <li>🧳 ${t('guide.step1.feature2')}</li>
+                        <li>📊 ${t('guide.step1.feature3')}</li>
+                        <li>📱 ${t('guide.step1.feature4')}</li>
+                        <li>🔔 ${t('guide.step1.feature5')}</li>
+                        <li>📈 ${t('guide.step1.feature6')}</li>
+                    </ul>
+                    <p><strong>${t('guide.step1.letsExplore')}</strong></p>
+                `,
+                target: null,
+                action: null
+            },
+            {
+                title: t('guide.step2.title'),
+                content: `
+                    <h3>${t('guide.step2.intro')}</h3>
+                    <p><strong>🚀 ${t('guide.step2.appExperience')}</strong></p>
+                    <ul>
+                        <li>📱 ${t('guide.step2.offline')}</li>
+                        <li>🔔 ${t('guide.step2.notifications')}</li>
+                        <li>🏠 ${t('guide.step2.homeScreen')}</li>
+                        <li>⚡ ${t('guide.step2.performance')}</li>
+                        <li>🔒 ${t('guide.step2.secure')}</li>
+                        <li>🔄 ${t('guide.step2.updates')}</li>
+                    </ul>
+                    <p><strong>💡 Pro tip:</strong> Add this to your home screen for the best mobile experience!</p>
+                `,
+                target: null,
+                action: null
+            },
+            {
+                title: "💰 Smart Expense Tracking",
+                content: `
+                    <h3>Master the expense form!</h3>
+                    <p><strong>🎯 Each field explained:</strong></p>
+                    <ul>
+                        <li><strong>💵 Amount:</strong> How much you spent (auto-calculates in budget)</li>
+                        <li><strong>📂 Category:</strong> Smart categorization with custom emojis</li>
+                        <li><strong>📝 Description:</strong> Optional details for better tracking</li>
+                        <li><strong>👤 Person:</strong> Who made the purchase (multi-person support)</li>
+                        <li><strong>📅 Date:</strong> When it occurred (defaults to today)</li>
+                        <li><strong>🔄 Recurring:</strong> Set up automatic recurring expenses</li>
+                    </ul>
+                    <p><strong>✨ Try adding a test expense to see the magic!</strong></p>
+                `,
+                target: "#expenseForm",
+                action: "scrollTo"
+            },
+            {
+                title: "🎯 Lightning-Fast Quick Actions",
+                content: `
+                    <h3>One-click expense entry!</h3>
+                    <p><strong>⚡ Quick action buttons for common expenses:</strong></p>
+                    <ul>
+                        <li>🛒 <strong>Quick Groceries</strong> - Pre-fills grocery category</li>
+                        <li>⚡ <strong>Quick Utilities</strong> - Bills and utilities</li>
+                        <li>🚗 <strong>Quick Transport</strong> - Gas, taxi, public transport</li>
+                        <li>🏡 <strong>Quick Mortgage</strong> - Housing payments</li>
+                        <li>🚙 <strong>Quick Car Loan</strong> - Vehicle payments</li>
+                        <li>🍽️ <strong>Dining Out</strong> - Restaurant expenses</li>
+                    </ul>
+                    <p><strong>💡 Click any button to see intelligent pre-filling in action!</strong></p>
+                `,
+                target: ".quick-actions",
+                action: "highlight"
+            },
+            {
+                title: "🔍 Advanced Search & Filtering",
+                content: `
+                    <h3>Find anything instantly!</h3>
+                    <p><strong>🎯 Search by multiple criteria:</strong></p>
+                    <ul>
+                        <li>💰 <strong>Amount:</strong> "50", "€25", ">100" (range searches)</li>
+                        <li>📝 <strong>Category:</strong> Any category name</li>
+                        <li>📄 <strong>Description:</strong> Any text in descriptions</li>
+                        <li>👤 <strong>Person:</strong> Who paid for it</li>
+                        <li>📅 <strong>Date:</strong> Specific dates or ranges</li>
+                    </ul>
+                    <p><strong>📊 Smart View Modes:</strong></p>
+                    <ul>
+                        <li><strong>Recent:</strong> Last 30 days (optimized for speed)</li>
+                        <li><strong>All:</strong> Complete expense history with pagination</li>
+                    </ul>
+                `,
+                target: ".search-container",
+                action: "highlight"
+            },
+            {
+                title: "📊 Interactive Dashboard & Analytics",
+                content: `
+                    <h3>Your financial command center!</h3>
+                    <p><strong>📈 Real-time insights:</strong></p>
+                    <ul>
+                        <li>💹 <strong>Dynamic charts:</strong> Visual spending breakdown</li>
+                        <li>📊 <strong>Monthly trends:</strong> Track spending patterns</li>
+                        <li>🎯 <strong>Budget progress:</strong> Visual budget vs. actual</li>
+                        <li>🔮 <strong>Smart projections:</strong> Predict monthly spending</li>
+                        <li>💡 <strong>AI insights:</strong> Personalized financial advice</li>
+                        <li>📅 <strong>Upcoming recurring:</strong> See what's due next</li>
+                    </ul>
+                    <p><strong>✨ Click Dashboard tab to see your financial story!</strong></p>
+                `,
+                target: '[data-tab="dashboard"]',
+                action: "highlight"
+            },
+            {
+                title: "🔄 Intelligent Recurring Expenses",
+                content: `
+                    <h3>Never forget a bill again!</h3>
+                    <p><strong>⚡ Auto-processing features:</strong></p>
+                    <ul>
+                        <li>🏠 <strong>Housing:</strong> Rent, mortgage, utilities</li>
+                        <li>📱 <strong>Subscriptions:</strong> Netflix, Spotify, gym memberships</li>
+                        <li>🚗 <strong>Vehicle:</strong> Car payments, insurance, fuel</li>
+                        <li>🛒 <strong>Regular shopping:</strong> Weekly groceries</li>
+                        <li>💳 <strong>Bills:</strong> Credit cards, loans</li>
+                    </ul>
+                    <p><strong>🤖 Smart Features:</strong></p>
+                    <ul>
+                        <li>Auto-deducts from budget when due</li>
+                        <li>Shows next 5 upcoming payments</li>
+                        <li>Quick-add buttons for overdue payments</li>
+                        <li>Visual urgency indicators (green/yellow/red)</li>
+                    </ul>
+                `,
+                target: '[data-action="show-recurring"]',
+                action: "highlight"
+            },
+            {
+                title: "🧳 Trip Expense Management",
+                content: `
+                    <h3>Track group trips like a pro!</h3>
+                    <p><strong>✈️ Smart trip features:</strong></p>
+                    <ul>
+                        <li>📅 <strong>Auto-status tracking:</strong> Upcoming → Ongoing → Completed</li>
+                        <li>👥 <strong>Custom payer names:</strong> Track who paid what (no more "Friend 1"!)</li>
+                        <li>📊 <strong>Expense breakdown:</strong> By category and by person</li>
+                        <li>📱 <strong>Instant trip switching:</strong> Manage multiple trips easily</li>
+                        <li>✅ <strong>Trip completion:</strong> Choose exact end date</li>
+                        <li>🔄 <strong>Reopen completed trips:</strong> If plans change</li>
+                    </ul>
+                    <p><strong>💡 Perfect for group vacations, business trips, and events!</strong></p>
+                `,
+                target: '[data-tab="travel"]',
+                action: "highlight"
+            },
+            {
+                title: "📱 Cross-Device Data Sync",
+                content: `
+                    <h3>Access your data everywhere!</h3>
+                    <p><strong>☁️ Multiple sync options:</strong></p>
+                    <ul>
+                        <li>📤 <strong>Export/Import:</strong> JSON backup files (works now!)</li>
+                        <li>📱 <strong>QR Code transfer:</strong> Device-to-device sharing</li>
+                        <li>🔥 <strong>Firebase sync:</strong> Real-time cloud sync (coming soon)</li>
+                        <li>💾 <strong>Local sync mode:</strong> Privacy-focused option</li>
+                    </ul>
+                    <p><strong>🛡️ Data safety features:</strong></p>
+                    <ul>
+                        <li>✅ Validation before import</li>
+                        <li>⚠️ Confirmation for data replacement</li>
+                        <li>📋 Complete backup of all data</li>
+                        <li>🔒 Your data, your control</li>
+                    </ul>
+                `,
+                target: ".sync-status-card",
+                action: "scrollTo"
+            },
+            {
+                title: "💡 Interactive Budget Features",
+                content: `
+                    <h3>Budget management made smart!</h3>
+                    <p><strong>🎯 Clickable budget elements:</strong></p>
+                    <ul>
+                        <li>💰 <strong>Click "Spent":</strong> See detailed breakdown by category</li>
+                        <li>📊 <strong>Click "Remaining":</strong> View upcoming recurring payments</li>
+                        <li>📋 <strong>Click expense count:</strong> See what expenses are for</li>
+                        <li>🔮 <strong>Click projection:</strong> Detailed spending forecast</li>
+                    </ul>
+                    <p><strong>📈 Smart projections:</strong></p>
+                    <ul>
+                        <li>Predicts end-of-month spending</li>
+                        <li>Factors in remaining recurring expenses</li>
+                        <li>Shows daily budget recommendations</li>
+                        <li>Warns about potential overspending</li>
+                    </ul>
+                `,
+                target: ".stats-grid",
+                action: "highlight"
+            },
+            {
+                title: "🔔 Advanced Notification System",
+                content: `
+                    <h3>Stay on top of your finances!</h3>
+                    <p><strong>🤖 Intelligent reminders:</strong></p>
+                    <ul>
+                        <li>📅 <strong>3 days before</strong> recurring expenses due</li>
+                        <li>⚠️ <strong>1 day before</strong> with urgent priority</li>
+                        <li>🚨 <strong>Overdue alerts</strong> for missed payments</li>
+                        <li>💰 <strong>Budget warnings</strong> when approaching limit</li>
+                        <li>📊 <strong>Monthly summaries</strong> and insights</li>
+                    </ul>
+                    <p><strong>⚡ Quick actions from notifications:</strong></p>
+                    <ul>
+                        <li>Click notification to open app</li>
+                        <li>Quick-add expenses directly</li>
+                        <li>Mark recurring expenses as paid</li>
+                    </ul>
+                `,
+                target: "#notificationStatus",
+                action: "scrollTo"
+            },
+            {
+                title: "⚙️ Powerful Settings & Customization",
+                content: `
+                    <h3>Make the app truly yours!</h3>
+                    <p><strong>🎨 Personalization options:</strong></p>
+                    <ul>
+                        <li>💰 <strong>Monthly budget:</strong> Set goals and get alerts</li>
+                        <li>🎯 <strong>Custom categories:</strong> Create categories with emojis</li>
+                        <li>📱 <strong>Data sync:</strong> Export, import, QR codes</li>
+                        <li>🔔 <strong>Notification preferences:</strong> Test and configure</li>
+                        <li>⌨️ <strong>Keyboard shortcuts:</strong> Power user features</li>
+                        <li>📊 <strong>Data management:</strong> Export, clear, backup</li>
+                    </ul>
+                    <p><strong>🔧 Advanced features:</strong></p>
+                    <ul>
+                        <li>Theme customization (coming soon)</li>
+                        <li>Currency settings</li>
+                        <li>Export formats (CSV, JSON)</li>
+                    </ul>
+                `,
+                target: '[data-tab="settings"]',
+                action: "highlight"
+            },
+            {
+                title: "🚀 You're Ready to Master Your Finances!",
+                content: `
+                    <h3>Your complete financial toolkit!</h3>
+                    <p><strong>🎯 Immediate next steps:</strong></p>
+                    <ul>
+                        <li>📱 Add app to home screen for quick access</li>
+                        <li>🔔 Enable notifications for smart reminders</li>
+                        <li>💰 Set your monthly budget goal</li>
+                        <li>📝 Add your first few expenses</li>
+                        <li>🔄 Set up recurring bills and subscriptions</li>
+                        <li>🧳 Create a trip for vacation planning</li>
+                        <li>📤 Export data as backup</li>
+                    </ul>
+                    <p><strong>💡 Pro power-user tips:</strong></p>
+                    <ul>
+                        <li>Use Ctrl+N to quickly add expenses</li>
+                        <li>Click budget elements for detailed breakdowns</li>
+                        <li>Set up recurring expenses to automate tracking</li>
+                        <li>Use trip mode for group expense management</li>
+                        <li>Export data regularly as backup</li>
+                        <li>Sync across devices for everywhere access</li>
+                    </ul>
+                    <p><strong>🎉 Welcome to effortless expense tracking!</strong></p>
+                `,
+                target: null,
+                action: null
+            }
+        ];
+         }
+
+         let currentGuideStep = 0;
+         let isGuideActive = false;
+
+         function startGuide(isQuickTour = false) {
+             if (isQuickTour) {
+                 // Quick tour shows only essential steps: Expense tracking, Dashboard, Trip management, Data sync
+                 currentGuideStep = 0;
+                                 const allSteps = getGuideSteps();
+                const quickSteps = [
+                    allSteps[2],  // Smart Expense Tracking
+                    allSteps[5],  // Interactive Dashboard
+                    allSteps[7],  // Trip Management
+                    allSteps[8],  // Data Sync
+                    allSteps[12]  // Final steps
+                ];
+                                 showGuideStep(quickSteps, 0, true);
+            } else {
+                // Full guide shows all steps
+                currentGuideStep = 0;
+                showGuideStep(getGuideSteps(), 0, false);
+            }
+             
+             isGuideActive = true;
+             document.getElementById('guideOverlay').style.display = 'flex';
+             
+             // Mark that user has seen the guide
+             localStorage.setItem('hasSeenGuide', 'true');
+         }
+
+         function showGuideStep(steps, stepIndex, isQuickTour) {
+             const step = steps[stepIndex];
+             if (!step) return;
+
+             // Update content
+             document.getElementById('guideTitle').innerHTML = step.title;
+             document.getElementById('guideText').innerHTML = step.content;
+             
+             // Update progress
+             const progress = ((stepIndex + 1) / steps.length) * 100;
+             document.getElementById('guideProgress').style.width = progress + '%';
+             document.getElementById('guideProgressText').textContent = 
+                 `Step ${stepIndex + 1} of ${steps.length}`;
+
+             // Update buttons
+             const prevBtn = document.getElementById('guidePrevBtn');
+             const nextBtn = document.getElementById('guideNextBtn');
+             const finishBtn = document.getElementById('guideFinishBtn');
+
+             prevBtn.style.display = stepIndex > 0 ? 'block' : 'none';
+             nextBtn.style.display = stepIndex < steps.length - 1 ? 'block' : 'none';
+             finishBtn.style.display = stepIndex === steps.length - 1 ? 'block' : 'none';
+
+             // Handle spotlight
+             handleGuideAction(step);
+
+             // Store current state
+             window.currentGuideSteps = steps;
+             window.currentStepIndex = stepIndex;
+             window.isQuickTour = isQuickTour;
+         }
+
+         function handleGuideAction(step) {
+             const spotlight = document.getElementById('guideSpotlight');
+             spotlight.classList.remove('active');
+
+             if (step.target && step.action) {
+                 const targetElement = document.querySelector(step.target);
+                 if (targetElement) {
+                     setTimeout(() => {
+                         if (step.action === 'highlight') {
+                             highlightElement(targetElement);
+                         } else if (step.action === 'scrollTo') {
+                             scrollToElement(targetElement);
+                         }
+                     }, 300);
+                 }
+             }
+         }
+
+         function highlightElement(element) {
+             const rect = element.getBoundingClientRect();
+             const spotlight = document.getElementById('guideSpotlight');
+             
+             spotlight.style.left = (rect.left - 10) + 'px';
+             spotlight.style.top = (rect.top - 10) + 'px';
+             spotlight.style.width = (rect.width + 20) + 'px';
+             spotlight.style.height = (rect.height + 20) + 'px';
+             spotlight.classList.add('active');
+         }
+
+         function scrollToElement(element) {
+             element.scrollIntoView({ 
+                 behavior: 'smooth', 
+                 block: 'center' 
+             });
+             setTimeout(() => highlightElement(element), 500);
+         }
+
+         function nextGuideStep() {
+             const steps = window.currentGuideSteps;
+             const currentIndex = window.currentStepIndex;
+             
+             if (currentIndex < steps.length - 1) {
+                 showGuideStep(steps, currentIndex + 1, window.isQuickTour);
+             }
+         }
+
+         function prevGuideStep() {
+             const steps = window.currentGuideSteps;
+             const currentIndex = window.currentStepIndex;
+             
+             if (currentIndex > 0) {
+                 showGuideStep(steps, currentIndex - 1, window.isQuickTour);
+             }
+         }
+
+         function closeGuide() {
+             document.getElementById('guideOverlay').style.display = 'none';
+             document.getElementById('guideSpotlight').classList.remove('active');
+             isGuideActive = false;
+         }
+
+         function skipGuide() {
+             if (confirm('Are you sure you want to skip the guide? You can access it anytime from Settings.')) {
+                 closeGuide();
+             }
+         }
+
+         function showWelcomeBackMessage() {
+             // Create main container
+             const messageDiv = document.createElement('div');
+             messageDiv.style.cssText = `
+                 position: fixed; 
+                 top: 20px; 
+                 right: 20px; 
+                 background: var(--card-bg); 
+                 border: 2px solid var(--primary-color);
+                 border-radius: var(--border-radius-xl);
+                 padding: 1.5rem; 
+                 box-shadow: var(--shadow-xl);
+                 z-index: 1000;
+                 max-width: 350px;
+                 animation: slideInRight 0.5s ease-out;
+             `;
+             
+             // Create header
+             const headerDiv = document.createElement('div');
+             headerDiv.style.cssText = 'display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;';
+             
+             const title = document.createElement('h3');
+             title.style.cssText = 'margin: 0; color: var(--primary-color);';
+             title.textContent = '🎉 Welcome Back!';
+             
+             const closeBtn = document.createElement('button');
+             closeBtn.style.cssText = `
+                 background: none; 
+                 border: none; 
+                 font-size: 1.2rem; 
+                 cursor: pointer;
+                 color: var(--text-secondary);
+             `;
+             closeBtn.textContent = '✖️';
+             closeBtn.addEventListener('click', () => {
+                 messageDiv.remove();
+             });
+             
+             headerDiv.appendChild(title);
+             headerDiv.appendChild(closeBtn);
+             
+             // Create message text
+             const messageText = document.createElement('p');
+             messageText.style.cssText = 'margin: 0 0 1rem 0; color: var(--text-primary);';
+             messageText.textContent = "We've added new features! Want a quick tour to see what's new?";
+             
+             // Create button container
+             const buttonContainer = document.createElement('div');
+             buttonContainer.style.cssText = 'display: flex; gap: 0.5rem;';
+             
+             // Create Quick Tour button
+             const quickTourBtn = document.createElement('button');
+             quickTourBtn.className = 'btn btn-primary';
+             quickTourBtn.style.cssText = 'font-size: 0.9rem; padding: 0.5rem 1rem;';
+             quickTourBtn.textContent = '⚡ Quick Tour';
+             quickTourBtn.addEventListener('click', () => {
+                 startGuide(true);
+                 messageDiv.remove();
+             });
+             
+             // Create Maybe Later button
+             const laterBtn = document.createElement('button');
+             laterBtn.className = 'btn btn-secondary';
+             laterBtn.style.cssText = 'font-size: 0.9rem; padding: 0.5rem 1rem;';
+             laterBtn.textContent = 'Maybe Later';
+             laterBtn.addEventListener('click', () => {
+                 messageDiv.remove();
+             });
+             
+             // Assemble the message
+             buttonContainer.appendChild(quickTourBtn);
+             buttonContainer.appendChild(laterBtn);
+             
+             messageDiv.appendChild(headerDiv);
+             messageDiv.appendChild(messageText);
+             messageDiv.appendChild(buttonContainer);
+             
+             // Add to DOM
+             document.body.appendChild(messageDiv);
+             
+             // Auto-remove after 10 seconds
+             setTimeout(() => {
+                 if (messageDiv && messageDiv.parentNode) {
+                     messageDiv.remove();
+                 }
+             }, 10000);
+         }
+
+         // Add keyboard support for guide navigation
+         document.addEventListener('keydown', (e) => {
+             if (!isGuideActive) return;
+             
+             if (e.key === 'ArrowRight' || e.key === 'Enter') {
+                 e.preventDefault();
+                 const nextBtn = document.getElementById('guideNextBtn');
+                 const finishBtn = document.getElementById('guideFinishBtn');
+                 
+                 if (nextBtn.style.display !== 'none') {
+                     nextGuideStep();
+                 } else if (finishBtn.style.display !== 'none') {
+                     closeGuide();
+                 }
+             } else if (e.key === 'ArrowLeft') {
+                 e.preventDefault();
+                 const prevBtn = document.getElementById('guidePrevBtn');
+                 if (prevBtn.style.display !== 'none') {
+                     prevGuideStep();
+                 }
+             } else if (e.key === 'Escape') {
+                 e.preventDefault();
+                 skipGuide();
+             }
+         });
+
+         // Create a test recurring expense that will trigger a reminder soon
+         function createTestReminder() {
+             // Create a test recurring expense due in 3 days
+             const testDate = new Date();
+             testDate.setDate(testDate.getDate() - 27); // Set last processed to 27 days ago for monthly (30 days)
+             
+             const testRecurring = {
+                 id: Date.now(),
+                 category: 'Test Reminder',
+                 amount: 25.00,
+                 description: 'Test recurring expense for notifications',
+                 person: 'Test User',
+                 frequency: 'Monthly',
+                 isActive: true,
+                 startDate: testDate.toISOString().split('T')[0],
+                 lastProcessedDate: testDate.toISOString().split('T')[0],
+                 endDate: null
+             };
+             
+             recurringExpenses.push(testRecurring);
+             localStorage.setItem('recurringExpenses', JSON.stringify(recurringExpenses));
+             
+             showNotification('🧪 Test reminder created! Due in 3 days. Check console for details.', 'success');
+             console.log('🧪 Test recurring expense created:', testRecurring);
+             console.log('📅 This expense will trigger a reminder in 3 days');
+             
+             // Update the notification status to show the new recurring expense
+             updateNotificationStatus();
+             
+             // Refresh recurring list if modal is open
+             if (document.getElementById('recurringModal').style.display === 'block') {
+                 renderRecurringList();
+             }
+         }
+
+         // Handle URL parameters for deep linking
+        function handleURLParameters() {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            if (urlParams.get('action') === 'add') {
+                scrollToForm();
+                
+                // Pre-fill form if category and amount are provided (from notification)
+                const category = urlParams.get('category');
+                const amount = urlParams.get('amount');
+                
+                if (category) {
+                    const categorySelect = document.getElementById('category');
+                    if (categorySelect) {
+                        categorySelect.value = decodeURIComponent(category);
+                    }
+                }
+                
+                if (amount) {
+                    const amountInput = document.getElementById('amount');
+                    if (amountInput) {
+                        amountInput.value = amount;
+                    }
+                }
+                
+                console.log('📝 Pre-filled form from notification:', { category, amount });
+            } else if (urlParams.get('tab')) {
+                const tab = urlParams.get('tab');
+                if (tab === 'dashboard' || tab === 'settings') {
+                    switchTab(tab);
+                }
+            } else if (urlParams.get('action') === 'recurring') {
+                showRecurringModal();
+            }
+        }
+
+        // Force cache clear and app reload (for debugging cache issues)
+        async function forceClearCacheAndReload() {
+            try {
+                // Clear all caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    await Promise.all(cacheNames.map(name => caches.delete(name)));
+                    console.log('🗑️ All caches cleared');
+                }
+                
+                // Unregister service worker
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    await Promise.all(registrations.map(reg => reg.unregister()));
+                    console.log('🚫 Service worker unregistered');
+                }
+                
+                // Force hard reload
+                window.location.reload(true);
+            } catch (error) {
+                console.error('❌ Error clearing cache:', error);
+                window.location.reload(true);
+            }
+        }
+
+        // Add to window for debugging
+        window.forceClearCacheAndReload = forceClearCacheAndReload;
+
+        // Check version on app load and force update if needed
+        window.addEventListener('load', () => {
+            // Add version to console for debugging
+            console.log('📱 App Version: 2.1.1-all-toggles-fix');
+            console.log('🔧 If you have cache issues, run: forceClearCacheAndReload()');
+        });
+
+        // Listen for messages from service worker
+        navigator.serviceWorker.addEventListener('message', event => {
+            console.log('📨 Message from SW:', event.data);
+            
+            if (event.data.type === 'notification-action') {
+                const { action, data, url } = event.data;
+                
+                if (action === 'add-expense' && data && data.category) {
+                    // Pre-fill the form
+                    scrollToForm();
+                    
+                    const categorySelect = document.getElementById('category');
+                    const amountInput = document.getElementById('amount');
+                    
+                    if (categorySelect && data.category) {
+                        categorySelect.value = data.category;
+                    }
+                    
+                    if (amountInput && data.amount) {
+                        amountInput.value = data.amount;
+                    }
+                    
+                    console.log('📝 Pre-filled form from SW message:', data);
+                } else if (action === 'view-recurring') {
+                    showRecurringModal();
+                }
+            }
+        });
+
+        // Show update notification when new version is available
+        function showUpdateNotification() {
+            showNotification('🔄 New version available! Refresh to update.', 'info');
+        }
+        // Setup secure event listeners (replaces inline onclick handlers)
+        function setupEventListeners() {
+            // Navigation tabs
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', function() {
+                    const tabName = this.getAttribute('data-tab');
+                    if (tabName) {
+                        switchTab(tabName);
+                        // Update active state
+                        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                        this.classList.add('active');
+                    }
+                });
+            });
+
+            // Quick actions
+            document.querySelectorAll('.quick-action').forEach(action => {
+                action.addEventListener('click', function() {
+                    const actionType = this.getAttribute('data-action');
+                    const category = this.getAttribute('data-category');
+                    
+                    if (actionType === 'quick-form' && category) {
+                        showForm(category);
+                    } else if (actionType === 'show-insights') {
+                        showInsights();
+                    } else if (actionType === 'show-recurring') {
+                        showRecurringModal();
+                    }
+                });
+            });
+
+            // Search functionality
+            const searchInput = document.getElementById('searchInput');
+            const clearSearch = document.getElementById('clearSearch');
+            
+            if (searchInput) {
+                searchInput.addEventListener('input', handleSearch);
+                searchInput.addEventListener('keyup', handleSearch);
+            }
+            
+            if (clearSearch) {
+                clearSearch.addEventListener('click', function() {
+                    clearSearchFunction();
+                });
+            }
+
+            // View mode toggle
+            document.querySelectorAll('.view-mode-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const mode = this.getAttribute('data-view-mode');
+                    if (mode) {
+                        setViewMode(mode);
+                    }
+                });
+            });
+
+            // View style toggle (card/table)
+            const cardViewBtn = document.getElementById('cardViewBtn');
+            const tableViewBtn = document.getElementById('tableViewBtn');
+            
+            if (cardViewBtn) {
+                cardViewBtn.addEventListener('click', () => toggleViewStyle('card'));
+            }
+            
+            if (tableViewBtn) {
+                tableViewBtn.addEventListener('click', () => toggleViewStyle('table'));
+            }
+
+            // Filter selects
+            const categoryFilter = document.getElementById('categoryFilter');
+            const personFilter = document.getElementById('personFilter');
+            
+            if (categoryFilter) {
+                categoryFilter.addEventListener('change', filterExpenses);
+            }
+            
+            if (personFilter) {
+                personFilter.addEventListener('change', filterExpenses);
+            }
+
+            // Dark mode toggle
+            const darkModeToggle = document.getElementById('darkModeToggle');
+            if (darkModeToggle) {
+                darkModeToggle.addEventListener('change', toggleDarkMode);
+            }
+
+            // Pagination buttons
+            const prevPageBtn = document.getElementById('prevPageBtn');
+            const nextPageBtn = document.getElementById('nextPageBtn');
+            const prevPageBtnBottom = document.getElementById('prevPageBtnBottom');
+            const nextPageBtnBottom = document.getElementById('nextPageBtnBottom');
+            
+            if (prevPageBtn) {
+                prevPageBtn.addEventListener('click', () => changePage(-1));
+            }
+            
+            if (nextPageBtn) {
+                nextPageBtn.addEventListener('click', () => changePage(1));
+            }
+
+            if (prevPageBtnBottom) {
+                prevPageBtnBottom.addEventListener('click', () => changePage(-1));
+            }
+            
+            if (nextPageBtnBottom) {
+                nextPageBtnBottom.addEventListener('click', () => changePage(1));
+            }
+
+            // FAB button
+            const fabBtn = document.getElementById('fabScrollBtn');
+            if (fabBtn) {
+                fabBtn.addEventListener('click', scrollToForm);
+            }
+
+            // Data management buttons
+            const exportAllDataBtn = document.getElementById('exportAllDataBtn');
+            const clearAllDataBtn = document.getElementById('clearAllDataBtn');
+            
+            if (exportAllDataBtn) {
+                exportAllDataBtn.addEventListener('click', exportToCSV);
+            }
+            
+            if (clearAllDataBtn) {
+                clearAllDataBtn.addEventListener('click', clearAllData);
+            }
+
+            // Clear cache button
+            const clearCacheBtn = document.getElementById('clearCacheBtn');
+            if (clearCacheBtn) {
+                clearCacheBtn.addEventListener('click', () => {
+                    if (confirm('This will clear the app cache and reload. Your data will be preserved. Continue?')) {
+                        forceClearCacheAndReload();
+                    }
+                });
+            }
+
+            // Initialize sync manager after DOM is loaded
+            syncManager = new DataSyncManager();
+            
+            // Check for URL import parameter
+            checkURLImport();
+
+            // Sync functionality event listeners
+            const toggleSyncBtn = document.getElementById('toggleSyncBtn');
+            if (toggleSyncBtn) {
+                toggleSyncBtn.addEventListener('click', toggleSync);
+            }
+
+            const exportDataBtn = document.getElementById('exportDataBtn');
+            if (exportDataBtn) {
+                exportDataBtn.addEventListener('click', () => {
+                    if (syncManager) syncManager.exportData();
+                });
+            }
+
+            const importDataBtn = document.getElementById('importDataBtn');
+            const importDataFile = document.getElementById('importDataFile');
+            if (importDataBtn && importDataFile) {
+                importDataBtn.addEventListener('click', () => {
+                    importDataFile.click();
+                });
+                importDataFile.addEventListener('change', (e) => {
+                    if (e.target.files[0] && syncManager) {
+                        syncManager.importData(e.target.files[0]);
+                    }
+                });
+            }
+
+            const generateQRBtn = document.getElementById('generateQRBtn');
+            if (generateQRBtn) {
+                generateQRBtn.addEventListener('click', () => {
+                    if (syncManager) syncManager.generateQRCode();
+                });
+            }
+
+            const scanQRBtn = document.getElementById('scanQRBtn');
+            if (scanQRBtn) {
+                scanQRBtn.addEventListener('click', () => {
+                    startQRScanner();
+                });
+            }
+
+            // Custom category buttons
+            const addCustomCategoryBtn = document.getElementById('addCustomCategoryBtn');
+            const cancelCustomCategoryBtn = document.getElementById('cancelCustomCategoryBtn');
+            
+            if (addCustomCategoryBtn) {
+                addCustomCategoryBtn.addEventListener('click', addCustomCategory);
+            }
+            
+            if (cancelCustomCategoryBtn) {
+                cancelCustomCategoryBtn.addEventListener('click', cancelCustomCategory);
+            }
+
+            // Cancel edit button
+            const cancelEditBtn = document.getElementById('cancelEdit');
+            if (cancelEditBtn) {
+                cancelEditBtn.addEventListener('click', cancelEdit);
+            }
+
+            // Export CSV button
+            const exportCSVBtn = document.getElementById('exportCSVBtn');
+            if (exportCSVBtn) {
+                exportCSVBtn.addEventListener('click', exportToCSV);
+            }
+
+            // Export JSON button
+            const exportJSONBtn = document.getElementById('exportJSONBtn');
+            if (exportJSONBtn) {
+                exportJSONBtn.addEventListener('click', exportToJSON);
+            }
+
+            // Export Excel button (Premium)
+            const exportExcelBtn = document.getElementById('exportExcelBtn');
+            if (exportExcelBtn) {
+                exportExcelBtn.addEventListener('click', exportToExcel);
+            }
+
+            // Export PDF button (Premium)
+            const exportPDFBtn = document.getElementById('exportPDFBtn');
+            if (exportPDFBtn) {
+                exportPDFBtn.addEventListener('click', exportToPDF);
+            }
+
+            // Panel export buttons
+            const panelExportCSV = document.getElementById('panelExportCSV');
+            if (panelExportCSV) {
+                panelExportCSV.addEventListener('click', exportToCSV);
+            }
+
+            const panelExportJSON = document.getElementById('panelExportJSON');
+            if (panelExportJSON) {
+                panelExportJSON.addEventListener('click', exportToJSON);
+            }
+
+            const panelExportExcel = document.getElementById('panelExportExcel');
+            if (panelExportExcel) {
+                panelExportExcel.addEventListener('click', exportToExcel);
+            }
+
+            const panelExportPDF = document.getElementById('panelExportPDF');
+            if (panelExportPDF) {
+                panelExportPDF.addEventListener('click', exportToPDF);
+            }
+
+            // Panel minimize functionality
+            const minimizeBtn = document.getElementById('minimizePanel');
+            const summaryPanel = document.getElementById('expenseSummaryPanel');
+            
+            if (minimizeBtn && summaryPanel) {
+                minimizeBtn.addEventListener('click', () => {
+                    summaryPanel.classList.toggle('minimized');
+                    const isMinimized = summaryPanel.classList.contains('minimized');
+                    minimizeBtn.innerHTML = isMinimized ? 
+                        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>' :
+                        '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M5 12h14"/></svg>';
+                    
+                    // Update ARIA attributes
+                    minimizeBtn.setAttribute('aria-expanded', !isMinimized);
+                    minimizeBtn.setAttribute('aria-label', isMinimized ? 'Expand panel' : 'Minimize panel');
+                    
+                    // Save minimize state
+                    localStorage.setItem('summaryPanelMinimized', isMinimized);
+                });
+
+                // Restore minimize state
+                if (localStorage.getItem('summaryPanelMinimized') === 'true') {
+                    summaryPanel.classList.add('minimized');
+                    minimizeBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+                    minimizeBtn.setAttribute('aria-expanded', 'false');
+                    minimizeBtn.setAttribute('aria-label', 'Expand panel');
+                }
+
+                // Mobile bottom sheet functionality
+                if (window.innerWidth <= 768) {
+                    let startY = null;
+                    let currentY = null;
+                    let isDragging = false;
+
+                    summaryPanel.addEventListener('touchstart', (e) => {
+                        if (e.target.closest('.panel-header')) {
+                            startY = e.touches[0].clientY;
+                            isDragging = true;
+                        }
+                    });
+
+                    summaryPanel.addEventListener('touchmove', (e) => {
+                        if (!isDragging) return;
+                        currentY = e.touches[0].clientY;
+                        const deltaY = currentY - startY;
+                        
+                        if (deltaY > 0) {
+                            summaryPanel.style.transform = `translateY(calc(100% - 80px + ${deltaY}px))`;
+                        }
+                    });
+
+                    summaryPanel.addEventListener('touchend', () => {
+                        if (!isDragging) return;
+                        isDragging = false;
+                        
+                        const deltaY = currentY - startY;
+                        if (deltaY > 100) {
+                            summaryPanel.classList.remove('expanded');
+                        } else {
+                            summaryPanel.classList.add('expanded');
+                        }
+                        
+                        summaryPanel.style.transform = '';
+                    });
+                }
+            }
+
+            // Set budget button
+            const setBudgetBtn = document.getElementById('setBudgetBtn');
+            if (setBudgetBtn) {
+                setBudgetBtn.addEventListener('click', setBudget);
+            }
+            
+            // Set currency button
+            const setCurrencyBtn = document.getElementById('setCurrencyBtn');
+            if (setCurrencyBtn) {
+                setCurrencyBtn.addEventListener('click', setCurrency);
+            }
+
+            // Recurring modal buttons
+            const processRecurringBtn = document.getElementById('processRecurringBtn');
+            const checkRecurringBtn = document.getElementById('checkRecurringBtn');
+            const closeRecurringBtn = document.getElementById('closeRecurringBtn');
+            
+            if (processRecurringBtn) {
+                processRecurringBtn.addEventListener('click', processRecurringExpenses);
+            }
+            
+            if (checkRecurringBtn) {
+                checkRecurringBtn.addEventListener('click', checkRecurringExpenses);
+            }
+            
+            if (closeRecurringBtn) {
+                closeRecurringBtn.addEventListener('click', closeRecurringModal);
+            }
+
+            // Insights modal close button
+            const closeInsightsBtn = document.getElementById('closeInsightsBtn');
+            if (closeInsightsBtn) {
+                closeInsightsBtn.addEventListener('click', closeInsights);
+            }
+
+            // Notification test buttons
+            const testNotificationBtn = document.getElementById('testNotificationBtn');
+            const checkRemindersBtn = document.getElementById('checkRemindersBtn');
+            const createTestReminderBtn = document.getElementById('createTestReminderBtn');
+            
+            if (testNotificationBtn) {
+                testNotificationBtn.addEventListener('click', testNotification);
+            }
+            
+            if (checkRemindersBtn) {
+                checkRemindersBtn.addEventListener('click', checkRecurringReminders);
+            }
+            
+            if (createTestReminderBtn) {
+                createTestReminderBtn.addEventListener('click', createTestReminder);
+            }
+
+            // Guide buttons
+            const startGuideBtn = document.getElementById('startGuideBtn');
+            const quickTourBtn = document.getElementById('quickTourBtn');
+            const closeGuideBtn = document.getElementById('closeGuideBtn');
+            const helpBtn = document.getElementById('helpBtn');
+            const guideNextBtn = document.getElementById('guideNextBtn');
+            const guidePrevBtn = document.getElementById('guidePrevBtn');
+            const guideSkipBtn = document.getElementById('guideSkipBtn');
+            const guideFinishBtn = document.getElementById('guideFinishBtn');
+
+            if (startGuideBtn) {
+                startGuideBtn.addEventListener('click', () => startGuide(false));
+            }
+
+            if (quickTourBtn) {
+                quickTourBtn.addEventListener('click', () => startGuide(true));
+            }
+
+            if (helpBtn) {
+                helpBtn.addEventListener('click', () => startGuide(true));
+            }
+
+            if (closeGuideBtn) {
+                closeGuideBtn.addEventListener('click', closeGuide);
+            }
+
+            if (guideNextBtn) {
+                guideNextBtn.addEventListener('click', nextGuideStep);
+            }
+
+            if (guidePrevBtn) {
+                guidePrevBtn.addEventListener('click', prevGuideStep);
+            }
+
+            if (guideSkipBtn) {
+                guideSkipBtn.addEventListener('click', skipGuide);
+            }
+
+            if (guideFinishBtn) {
+                guideFinishBtn.addEventListener('click', closeGuide);
+            }
+
+            // Close guide on overlay click
+            document.getElementById('guideOverlay').addEventListener('click', (e) => {
+                if (e.target.id === 'guideOverlay') {
+                    skipGuide();
+                }
+            });
+
+            // Travel tracker event listeners
+            setupTravelEventListeners();
+        }
+
+        function setupTravelEventListeners() {
+            // Travel quick actions
+            document.querySelectorAll('.travel-action').forEach(action => {
+                action.addEventListener('click', function() {
+                    const category = this.getAttribute('data-travel-category');
+                    if (category) {
+                        document.getElementById('travelCategory').value = category;
+                        document.getElementById('travelAmount').focus();
+                    }
+                });
+            });
+
+            // Travel expense form
+            const travelExpenseForm = document.getElementById('travelExpenseForm');
+            if (travelExpenseForm) {
+                travelExpenseForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const formData = {
+                        amount: document.getElementById('travelAmount').value,
+                        category: document.getElementById('travelCategory').value,
+                        currency: document.getElementById('travelCurrency').value,
+                        date: document.getElementById('travelDate').value,
+                        location: document.getElementById('travelLocation').value,
+                        payer: document.getElementById('travelPayer').value,
+                        description: document.getElementById('travelDescription').value,
+                        deductFromMainBudget: document.getElementById('mainBudgetToggle').checked
+                    };
+
+                    if (travelEditingId) {
+                        // Update existing expense
+                        const expense = travelExpenses.find(e => e.id === travelEditingId);
+                        if (expense) {
+                            const oldDeductStatus = expense.deductFromMainBudget;
+                            
+                            expense.amount = parseFloat(formData.amount);
+                            expense.category = formData.category;
+                            expense.date = formData.date;
+                            expense.location = formData.location;
+                            expense.payer = formData.payer;
+                            expense.description = formData.description;
+                            expense.deductFromMainBudget = formData.deductFromMainBudget;
+                            
+                            // Handle main budget changes
+                            if (oldDeductStatus && !formData.deductFromMainBudget) {
+                                // Was deducting, now not - remove from main expenses
+                                const mainExpenseIndex = expenses.findIndex(e => e.travelExpenseId === expense.id);
+                                if (mainExpenseIndex !== -1) {
+                                    expenses.splice(mainExpenseIndex, 1);
+                                    localStorage.setItem('familyExpenses', JSON.stringify(expenses));
+                                }
+                            } else if (!oldDeductStatus && formData.deductFromMainBudget) {
+                                // Wasn't deducting, now is - add to main expenses
+                                addTravelExpenseToMain(expense);
+                            } else if (oldDeductStatus && formData.deductFromMainBudget) {
+                                // Was deducting and still is - update main expense
+                                const mainExpense = expenses.find(e => e.travelExpenseId === expense.id);
+                                if (mainExpense) {
+                                    mainExpense.amount = expense.amount;
+                                    mainExpense.category = expense.category;
+                                    mainExpense.date = expense.date;
+                                    mainExpense.description = `${expense.description} (Trip: ${currentTrip?.name || 'Unknown'})`;
+                                    localStorage.setItem('familyExpenses', JSON.stringify(expenses));
+                                }
+                            }
+                            
+                            localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses));
+                            
+                            cancelTravelEdit();
+                            renderTravelExpensesList();
+                            updateTravelCategoryBreakdown();
+                            updateTripStats();
+                            
+                            showNotification('✈️ Travel expense updated!', 'success');
+                        }
+                    } else {
+                        // Add new expense
+                        const needsCurrencyConversion = formData.deductFromMainBudget && 
+                            formData.currency !== mainCurrency;
+                        
+                        addTravelExpense(formData);
+                        
+                        // Only reset form if no currency conversion is needed
+                        // (if conversion is needed, form will be reset in the callback)
+                        if (!needsCurrencyConversion) {
+                            this.reset();
+                            document.getElementById('travelDate').valueAsDate = new Date();
+                            document.getElementById('mainBudgetToggle').checked = false;
+                        }
+                    }
+                });
+            }
+
+            // Cancel travel edit button
+            const cancelTravelEditBtn = document.getElementById('cancelTravelEdit');
+            if (cancelTravelEditBtn) {
+                cancelTravelEditBtn.addEventListener('click', cancelTravelEdit);
+            }
+
+            // Trip management button (now focuses on creating new trips)
+            const manageTripBtn = document.getElementById('manageTripBtn');
+            if (manageTripBtn) {
+                manageTripBtn.addEventListener('click', function() {
+                    document.getElementById('tripModal').style.display = 'block';
+                    renderTripsList();
+                });
+            }
+
+            // Add new trip button (from main tab)
+            const addNewTripBtn = document.getElementById('addNewTripBtn');
+            if (addNewTripBtn) {
+                addNewTripBtn.addEventListener('click', function() {
+                    document.getElementById('tripModal').style.display = 'block';
+                    renderTripsList();
+                });
+            }
+
+            // Complete trip button
+            const completeTripBtn = document.getElementById('completeTripBtn');
+            if (completeTripBtn) {
+                completeTripBtn.addEventListener('click', function() {
+                    if (currentTrip) {
+                        completeTrip(currentTrip.id);
+                    }
+                });
+            }
+
+            // Complete trip form
+            const completeTripForm = document.getElementById('completeTripForm');
+            if (completeTripForm) {
+                completeTripForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    const tripId = parseInt(document.getElementById('completeTripModal').dataset.tripId);
+                    const completionDate = document.getElementById('completionDate').value;
+                    finalizeCompleteTrip(tripId, completionDate);
+                });
+            }
+
+            // New trip form
+            const newTripForm = document.getElementById('newTripForm');
+            if (newTripForm) {
+                newTripForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const tripData = {
+                        name: document.getElementById('newTripName').value,
+                        destination: document.getElementById('newTripDestination').value,
+                        startDate: document.getElementById('newTripStartDate').value,
+                        endDate: document.getElementById('newTripEndDate').value,
+                        budget: document.getElementById('newTripBudget').value,
+                        currency: document.getElementById('newTripCurrency').value
+                    };
+
+                    if (window.editingTripId) {
+                        // Update existing trip
+                        updateTrip(window.editingTripId, tripData);
+                        window.editingTripId = null;
+                        
+                        // Reset form button and modal title
+                        document.querySelector('#newTripForm button[type="submit"]').textContent = '✈️ Create Trip';
+                        document.querySelector('#tripModal h2').textContent = '✈️ Create New Trip';
+                    } else {
+                        // Create new trip
+                        createNewTrip(tripData);
+                    }
+                    
+                    this.reset();
+                    document.getElementById('tripModal').style.display = 'none';
+                });
+            }
+
+            // Close trip modal button
+            const closeTripModalBtn = document.getElementById('closeTripModalBtn');
+            if (closeTripModalBtn) {
+                closeTripModalBtn.addEventListener('click', function() {
+                    // Reset edit mode
+                    if (window.editingTripId) {
+                        window.editingTripId = null;
+                        document.querySelector('#newTripForm button[type="submit"]').textContent = '✈️ Create Trip';
+                        document.querySelector('#tripModal h2').textContent = '✈️ Create New Trip';
+                    }
+                    document.getElementById('tripModal').style.display = 'none';
+                });
+            }
+
+            // Export travel CSV button
+            const exportTravelCSVBtn = document.getElementById('exportTravelCSVBtn');
+            if (exportTravelCSVBtn) {
+                exportTravelCSVBtn.addEventListener('click', exportTravelExpensesToCSV);
+            }
+
+            // Travel search and filters
+            const travelSearchInput = document.getElementById('travelSearchInput');
+            const clearTravelSearch = document.getElementById('clearTravelSearch');
+            const travelCategoryFilter = document.getElementById('travelCategoryFilter');
+
+            if (travelSearchInput) {
+                travelSearchInput.addEventListener('input', handleTravelSearch);
+                travelSearchInput.addEventListener('keyup', handleTravelSearch);
+            }
+
+            if (clearTravelSearch) {
+                clearTravelSearch.addEventListener('click', function() {
+                    travelSearchInput.value = '';
+                    clearTravelSearch.style.display = 'none';
+                    renderTravelExpensesList();
+                });
+            }
+
+            if (travelCategoryFilter) {
+                travelCategoryFilter.addEventListener('change', filterTravelExpenses);
+            }
+        }
+
+        function handleTravelSearch() {
+            const searchTerm = document.getElementById('travelSearchInput').value.toLowerCase();
+            const clearBtn = document.getElementById('clearTravelSearch');
+            
+            if (searchTerm.length > 0) {
+                clearBtn.style.display = 'block';
+                filterTravelExpenses();
+            } else {
+                clearBtn.style.display = 'none';
+                renderTravelExpensesList();
+            }
+        }
+
+        function filterTravelExpenses() {
+            if (!currentTrip) return;
+
+            const searchTerm = document.getElementById('travelSearchInput').value.toLowerCase();
+            const categoryFilter = document.getElementById('travelCategoryFilter').value;
+            
+            let tripExpenses = travelExpenses.filter(e => e.tripId === currentTrip.id);
+            
+            // Apply search filter
+            if (searchTerm) {
+                tripExpenses = tripExpenses.filter(expense => 
+                    expense.category.toLowerCase().includes(searchTerm) ||
+                    expense.description.toLowerCase().includes(searchTerm) ||
+                    expense.location.toLowerCase().includes(searchTerm) ||
+                    expense.amount.toString().includes(searchTerm)
+                );
+            }
+            
+            // Apply category filter
+            if (categoryFilter) {
+                tripExpenses = tripExpenses.filter(expense => expense.category === categoryFilter);
+            }
+            
+            // Render filtered expenses
+            const travelExpensesList = document.getElementById('travelExpensesList');
+            
+            if (tripExpenses.length === 0) {
+                travelExpensesList.innerHTML = '<div class="no-expenses">No expenses match your search criteria.</div>';
+                return;
+            }
+
+            // Sort by date (newest first)
+            const sortedExpenses = [...tripExpenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            travelExpensesList.innerHTML = '';
+            
+            sortedExpenses.forEach(expense => {
+                const expenseElement = createTravelExpenseElement(expense);
+                travelExpensesList.appendChild(expenseElement);
+            });
+        }
+
+        // Enhanced DOMContentLoaded to include PWA features
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup secure event listeners
+            setupEventListeners();
+            
+            // Handle URL parameters for deep linking
+            handleURLParameters();
+            
+            // Initialize notification status display
+            setTimeout(updateNotificationStatus, 1000);
+            
+            // Check if first-time user and show guide
+            setTimeout(() => {
+                const hasSeenGuide = localStorage.getItem('hasSeenGuide');
+                const hasExpenses = expenses.length > 0;
+                const hasRecurring = recurringExpenses.length > 0;
+                const hasBudget = monthlyBudget > 0;
+                
+                // Show guide if it's a truly new user (no data at all)
+                if (!hasSeenGuide && !hasExpenses && !hasRecurring && !hasBudget) {
+                    console.log('👋 Welcome new user! Starting interactive guide...');
+                    setTimeout(() => startGuide(false), 2000); // Delay to let page settle
+                } else if (!hasSeenGuide) {
+                    // User has some data but hasn't seen guide - offer quick tour
+                    console.log('💡 Existing data detected. Offering quick tour...');
+                    showWelcomeBackMessage();
+                }
+            }, 1500);
+            
+            // Setup notification permission request
+            if ('Notification' in window && Notification.permission === 'default') {
+                // Show notification permission request after user interacts with the app
+                setTimeout(() => {
+                    if (expenses.length > 0 || monthlyBudget > 0) {
+                        requestNotificationPermission();
+                    }
+                }, 30000); // Wait 30 seconds before asking
+            }
+            
+            // Check if running as PWA
+            if (window.matchMedia('(display-mode: standalone)').matches || 
+                window.navigator.standalone === true) {
+                console.log('✅ Running as PWA');
+                document.body.classList.add('pwa-mode');
+            }
+            
+            // Online/offline status handling
+            window.addEventListener('online', () => {
+                showNotification('You\'re back online!', 'success');
+            });
+            
+            window.addEventListener('offline', () => {
+                showNotification('You\'re offline. Changes will sync when you\'re back online.', 'info');
+            });
+            
+            // Initialize travel tab when it becomes active
+            if (document.getElementById('travelTab')) {
+                initializeTravelTab();
+            }
+        });
+
+        // ==================== TRAVEL TRACKER FUNCTIONALITY ====================
+
+        // Travel tab initialization
+        function initializeTravelTab() {
+            // Update all trip statuses first
+            updateTripsStatusBasedOnDates();
+            updateTripDisplay();
+            renderTravelExpensesList();
+            updateTravelCategoryBreakdown();
+            updateTripStats();
+            updatePayerSuggestions();
+            renderTripsList(); // Render trips list on the main tab
+            
+            // Set today's date for travel form
+            if (document.getElementById('travelDate')) {
+                document.getElementById('travelDate').valueAsDate = new Date();
+            }
+        }
+
+        // Trip Management Functions
+        function createNewTrip(tripData) {
+            const trip = {
+                id: Date.now(),
+                name: tripData.name,
+                destination: tripData.destination,
+                startDate: tripData.startDate,
+                endDate: tripData.endDate,
+                budget: tripData.budget || 0,
+                currency: tripData.currency || mainCurrency,
+                status: 'active',
+                createdAt: new Date().toISOString()
+            };
+            
+            trips.push(trip);
+            currentTrip = trip;
+            
+            // Save to localStorage
+            localStorage.setItem('trips', JSON.stringify(trips));
+            localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+            
+            updateTripDisplay();
+            updateTripStats();
+            renderTripsList();
+            
+            showNotification(`🚀 Trip "${trip.name}" started!`, 'success');
+        }
+
+        function switchToTrip(tripId) {
+            const trip = trips.find(t => t.id === tripId);
+            if (trip) {
+                currentTrip = trip;
+                localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+                updateTripDisplay();
+                updateTripStats();
+                renderTravelExpensesList();
+                updateTravelCategoryBreakdown();
+                showNotification(`📍 Switched to "${trip.name}"`, 'success');
+            }
+        }
+
+        function completeTrip(tripId) {
+            const trip = trips.find(t => t.id === tripId);
+            if (trip) {
+                trip.status = 'completed';
+                trip.completedAt = new Date().toISOString();
+                
+                if (currentTrip && currentTrip.id === tripId) {
+                    currentTrip = null;
+                    localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+                }
+                
+                localStorage.setItem('trips', JSON.stringify(trips));
+                updateTripDisplay();
+                renderTripsList();
+                showNotification(`✅ Trip "${trip.name}" completed!`, 'success');
+            }
+        }
+
+        function deleteTrip(tripId) {
+            if (confirm('Are you sure you want to delete this trip? This will also delete all associated expenses.')) {
+                // Remove trip expenses
+                travelExpenses = travelExpenses.filter(expense => expense.tripId !== tripId);
+                
+                // Remove trip
+                trips = trips.filter(t => t.id !== tripId);
+                
+                // Clear current trip if it was deleted
+                if (currentTrip && currentTrip.id === tripId) {
+                    currentTrip = null;
+                    localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+                }
+                
+                localStorage.setItem('trips', JSON.stringify(trips));
+                localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses));
+                
+                updateTripDisplay();
+                renderTripsList();
+                renderTravelExpensesList();
+                updateTravelCategoryBreakdown();
+                updateTripStats();
+                
+                showNotification('🗑️ Trip deleted successfully', 'success');
+            }
+        }
+
+        // Trip Management Functions
+        function completeTrip(tripId) {
+            // Set the trip ID and show the completion modal
+            document.getElementById('completeTripModal').dataset.tripId = tripId;
+            document.getElementById('completionDate').value = new Date().toISOString().split('T')[0]; // Set to today by default
+            document.getElementById('completeTripModal').style.display = 'block';
+        }
+
+        function closeCompleteTripModal() {
+            document.getElementById('completeTripModal').style.display = 'none';
+        }
+
+        function finalizeCompleteTrip(tripId, completionDate) {
+            const trip = trips.find(t => t.id === tripId);
+            if (trip) {
+                trip.status = 'completed';
+                trip.completedDate = completionDate;
+                trip.endDate = completionDate; // Update the actual end date
+                localStorage.setItem('trips', JSON.stringify(trips));
+                
+                // Clear current trip if it was the completed one
+                if (currentTrip && currentTrip.id === tripId) {
+                    currentTrip = null;
+                    localStorage.removeItem('currentTrip');
+                }
+                
+                updateTripDisplay();
+                renderTripsList();
+                closeCompleteTripModal();
+                showNotification(`🎉 Trip "${trip.name}" completed successfully!`, 'success');
+            }
+        }
+
+        function reopenTrip(tripId) {
+            const trip = trips.find(t => t.id === tripId);
+            if (trip) {
+                // First, remove completed status so updateTripsStatusBasedOnDates can work
+                trip.status = 'ongoing'; // Force to ongoing first
+                delete trip.completedDate;
+                
+                // If there's an end date and it's in the past, remove it so trip can continue
+                if (trip.endDate && new Date(trip.endDate) < new Date()) {
+                    delete trip.endDate;
+                }
+                
+                // Save the changes first
+                localStorage.setItem('trips', JSON.stringify(trips));
+                
+                // Set as current active trip immediately
+                currentTrip = trip;
+                localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+                
+                // Update all UI elements
+                updateTripDisplay();
+                initializeTravelTab();
+                renderTripsList();
+                
+                // Update trip statuses after reopening
+                updateTripsStatusBasedOnDates();
+                localStorage.setItem('trips', JSON.stringify(trips));
+                
+                showNotification(`🔄 Trip "${trip.name}" reopened and activated!`, 'success');
+            }
+        }
+        function viewTripDetails(tripId) {
+            const trip = trips.find(t => t.id === tripId);
+            if (!trip) return;
+            
+            const tripExpenses = travelExpenses.filter(e => e.tripId === tripId);
+            const total = tripExpenses.reduce((sum, e) => sum + e.amount, 0);
+            
+            // Group expenses by payer
+            const expensesByPayer = {};
+            tripExpenses.forEach(expense => {
+                const payer = expense.payer || 'Unknown';
+                if (!expensesByPayer[payer]) {
+                    expensesByPayer[payer] = { total: 0, expenses: [] };
+                }
+                expensesByPayer[payer].total += expense.amount;
+                expensesByPayer[payer].expenses.push(expense);
+            });
+
+            let payerBreakdown = '';
+            Object.entries(expensesByPayer)
+                .sort(([,a], [,b]) => b.total - a.total)
+                .forEach(([payer, data]) => {
+                    payerBreakdown += `
+                        <div class="payer-breakdown">
+                            <h4>👤 ${payer}: €${data.total.toFixed(2)} (${data.expenses.length} expenses)</h4>
+                            <div class="payer-expenses">
+                                ${data.expenses.map(e => `
+                                    <div class="payer-expense-item">
+                                        ${e.category} - €${e.amount.toFixed(2)} 
+                                        <span style="color: var(--text-secondary);">(${new Date(e.date).toLocaleDateString()})</span>
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    `;
+                });
+
+            const modalContent = `
+                <div style="max-height: 60vh; overflow-y: auto;">
+                    <div style="margin-bottom: 1.5rem;">
+                        <h3>🧳 ${trip.name}</h3>
+                        <p><strong>📍 Destination:</strong> ${trip.destination}</p>
+                        <p><strong>📅 Dates:</strong> ${new Date(trip.startDate).toLocaleDateString()} - ${trip.endDate ? new Date(trip.endDate).toLocaleDateString() : 'Ongoing'}</p>
+                        <p><strong>💰 Total Spent:</strong> €${total.toFixed(2)}</p>
+                        <p><strong>📊 Status:</strong> ${trip.status === 'completed' ? '✅ Completed' : '🔄 Active'}</p>
+                        ${trip.completedDate ? `<p><strong>🎉 Completed:</strong> ${new Date(trip.completedDate).toLocaleDateString()}</p>` : ''}
+                    </div>
+                    
+                    ${payerBreakdown ? `
+                        <div style="margin-bottom: 1.5rem;">
+                            <h3>💳 Expenses by Payer</h3>
+                            ${payerBreakdown}
+                        </div>
+                    ` : ''}
+                    
+                    <div class="trip-actions" style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.5rem;">
+                        ${trip.status === 'completed' ? 
+                            `<button class="btn btn-primary" onclick="reopenTrip('${trip.id}'); closeTripDetailsModal();">🔄 Reopen Trip</button>` :
+                            `<button class="btn btn-success" onclick="completeTrip('${trip.id}'); closeTripDetailsModal();">✅ Complete Trip</button>`
+                        }
+                        <button class="btn btn-secondary" onclick="closeTripDetailsModal()">Close</button>
+                    </div>
+                </div>
+            `;
+
+            // Create trip details modal if it doesn't exist
+            let tripDetailsModal = document.getElementById('tripDetailsModal');
+            if (!tripDetailsModal) {
+                tripDetailsModal = document.createElement('div');
+                tripDetailsModal.id = 'tripDetailsModal';
+                tripDetailsModal.className = 'modal';
+                tripDetailsModal.innerHTML = `
+                    <div class="modal-content">
+                        <h2>🧳 Trip Details</h2>
+                        <div id="tripDetailsContent"></div>
+                    </div>
+                `;
+                document.body.appendChild(tripDetailsModal);
+            }
+
+            document.getElementById('tripDetailsContent').innerHTML = modalContent;
+            tripDetailsModal.style.display = 'block';
+        }
+
+        function closeTripDetailsModal() {
+            const modal = document.getElementById('tripDetailsModal');
+            if (modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        // Travel Expense Functions
+        // Helper function to add travel expense to main budget
+        function addTravelExpenseToMain(travelExpense) {
+            const mainExpense = {
+                id: Date.now() + Math.random(), // Ensure unique ID
+                amount: travelExpense.convertedAmount || travelExpense.amount,
+                currency: mainCurrency,
+                originalAmount: travelExpense.amount,
+                originalCurrency: travelExpense.currency,
+                exchangeRate: travelExpense.exchangeRate,
+                convertedAmount: travelExpense.convertedAmount || travelExpense.amount,
+                category: travelExpense.category,
+                person: travelExpense.payer || 'Family',
+                description: `${travelExpense.description} (Trip: ${currentTrip?.name || 'Unknown'})`,
+                date: travelExpense.date,
+                timestamp: new Date().toISOString(),
+                isRecurring: false,
+                travelExpenseId: travelExpense.id, // Link back to travel expense
+                source: 'trip'
+            };
+            
+            expenses.push(mainExpense);
+            localStorage.setItem('familyExpenses', JSON.stringify(expenses));
+            
+            // Update dashboard if we're on the main page
+            if (typeof updateDashboard === 'function') {
+                updateDashboard();
+            }
+            if (typeof filterAndRenderExpenses === 'function') {
+                filterAndRenderExpenses();
+            }
+        }
+
+        function addTravelExpense(expenseData) {
+            if (!currentTrip) {
+                showNotification('Please start a trip first!', 'error');
+                return;
+            }
+
+            const expense = {
+                id: Date.now(),
+                tripId: currentTrip.id,
+                amount: parseFloat(expenseData.amount),
+                currency: expenseData.currency || currentTrip.currency || mainCurrency,
+                category: expenseData.category,
+                date: expenseData.date,
+                location: expenseData.location || '',
+                payer: expenseData.payer || 'Me',
+                description: expenseData.description || '',
+                deductFromMainBudget: expenseData.deductFromMainBudget || false,
+                createdAt: new Date().toISOString()
+            };
+
+            // Check if currency conversion is needed for main budget deduction
+            if (expense.deductFromMainBudget && expense.currency !== mainCurrency) {
+                showExchangeRateModal(expense.currency, (rate) => {
+                    expense.exchangeRate = rate;
+                    expense.convertedAmount = getConvertedAmount(expense.amount, expense.currency, mainCurrency, rate);
+                    
+                    travelExpenses.push(expense);
+                    localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses));
+                    
+                    addTravelExpenseToMain(expense);
+                    
+                    renderTravelExpensesList();
+                    updateTravelCategoryBreakdown();
+                    updateTripStats();
+                    
+                    // Reset the travel expense form
+                    document.getElementById('travelExpenseForm').reset();
+                    document.getElementById('travelDate').valueAsDate = new Date();
+                    document.getElementById('mainBudgetToggle').checked = false;
+                    
+                    // Reset currency to trip default
+                    const travelCurrencySelect = document.getElementById('travelCurrency');
+                    if (travelCurrencySelect) {
+                        travelCurrencySelect.value = (currentTrip && currentTrip.currency) || mainCurrency;
+                    }
+                    
+                    showNotification('✈️ Travel expense added!', 'success');
+                });
+                return;
+            }
+            
+            // If same currency or not deducting from main budget
+            expense.convertedAmount = expense.amount;
+
+            travelExpenses.push(expense);
+            localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses));
+
+            // Add to main expenses if toggle is enabled
+            if (expense.deductFromMainBudget) {
+                addTravelExpenseToMain(expense);
+            }
+            
+            renderTravelExpensesList();
+            updateTravelCategoryBreakdown();
+            updateTripStats();
+            
+            showNotification('✈️ Travel expense added!', 'success');
+        }
+
+        function editTravelExpense(expenseId) {
+            const expense = travelExpenses.find(e => e.id === expenseId);
+            if (expense) {
+                travelEditingId = expenseId;
+                
+                document.getElementById('travelAmount').value = expense.amount;
+                document.getElementById('travelCategory').value = expense.category;
+                document.getElementById('travelDate').value = expense.date;
+                document.getElementById('travelLocation').value = expense.location;
+                document.getElementById('travelPayer').value = expense.payer || 'Me';
+                document.getElementById('travelDescription').value = expense.description;
+                document.getElementById('mainBudgetToggle').checked = expense.deductFromMainBudget || false;
+                
+                document.getElementById('cancelTravelEdit').style.display = 'block';
+                document.querySelector('#travelExpenseForm button[type="submit"]').textContent = '💾 Update Expense';
+                
+                // Scroll to form
+                document.getElementById('travelExpenseForm').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function deleteTravelExpense(expenseId) {
+            if (confirm('Are you sure you want to delete this travel expense?')) {
+                // Find the expense before deleting
+                const expenseToDelete = travelExpenses.find(e => e.id === expenseId);
+                
+                // Remove from travel expenses
+                travelExpenses = travelExpenses.filter(expense => expense.id !== expenseId);
+                localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses));
+                
+                // If it was linked to main budget, remove from main expenses too
+                if (expenseToDelete && expenseToDelete.deductFromMainBudget) {
+                    const mainExpenseIndex = expenses.findIndex(e => e.travelExpenseId === expenseId);
+                    if (mainExpenseIndex !== -1) {
+                        expenses.splice(mainExpenseIndex, 1);
+                        localStorage.setItem('familyExpenses', JSON.stringify(expenses));
+                        
+                        // Update main dashboard
+                        if (typeof updateDashboard === 'function') {
+                            updateDashboard();
+                        }
+                        if (typeof filterAndRenderExpenses === 'function') {
+                            filterAndRenderExpenses();
+                        }
+                    }
+                }
+                
+                renderTravelExpensesList();
+                updateTravelCategoryBreakdown();
+                updateTripStats();
+                
+                showNotification('🗑️ Travel expense deleted', 'success');
+            }
+        }
+
+        function cancelTravelEdit() {
+            travelEditingId = null;
+            document.getElementById('travelExpenseForm').reset();
+            document.getElementById('travelDate').valueAsDate = new Date();
+            document.getElementById('mainBudgetToggle').checked = false; // Reset toggle
+            document.getElementById('cancelTravelEdit').style.display = 'none';
+            document.querySelector('#travelExpenseForm button[type="submit"]').textContent = '💾 Add to Trip';
+        }
+
+        // Display Functions
+        function updateTripDisplay() {
+            const tripNameElement = document.getElementById('tripName');
+            const manageTripBtn = document.getElementById('manageTripBtn');
+            const completeTripBtn = document.getElementById('completeTripBtn');
+            
+            // Auto-update trip statuses first
+            updateTripsStatusBasedOnDates();
+            
+            // Find the most relevant active trip (ongoing first, then upcoming)
+            const ongoingTrips = trips.filter(t => t.status === 'ongoing');
+            const upcomingTrips = trips.filter(t => t.status === 'upcoming');
+            
+            let activeTrip = null;
+            if (ongoingTrips.length > 0) {
+                activeTrip = ongoingTrips[0]; // Take the first ongoing trip
+            } else if (upcomingTrips.length > 0) {
+                activeTrip = upcomingTrips[0]; // Take the first upcoming trip
+            }
+            
+            // Update currentTrip if we found a better match or if current is outdated
+            if (activeTrip && (!currentTrip || currentTrip.status === 'completed')) {
+                currentTrip = activeTrip;
+                localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+            }
+            
+            if (currentTrip && (currentTrip.status === 'ongoing' || currentTrip.status === 'upcoming')) {
+                const statusEmoji = currentTrip.status === 'ongoing' ? '🟢' : '🟡';
+                const currencyText = currentTrip.currency && currentTrip.currency !== mainCurrency ? ` [${currentTrip.currency}]` : '';
+                tripNameElement.textContent = `${statusEmoji} ${currentTrip.name} (${currentTrip.destination})${currencyText}`;
+                manageTripBtn.textContent = '✈️ New Trip';
+                completeTripBtn.style.display = currentTrip.status === 'ongoing' ? 'block' : 'none';
+            } else {
+                tripNameElement.textContent = 'No active trip';
+                manageTripBtn.textContent = '✈️ New Trip';
+                completeTripBtn.style.display = 'none';
+            }
+        }
+
+        function updateTripStats() {
+            if (!currentTrip) {
+                const defaultCurrency = mainCurrency || 'USD';
+                document.getElementById('tripTotal').textContent = formatCurrencyAmount(0, defaultCurrency);
+                document.getElementById('tripDays').textContent = '0';
+                document.getElementById('tripExpenseCount').textContent = '0';
+                document.getElementById('tripAvgDaily').textContent = formatCurrencyAmount(0, defaultCurrency);
+                return;
+            }
+
+            const tripExpenses = travelExpenses.filter(e => e.tripId === currentTrip.id);
+            const tripCurrency = currentTrip.currency || mainCurrency;
+            
+            // Check if all expenses use the same currency
+            const expenseCurrencies = [...new Set(tripExpenses.map(e => e.currency || tripCurrency))];
+            const displayCurrency = expenseCurrencies.length === 1 ? expenseCurrencies[0] : tripCurrency;
+            
+            // Calculate total
+            const total = tripExpenses.reduce((sum, expense) => {
+                const expenseCurrency = expense.currency || tripCurrency;
+                // If we're displaying in the expense's currency, just add it
+                if (displayCurrency === expenseCurrency) {
+                    return sum + expense.amount;
+                }
+                // If mixed currencies and this expense was deducted from main budget with conversion
+                if (expense.deductFromMainBudget && expense.convertedAmount && displayCurrency === mainCurrency) {
+                    return sum + expense.convertedAmount;
+                }
+                // Otherwise just add the amount (simplified - in real app would need proper conversion)
+                return sum + expense.amount;
+            }, 0);
+            
+            // Calculate days
+            const startDate = new Date(currentTrip.startDate);
+            const endDate = currentTrip.endDate ? new Date(currentTrip.endDate) : new Date();
+            const days = Math.max(1, Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1);
+            
+            const avgDaily = days > 0 ? total / days : 0;
+
+            // Add indicator if mixed currencies
+            let totalText = formatCurrencyAmount(total, displayCurrency);
+            if (expenseCurrencies.length > 1) {
+                totalText += ' *';
+            }
+
+            document.getElementById('tripTotal').textContent = totalText;
+            document.getElementById('tripDays').textContent = days;
+            document.getElementById('tripExpenseCount').textContent = tripExpenses.length;
+            document.getElementById('tripAvgDaily').textContent = formatCurrencyAmount(avgDaily, displayCurrency);
+        }
+
+        function renderTravelExpensesList() {
+            const travelExpensesList = document.getElementById('travelExpensesList');
+            
+            if (!currentTrip) {
+                travelExpensesList.innerHTML = '<div class="no-expenses">Start a trip and add expenses to track your travel spending!</div>';
+                return;
+            }
+
+            const tripExpenses = travelExpenses.filter(e => e.tripId === currentTrip.id);
+            
+            if (tripExpenses.length === 0) {
+                travelExpensesList.innerHTML = '<div class="no-expenses">No expenses added for this trip yet. Start tracking your travel spending!</div>';
+                return;
+            }
+
+            // Sort by date (newest first)
+            const sortedExpenses = [...tripExpenses].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            travelExpensesList.innerHTML = '';
+            
+            sortedExpenses.forEach(expense => {
+                const expenseElement = createTravelExpenseElement(expense);
+                travelExpensesList.appendChild(expenseElement);
+            });
+        }
+
+        function createTravelExpenseElement(expense) {
+            const expenseDiv = document.createElement('div');
+            expenseDiv.className = 'travel-expense-item';
+            
+            // Add visual indicator for main budget deduction
+            if (expense.deductFromMainBudget) {
+                expenseDiv.style.borderLeft = '4px solid var(--primary-color, #667eea)';
+                expenseDiv.style.background = 'linear-gradient(90deg, rgba(102, 126, 234, 0.05) 0%, var(--bg-primary) 10%)';
+            }
+            
+            const detailsDiv = document.createElement('div');
+            detailsDiv.className = 'travel-expense-details';
+            
+            const title = document.createElement('h4');
+            const expenseCurrency = expense.currency || currentTrip?.currency || mainCurrency;
+            const currencySymbol = CURRENCIES[expenseCurrency]?.symbol || expenseCurrency;
+            title.textContent = `${expense.category} - ${formatCurrencyAmount(expense.amount, expenseCurrency)}`;
+            
+            const details = document.createElement('p');
+            const formattedDate = new Date(expense.date).toLocaleDateString();
+            let detailsText = `📅 ${formattedDate}`;
+            
+            if (expense.payer) {
+                detailsText += ` • 👤 Paid by: ${expense.payer}`;
+            }
+            
+            if (expense.location) {
+                detailsText += ` • 📍 ${expense.location}`;
+            }
+            
+            if (expense.description) {
+                detailsText += ` • ${expense.description}`;
+            }
+            
+            if (expense.deductFromMainBudget) {
+                detailsText += ` • 💰 Deducted from main budget`;
+                // Show converted amount if different currency
+                if (expenseCurrency !== mainCurrency && expense.convertedAmount) {
+                    detailsText += ` (${formatCurrencyAmount(expense.convertedAmount, mainCurrency)})`;
+                }
+            }
+            
+            details.textContent = detailsText;
+            
+            detailsDiv.appendChild(title);
+            detailsDiv.appendChild(details);
+            
+            const amountDiv = document.createElement('div');
+            amountDiv.className = 'travel-expense-amount';
+            
+            // Show original amount
+            amountDiv.innerHTML = formatCurrencyAmount(expense.amount, expenseCurrency);
+            
+            // Show converted amount below if different currency and deducted from main budget
+            if (expense.deductFromMainBudget && expenseCurrency !== mainCurrency && expense.convertedAmount) {
+                const convertedDiv = document.createElement('div');
+                convertedDiv.style.fontSize = '0.85rem';
+                convertedDiv.style.color = 'var(--text-secondary)';
+                convertedDiv.style.marginTop = '2px';
+                convertedDiv.textContent = `≈ ${formatCurrencyAmount(expense.convertedAmount, mainCurrency)}`;
+                amountDiv.appendChild(convertedDiv);
+            }
+            
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'travel-expense-actions';
+            
+            const editBtn = document.createElement('button');
+            editBtn.className = 'btn btn-warning';
+            editBtn.textContent = '✏️';
+            editBtn.title = 'Edit expense';
+            editBtn.addEventListener('click', () => editTravelExpense(expense.id));
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-danger';
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.title = 'Delete expense';
+            deleteBtn.addEventListener('click', () => deleteTravelExpense(expense.id));
+            
+            actionsDiv.appendChild(editBtn);
+            actionsDiv.appendChild(deleteBtn);
+            
+            expenseDiv.appendChild(detailsDiv);
+            expenseDiv.appendChild(amountDiv);
+            expenseDiv.appendChild(actionsDiv);
+            
+            return expenseDiv;
+        }
+
+        function updateTravelCategoryBreakdown() {
+            const breakdownContainer = document.getElementById('travelCategoryBreakdown');
+            
+            if (!currentTrip) {
+                breakdownContainer.innerHTML = '<div class="no-breakdown">Start a trip to see category breakdown</div>';
+                return;
+            }
+
+            const tripExpenses = travelExpenses.filter(e => e.tripId === currentTrip.id);
+            
+            if (tripExpenses.length === 0) {
+                breakdownContainer.innerHTML = '<div class="no-breakdown">Add expenses to see category breakdown</div>';
+                return;
+            }
+
+            // Calculate category totals
+            const tripCurrency = currentTrip.currency || mainCurrency;
+            
+            // Check if all expenses use the same currency
+            const expenseCurrencies = [...new Set(tripExpenses.map(e => e.currency || tripCurrency))];
+            const displayCurrency = expenseCurrencies.length === 1 ? expenseCurrencies[0] : tripCurrency;
+            
+            const categoryTotals = {};
+            
+            tripExpenses.forEach(expense => {
+                const expenseCurrency = expense.currency || tripCurrency;
+                let amount = expense.amount;
+                
+                // If displaying in a different currency than the expense
+                if (displayCurrency !== expenseCurrency) {
+                    // If this expense was deducted from main budget with conversion
+                    if (expense.deductFromMainBudget && expense.convertedAmount && displayCurrency === mainCurrency) {
+                        amount = expense.convertedAmount;
+                    }
+                    // Otherwise use original amount (simplified)
+                }
+                
+                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + amount;
+            });
+
+            // Sort categories by amount (highest first)
+            const sortedCategories = Object.entries(categoryTotals)
+                .sort(([,a], [,b]) => b - a);
+
+            breakdownContainer.innerHTML = '';
+            
+            sortedCategories.forEach(([category, amount]) => {
+                const categoryItem = document.createElement('div');
+                categoryItem.className = 'category-item';
+                
+                const categoryInfo = document.createElement('div');
+                categoryInfo.className = 'category-item-info';
+                categoryInfo.textContent = category;
+                
+                const categoryAmount = document.createElement('div');
+                categoryAmount.className = 'category-amount';
+                categoryAmount.textContent = formatCurrencyAmount(amount, displayCurrency);
+                
+                categoryItem.appendChild(categoryInfo);
+                categoryItem.appendChild(categoryAmount);
+                breakdownContainer.appendChild(categoryItem);
+            });
+        }
+
+        function renderTripsList() {
+            const mainTripsList = document.getElementById('mainTripsList');
+            const modalTripsList = document.getElementById('tripsList');
+            
+            // Update both lists (main tab and modal if it exists)
+            [mainTripsList, modalTripsList].forEach(tripsList => {
+                if (!tripsList) return;
+                
+                if (trips.length === 0) {
+                    tripsList.innerHTML = '<div class="no-trips">✈️ No trips created yet. Start your first adventure!</div>';
+                    return;
+                }
+
+                tripsList.innerHTML = '';
+                
+                // Auto-update trip statuses based on dates
+                updateTripsStatusBasedOnDates();
+                
+                // Sort trips: ongoing first, then upcoming, then completed (by start date)
+                const sortedTrips = [...trips].sort((a, b) => {
+                    const statusOrder = { 'ongoing': 1, 'upcoming': 2, 'active': 3, 'completed': 4 };
+                    const aOrder = statusOrder[a.status] || 5;
+                    const bOrder = statusOrder[b.status] || 5;
+                    
+                    if (aOrder !== bOrder) return aOrder - bOrder;
+                    return new Date(b.startDate) - new Date(a.startDate);
+                });
+
+                sortedTrips.forEach(trip => {
+                    const tripElement = createTripElement(trip, tripsList.id === 'mainTripsList');
+                    tripsList.appendChild(tripElement);
+                });
+            });
+            
+            // Update payer suggestions
+            updatePayerSuggestions();
+        }
+
+        function updateTripsStatusBasedOnDates() {
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            
+            trips.forEach(trip => {
+                if (trip.status === 'completed') return; // Don't auto-change completed trips
+                
+                const startDate = new Date(trip.startDate);
+                const endDate = trip.endDate ? new Date(trip.endDate) : null;
+                
+                startDate.setHours(0, 0, 0, 0);
+                if (endDate) endDate.setHours(0, 0, 0, 0);
+                
+                if (startDate > today) {
+                    trip.status = 'upcoming';
+                } else if (endDate && endDate < today) {
+                    trip.status = 'completed';
+                    trip.completedDate = trip.endDate;
+                } else {
+                    trip.status = 'ongoing';
+                }
+            });
+            
+            localStorage.setItem('trips', JSON.stringify(trips));
+        }
+
+        function updatePayerSuggestions() {
+            // Get unique payer names from existing expenses
+            const payerNames = [...new Set(travelExpenses.map(e => e.payer).filter(p => p))];
+            const datalist = document.getElementById('payerSuggestions');
+            
+            // Clear existing options except default ones
+            datalist.innerHTML = '<option value="Me"><option value="You">';
+            
+            // Add unique payer names
+            payerNames.forEach(payer => {
+                if (payer !== 'Me' && payer !== 'You') {
+                    datalist.innerHTML += `<option value="${payer}">`;
+                }
+            });
+        }
+
+        function updateTrip(tripId, tripData) {
+            const trip = trips.find(t => t.id === tripId);
+            if (!trip) return;
+            
+            // Update trip data
+            trip.name = tripData.name;
+            trip.destination = tripData.destination;
+            trip.startDate = tripData.startDate;
+            trip.endDate = tripData.endDate || null;
+            trip.budget = tripData.budget ? parseFloat(tripData.budget) : null;
+            
+            // Save to localStorage
+            localStorage.setItem('trips', JSON.stringify(trips));
+            
+            // Update current trip if this is the current one
+            if (currentTrip && currentTrip.id === tripId) {
+                currentTrip = trip;
+                localStorage.setItem('currentTrip', JSON.stringify(currentTrip));
+                updateTripDisplay();
+            }
+            
+            // Update trip statuses and refresh display
+            updateTripsStatusBasedOnDates();
+            renderTripsList();
+            
+            showNotification(`✅ Trip "${trip.name}" updated successfully!`, 'success');
+        }
+
+        function editTrip(tripId) {
+            const trip = trips.find(t => t.id === tripId);
+            if (!trip) return;
+            
+            // Populate the trip form with existing data
+            document.getElementById('newTripName').value = trip.name;
+            document.getElementById('newTripDestination').value = trip.destination;
+            document.getElementById('newTripStartDate').value = trip.startDate;
+            document.getElementById('newTripEndDate').value = trip.endDate || '';
+            document.getElementById('newTripBudget').value = trip.budget || '';
+            document.getElementById('newTripCurrency').value = trip.currency || mainCurrency;
+            
+            // Store the ID for updating
+            window.editingTripId = tripId;
+            
+            // Change form button text and modal title
+            document.querySelector('#newTripForm button[type="submit"]').textContent = '💾 Update Trip';
+            document.querySelector('#tripModal h2').textContent = '✏️ Edit Trip';
+            
+            // Show the modal
+            document.getElementById('tripModal').style.display = 'block';
+            
+            // Scroll to form
+            document.getElementById('tripForm').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function createTripElement(trip, isMainTab = false) {
+            const tripDiv = document.createElement('div');
+            tripDiv.className = 'trip-item';
+            
+            const infoDiv = document.createElement('div');
+            infoDiv.className = 'trip-item-info';
+            
+            const title = document.createElement('h4');
+            title.textContent = trip.name;
+            
+            const details = document.createElement('p');
+            const startDate = new Date(trip.startDate).toLocaleDateString();
+            const endDate = trip.endDate ? new Date(trip.endDate).toLocaleDateString() : 'Ongoing';
+            details.textContent = `📍 ${trip.destination} • 📅 ${startDate} - ${endDate}`;
+            
+            const status = document.createElement('span');
+            status.className = `trip-status ${trip.status}`;
+            
+            switch(trip.status) {
+                case 'upcoming':
+                    status.textContent = '🟡 Upcoming';
+                    break;
+                case 'ongoing':
+                    status.textContent = '🟢 Ongoing';
+                    break;
+                case 'active':
+                    status.textContent = '🟢 Active';
+                    break;
+                case 'completed':
+                    status.textContent = '✅ Completed';
+                    break;
+                default:
+                    status.textContent = '🟢 Active';
+            }
+            
+            infoDiv.appendChild(title);
+            infoDiv.appendChild(details);
+            infoDiv.appendChild(status);
+            
+            const actionsDiv = document.createElement('div');
+            actionsDiv.className = 'trip-item-actions';
+            
+            if (trip.status === 'upcoming') {
+                const switchBtn = document.createElement('button');
+                switchBtn.className = 'btn btn-primary';
+                switchBtn.textContent = '🚀 Start Trip';
+                switchBtn.addEventListener('click', () => {
+                    switchToTrip(trip.id);
+                    if (!isMainTab) {
+                        document.getElementById('tripModal').style.display = 'none';
+                    }
+                });
+                actionsDiv.appendChild(switchBtn);
+                
+                const editBtn = document.createElement('button');
+                editBtn.className = 'btn btn-secondary';
+                editBtn.textContent = '✏️ Edit';
+                editBtn.addEventListener('click', () => editTrip(trip.id));
+                actionsDiv.appendChild(editBtn);
+            } else if (trip.status === 'ongoing' || trip.status === 'active') {
+                const switchBtn = document.createElement('button');
+                switchBtn.className = 'btn btn-primary';
+                switchBtn.textContent = '📍 Switch To';
+                switchBtn.addEventListener('click', () => {
+                    switchToTrip(trip.id);
+                    if (!isMainTab) {
+                        document.getElementById('tripModal').style.display = 'none';
+                    }
+                });
+                actionsDiv.appendChild(switchBtn);
+                
+                const completeBtn = document.createElement('button');
+                completeBtn.className = 'btn btn-success';
+                completeBtn.textContent = '✅ Complete';
+                completeBtn.addEventListener('click', () => completeTrip(trip.id));
+                actionsDiv.appendChild(completeBtn);
+            } else {
+                // Completed trip actions
+                const viewBtn = document.createElement('button');
+                viewBtn.className = 'btn btn-info';
+                viewBtn.textContent = '👁️ View Details';
+                viewBtn.addEventListener('click', () => {
+                    viewTripDetails(trip.id);
+                    if (!isMainTab) {
+                        document.getElementById('tripModal').style.display = 'none';
+                    }
+                });
+                actionsDiv.appendChild(viewBtn);
+                
+                const reopenBtn = document.createElement('button');
+                reopenBtn.className = 'btn btn-warning';
+                reopenBtn.textContent = '🔄 Reopen';
+                reopenBtn.addEventListener('click', () => reopenTrip(trip.id));
+                actionsDiv.appendChild(reopenBtn);
+            }
+            
+            const deleteBtn = document.createElement('button');
+            deleteBtn.className = 'btn btn-danger';
+            deleteBtn.textContent = '🗑️';
+            deleteBtn.addEventListener('click', () => deleteTrip(trip.id));
+            actionsDiv.appendChild(deleteBtn);
+            
+            tripDiv.appendChild(infoDiv);
+            tripDiv.appendChild(actionsDiv);
+            
+            return tripDiv;
+        }
+
+        function exportTravelExpensesToCSV() {
+            if (!currentTrip) {
+                showNotification('No active trip to export!', 'error');
+                return;
+            }
+
+            const tripExpenses = travelExpenses.filter(e => e.tripId === currentTrip.id);
+            
+            if (tripExpenses.length === 0) {
+                showNotification('No expenses to export for this trip!', 'error');
+                return;
+            }
+
+            const csvContent = [
+                ['Date', 'Category', 'Amount (€)', 'Location', 'Description'],
+                ...tripExpenses.map(expense => [
+                    expense.date,
+                    expense.category,
+                    expense.amount.toFixed(2),
+                    expense.location || '',
+                    expense.description || ''
+                ])
+            ].map(row => row.map(field => `"${field}"`).join(',')).join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentTrip.name.replace(/[^a-z0-9]/gi, '_')}_expenses.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+            
+            showNotification('📥 Trip expenses exported!', 'success');
+        }
+
+        // Version Management System
+        let currentVersion = '0.0.1';
+        let updateAvailable = false;
+
+        // Check for updates
+        async function checkForUpdates() {
+            try {
+                const response = await fetch('version.json?t=' + Date.now());
+                const latestVersionData = await response.json();
+                const latestVersion = latestVersionData.version;
+                
+                // Get current version from localStorage or default
+                const storedVersion = localStorage.getItem('appVersion') || currentVersion;
+                
+                if (compareVersions(latestVersion, storedVersion) > 0) {
+                    updateAvailable = true;
+                    showUpdateNotification(latestVersion, storedVersion);
+                    
+                    // Update version in localStorage after notification
+                    localStorage.setItem('appVersion', latestVersion);
+                    currentVersion = latestVersion;
+                } else if (storedVersion !== currentVersion) {
+                    // App was updated in background
+                    showUpdateSuccessNotification(latestVersion);
+                    currentVersion = latestVersion;
+                }
+                
+                // Update version display
+                updateVersionDisplay(latestVersion);
+                
+            } catch (error) {
+                console.error('Error checking for updates:', error);
+            }
+        }
+
+        // Compare version strings (returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal)
+        function compareVersions(v1, v2) {
+            const parts1 = v1.split('.').map(Number);
+            const parts2 = v2.split('.').map(Number);
+            
+            for (let i = 0; i < 3; i++) {
+                if (parts1[i] > parts2[i]) return 1;
+                if (parts1[i] < parts2[i]) return -1;
+            }
+            return 0;
+        }
+
+        // Show update notification
+        function showUpdateNotification(newVersion, oldVersion) {
+            const notification = document.createElement('div');
+            notification.className = 'update-notification';
+            notification.innerHTML = `
+                <div class="update-content">
+                    <span class="update-icon">🎉</span>
+                    <div class="update-text">
+                        <strong>New Update Available!</strong>
+                        <span>Version ${newVersion} is ready (current: ${oldVersion})</span>
+                    </div>
+                    <div class="update-actions">
+                        <button class="btn btn-primary btn-sm" onclick="refreshApp()">
+                            <span>🔄</span> Refresh
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="dismissUpdateNotification(this)">
+                            Later
+                        </button>
+                    </div>
+                </div>
+            `;
             document.body.appendChild(notification);
             
             // Auto-dismiss after 10 seconds
@@ -17340,6 +20264,67 @@
             const analyticsCard = document.getElementById('rolloverAnalyticsCard');
             const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
             
+        }
+        
+        // Fix 4: Override the demo activation
+        function overrideDemoActivation() {
+            if (!window.premiumManager || !window.premiumManager.redirectToCheckout) {
+                setTimeout(overrideDemoActivation, 100);
+                return;
+            }
+            
+            window.premiumManager.redirectToCheckout = function() {
+                if (window.analytics) {
+                    window.analytics.track('checkout_started', {
+                        source: 'paywall',
+                        tier: 'premium'
+                    });
+                }
+                
+                alert('Payment integration coming soon! For now, enjoy the free version.');
+                
+                const mockLicense = `PREMIUM-${Date.now()}-DEMO-KEY`;
+                if (confirm('Would you like to activate a demo Premium license for testing?')) {
+                    // Use the fixed validateLicense
+                    this.validateLicense(mockLicense);
+                    
+                    // Close modal
+                    document.querySelector('.premium-paywall-modal')?.remove();
+                    
+                    // Update UI immediately
+                    setTimeout(updatePremiumUIState, 100);
+                    
+                    // Show success message
+                    if (window.showNotification) {
+                        window.showNotification('🎉 Demo Premium license activated! Export features are now available.', 'success');
+                    }
+                }
+            };
+        }
+        
+        // Initialize everything
+        fixPremiumManager();
+        overrideDemoActivation();
+        
+        // Enhanced Dashboard Functions
+        let dashboardState = {
+            periodType: 'month',
+            currentDate: new Date(),
+            selectedMonth: new Date().getMonth(),
+            selectedYear: new Date().getFullYear(),
+            selectedQuarter: Math.floor(new Date().getMonth() / 3),
+            charts: {
+                spending: null,
+                category: null,
+                trend: null
+            }
+        };
+
+        // Update rollover analytics
+        function updateRolloverAnalytics() {
+            const analyticsCard = document.getElementById('rolloverAnalyticsCard');
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            
             // Show card if there's rollover history
             if (rolloverData.history.length > 0 || rolloverData.reserveFund > 0) {
                 analyticsCard.style.display = 'block';
@@ -17391,6 +20376,77 @@
             const months = [];
             const rolloverAmounts = [];
             const decisions = [];
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            
+            // Get last 6 months of data
+            const sortedHistory = rolloverData.history.slice(-6);
+            
+            sortedHistory.forEach(item => {
+                months.push(item.month);
+                rolloverAmounts.push(item.amount);
+                decisions.push(item.decision);
+            });
+            
+            // Destroy existing chart if any
+            if (window.rolloverTrendChart && typeof window.rolloverTrendChart.destroy === 'function') {
+                window.rolloverTrendChart.destroy();
+            }
+            
+            // Create new chart
+            window.rolloverTrendChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Rollover Amount',
+                        data: rolloverAmounts,
+                        backgroundColor: rolloverAmounts.map((_, index) => {
+                            const decision = decisions[index];
+                            if (decision === 'saved_to_reserve') return 'rgba(34, 197, 94, 0.8)';
+                            if (decision === 'add_to_budget') return 'rgba(59, 130, 246, 0.8)';
+                            if (decision === 'allocated_to_categories') return 'rgba(168, 85, 247, 0.8)';
+                            return 'rgba(156, 163, 175, 0.8)';
+                        }),
+                        borderColor: rolloverAmounts.map((_, index) => {
+                            const decision = decisions[index];
+                            if (decision === 'saved_to_reserve') return 'rgb(34, 197, 94)';
+                            if (decision === 'add_to_budget') return 'rgb(59, 130, 246)';
+                            if (decision === 'allocated_to_categories') return 'rgb(168, 85, 247)';
+                            return 'rgb(156, 163, 175)';
+                        }),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const decision = decisions[context.dataIndex];
+                                    const decisionText = decision.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                                    return [
+                                        `Amount: ${currencySymbol}${context.parsed.y.toFixed(2)}`,
+                                        `Action: ${decisionText}`
+                                    ];
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return currencySymbol + value.toFixed(0);
+                                }
+                            }
+                        }
+                    }
             const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
             
             // Get last 6 months of data
@@ -17672,6 +20728,256 @@
                                                  usage > 80 ? 'linear-gradient(90deg, #ff9800 0%, #ffc107 100%)' :
                                                  'linear-gradient(90deg, #4caf50 0%, #8bc34a 100%)';
                 }
+            });
+        }
+        
+        // Initialize Dashboard
+        function initializeDashboard() {
+            setupDashboardControls();
+            updatePeriodDisplay();
+            updateDashboardData();
+        }
+
+        // Setup Dashboard Controls
+        function setupDashboardControls() {
+            // Period type selector
+            const periodSelector = document.getElementById('periodTypeSelector');
+            if (periodSelector) {
+                periodSelector.addEventListener('change', function() {
+                    dashboardState.periodType = this.value;
+                    updatePeriodDisplay();
+                    updateDashboardData();
+                });
+            }
+
+            // Previous/Next buttons
+            const prevBtn = document.getElementById('prevPeriod');
+            const nextBtn = document.getElementById('nextPeriod');
+            
+            if (prevBtn) {
+                prevBtn.addEventListener('click', () => navigatePeriod(-1));
+            }
+            
+            if (nextBtn) {
+                nextBtn.addEventListener('click', () => navigatePeriod(1));
+            }
+
+            // Refresh button
+            const refreshBtn = document.getElementById('refreshDashboard');
+            if (refreshBtn) {
+                refreshBtn.addEventListener('click', () => {
+                    updateDashboardData();
+                    showNotification(t('dashboard.refreshed') || 'Dashboard refreshed', 'success');
+                });
+            }
+
+            // Export button
+            const exportBtn = document.getElementById('exportDashboard');
+            if (exportBtn) {
+                exportBtn.addEventListener('click', exportDashboardData);
+            }
+        }
+
+        // Navigate periods
+        function navigatePeriod(direction) {
+            switch(dashboardState.periodType) {
+                case 'month':
+                    dashboardState.selectedMonth += direction;
+                    if (dashboardState.selectedMonth < 0) {
+                        dashboardState.selectedMonth = 11;
+                        dashboardState.selectedYear--;
+                    } else if (dashboardState.selectedMonth > 11) {
+                        dashboardState.selectedMonth = 0;
+                        dashboardState.selectedYear++;
+                    }
+                    break;
+                case 'quarter':
+                    dashboardState.selectedQuarter += direction;
+                    if (dashboardState.selectedQuarter < 0) {
+                        dashboardState.selectedQuarter = 3;
+                        dashboardState.selectedYear--;
+                    } else if (dashboardState.selectedQuarter > 3) {
+                        dashboardState.selectedQuarter = 0;
+                        dashboardState.selectedYear++;
+                    }
+                    break;
+                case 'year':
+                    dashboardState.selectedYear += direction;
+                    break;
+            }
+            updatePeriodDisplay();
+            updateDashboardData();
+        }
+
+        // Update period display
+        function updatePeriodDisplay() {
+            const display = document.getElementById('currentPeriodDisplay');
+            if (!display) return;
+            
+            let periodText = '';
+            const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                               'July', 'August', 'September', 'October', 'November', 'December'];
+            
+            switch(dashboardState.periodType) {
+                case 'month':
+                    periodText = `${monthNames[dashboardState.selectedMonth]} ${dashboardState.selectedYear}`;
+                    break;
+                case 'quarter':
+                    periodText = `Q${dashboardState.selectedQuarter + 1} ${dashboardState.selectedYear}`;
+                    break;
+                case 'year':
+                    periodText = `${dashboardState.selectedYear}`;
+                    break;
+                case 'custom':
+                    periodText = 'Custom Range';
+                    break;
+            }
+            
+            display.querySelector('.period-label').textContent = periodText;
+        }
+
+        // Get date range based on selected period
+        function getDateRangeFilter() {
+            // Calculate daily average
+            const days = Math.ceil((dateRange.end - dateRange.start) / (1000 * 60 * 60 * 24)) + 1;
+            const dailyAvg = totalSpent / days;
+            const avgDailyEl = document.getElementById('avgDailyMetric');
+            if (avgDailyEl) {
+                avgDailyEl.textContent = formatCurrencyAmount(dailyAvg, mainCurrency);
+            }
+            
+            // Calculate projected monthly
+            const projectedEl = document.getElementById('projectedMonthly');
+            if (projectedEl) {
+                const projected = dailyAvg * 30;
+                projectedEl.textContent = `${formatCurrencyAmount(projected, mainCurrency)} ${t('metrics.projected') || 'projected'}`;
+            }
+            
+            // Transaction count and top category
+            const transactionCountEl = document.getElementById('transactionCountMetric');
+            if (transactionCountEl) {
+                transactionCountEl.textContent = periodExpenses.length;
+            }
+            
+            // Find top category
+            const categoryTotals = {};
+            periodExpenses.forEach(expense => {
+                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + getAmountInMainCurrency(expense);
+            });
+            
+            const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
+            const topCategoryEl = document.getElementById('topCategoryMetric');
+            if (topCategoryEl) {
+                if (topCategory) {
+                    const icon = categoryIcons[topCategory[0]] || '📝';
+                    topCategoryEl.textContent = `${icon} ${topCategory[0]}`;
+                } else {
+                    topCategoryEl.textContent = t('metrics.noData') || 'No data';
+                }
+            }
+        }
+
+        // Get previous period range for comparison
+        function getPreviousPeriodRange() {
+            const startDate = new Date();
+            const endDate = new Date();
+            
+            switch(dashboardState.periodType) {
+                case 'month':
+                    startDate.setFullYear(dashboardState.selectedYear, dashboardState.selectedMonth, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setFullYear(dashboardState.selectedYear, dashboardState.selectedMonth + 1, 0);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+                case 'quarter':
+                    const startMonth = dashboardState.selectedQuarter * 3;
+                    startDate.setFullYear(dashboardState.selectedYear, startMonth, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setFullYear(dashboardState.selectedYear, startMonth + 3, 0);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+                case 'year':
+                    startDate.setFullYear(dashboardState.selectedYear, 0, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setFullYear(dashboardState.selectedYear, 11, 31);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+            }
+            
+            return { start: startDate, end: endDate };
+        }
+
+        // Update all dashboard data
+        function updateDashboardData() {
+            // Only update if dashboard is active
+            const dashboardTab = document.getElementById('dashboardTab');
+            if (!dashboardTab || !dashboardTab.classList.contains('active')) {
+                return;
+            }
+            
+            const dateRange = getDateRangeFilter();
+            
+            // Filter expenses for the selected period
+            const periodExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
+            });
+            
+            // Update metrics
+            updateDashboardMetrics(periodExpenses, dateRange);
+            
+            // Update existing dashboard components
+            updateDashboard();
+            
+            // Update new charts with a slight delay to ensure DOM is ready
+            requestAnimationFrame(() => {
+                updateSpendingTrendChart();
+                updateCategoryBudgetChart();
+                updateCashFlowSummary();
+                generateSmartInsights();
+            });
+        }
+
+        // Update dashboard metrics
+        function updateDashboardMetrics(periodExpenses, dateRange) {
+            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
+            
+            // Calculate total spent
+            const totalSpent = periodExpenses.reduce((sum, expense) => sum + getAmountInMainCurrency(expense), 0);
+            const totalSpentEl = document.getElementById('totalSpentMetric');
+            if (totalSpentEl) {
+                totalSpentEl.textContent = formatCurrencyAmount(totalSpent, mainCurrency);
+            }
+            
+            // Calculate comparison with previous period
+            const prevRange = getPreviousPeriodRange();
+            const prevExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= prevRange.start && expenseDate <= prevRange.end;
+            });
+            const prevTotal = prevExpenses.reduce((sum, expense) => sum + getAmountInMainCurrency(expense), 0);
+            
+            const changeEl = document.getElementById('spentChange');
+            if (changeEl && prevTotal > 0) {
+                const percentChange = ((totalSpent - prevTotal) / prevTotal) * 100;
+                const arrow = percentChange > 0 ? '↑' : '↓';
+                const changeClass = percentChange > 0 ? 'negative' : 'positive';
+                changeEl.className = `metric-change ${changeClass}`;
+                changeEl.innerHTML = `<span class="change-arrow">${arrow}</span><span class="change-value">${Math.abs(percentChange).toFixed(1)}%</span>`;
+            }
+            
+            // Calculate budget usage
+            const budgetUsageEl = document.getElementById('budgetUsageMetric');
+            const progressBar = document.getElementById('budgetProgressBar');
+            if (budgetUsageEl && monthlyBudget > 0) {
+                const usage = (totalSpent / monthlyBudget) * 100;
+                budgetUsageEl.textContent = `${Math.round(usage)}%`;
+                if (progressBar) {
+                    progressBar.style.width = `${Math.min(usage, 100)}%`;
+                    progressBar.style.background = usage > 100 ? 'linear-gradient(90deg, #f44336 0%, #ff5252 100%)' : 
+                                                 usage > 80 ? 'linear-gradient(90deg, #ff9800 0%, #ffc107 100%)' :
+                                                 'linear-gradient(90deg, #4caf50 0%, #8bc34a 100%)';
+                }
             }
             
             // Calculate daily average
@@ -17733,6 +21039,19 @@
                     startDate.setFullYear(prevYear, startMonth, 1);
                     startDate.setHours(0, 0, 0, 0);
                     endDate.setFullYear(prevYear, startMonth + 3, 0);
+                    startDate.setFullYear(dashboardState.selectedYear, dashboardState.selectedMonth - 1, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setFullYear(dashboardState.selectedYear, dashboardState.selectedMonth, 0);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+                case 'quarter':
+                    const prevQuarter = dashboardState.selectedQuarter - 1;
+                    const prevYear = prevQuarter < 0 ? dashboardState.selectedYear - 1 : dashboardState.selectedYear;
+                    const adjustedQuarter = prevQuarter < 0 ? 3 : prevQuarter;
+                    const startMonth = adjustedQuarter * 3;
+                    startDate.setFullYear(prevYear, startMonth, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setFullYear(prevYear, startMonth + 3, 0);
                     endDate.setHours(23, 59, 59, 999);
                     break;
                 case 'year':
@@ -17741,6 +21060,242 @@
                     endDate.setFullYear(dashboardState.selectedYear - 1, 11, 31);
                     endDate.setHours(23, 59, 59, 999);
                     break;
+                case 'year':
+                    startDate.setFullYear(dashboardState.selectedYear - 1, 0, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setFullYear(dashboardState.selectedYear - 1, 11, 31);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+                case 'year':
+                    startDate.setFullYear(dashboardState.selectedYear - 1, 0, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setFullYear(dashboardState.selectedYear - 1, 11, 31);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+            }
+            
+            return { start: startDate, end: endDate };
+        }
+
+        // Export dashboard data
+        function exportDashboardData() {
+            const dateRange = getDateRangeFilter();
+            const periodExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
+            });
+            
+            // Create CSV data
+            let csv = 'Date,Description,Category,Amount,Currency,Converted Amount,Tags\n';
+            
+            periodExpenses.forEach(expense => {
+                const tags = [];
+                if (expense.isRecurring) tags.push('Recurring');
+                if (expense.isFixedCost) tags.push('Fixed Cost');
+                
+                csv += `${expense.date},"${expense.description}","${expense.category}",${expense.amount},${expense.currency || mainCurrency},${expense.convertedAmount || expense.amount},"${tags.join(', ')}"\n`;
+            });
+            
+            // Download CSV
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dashboard-export-${dateRange.start.toISOString().split('T')[0]}-to-${dateRange.end.toISOString().split('T')[0]}.csv`;
+            a.click();
+            
+            showNotification(t('dashboard.exported') || 'Dashboard data exported', 'success');
+        }
+
+        // Update spending trend chart
+        function updateSpendingTrendChart() {
+            const canvas = document.getElementById('spendingTrendChart');
+            if (!canvas) return; // Element not found, skip update
+            
+            const ctx = canvas.getContext('2d');
+            const dateRange = getDateRangeFilter();
+            
+            // Filter expenses by date range
+            const filteredExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
+            });
+            
+            // Group by day/week based on range
+            const groupedData = dashboardState.periodType === 'year' ? 
+                groupExpensesByWeek(filteredExpenses) : 
+                groupExpensesByDay(filteredExpenses);
+            
+            const labels = Object.keys(groupedData).sort();
+            const data = labels.map(date => groupedData[date]);
+            
+            // If no data, show empty state
+            if (labels.length === 0) {
+                if (dashboardState.charts.spending) {
+                    dashboardState.charts.spending.destroy();
+                    dashboardState.charts.spending = null;
+                }
+                // Clear the canvas and show message
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.font = '16px system-ui';
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('No expense data for selected period', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+            
+            if (dashboardState.charts.spending) {
+                dashboardState.charts.spending.destroy();
+            }
+            
+            // Format labels for display
+            const formattedLabels = labels.map(label => {
+                if (dashboardState.periodType === 'year' && label.includes('-W')) {
+                    // Convert week format to readable
+                    const [year, week] = label.split('-W');
+                    return `Week ${parseInt(week)}`;
+                } else {
+                    // Convert date to readable format
+                    const date = new Date(label);
+                    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                }
+            });
+
+            dashboardState.charts.spending = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: formattedLabels,
+                    datasets: [{
+                        label: t('charts.dailySpending') || 'Daily Spending',
+                        data: data,
+                        borderColor: '#007bff',
+                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                        tension: 0.3,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return formatCurrencyAmount(context.parsed.y, mainCurrency);
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 10
+                            }
+                        },
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return formatCurrencyAmount(value, mainCurrency);
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update category vs budget chart
+        function updateCategoryBudgetChart() {
+            const canvas = document.getElementById('categoryBudgetChart');
+            if (!canvas) return; // Element not found, skip update
+            
+            const ctx = canvas.getContext('2d');
+            const dateRange = getDateRangeFilter();
+            
+            // Calculate category totals
+            const categoryTotals = {};
+            const categoryBudgets = {};
+            
+            return { start: startDate, end: endDate };
+        }
+
+        // Export dashboard data
+        function exportDashboardData() {
+            const dateRange = getDateRangeFilter();
+            const periodExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
+            });
+            
+            // Create CSV data
+            let csv = 'Date,Description,Category,Amount,Currency,Converted Amount,Tags\n';
+            
+            periodExpenses.forEach(expense => {
+                const tags = [];
+                if (expense.isRecurring) tags.push('Recurring');
+                if (expense.isFixedCost) tags.push('Fixed Cost');
+                
+                csv += `${expense.date},"${expense.description}","${expense.category}",${expense.amount},${expense.currency || mainCurrency},${expense.convertedAmount || expense.amount},"${tags.join(', ')}"\n`;
+            });
+            
+            // Download CSV
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dashboard-export-${dateRange.start.toISOString().split('T')[0]}-to-${dateRange.end.toISOString().split('T')[0]}.csv`;
+            a.click();
+            
+            showNotification(t('dashboard.exported') || 'Dashboard data exported', 'success');
+        }
+
+        // Update spending trend chart
+        function updateSpendingTrendChart() {
+            const canvas = document.getElementById('spendingTrendChart');
+            if (!canvas) return; // Element not found, skip update
+            
+            const ctx = canvas.getContext('2d');
+            const dateRange = getDateRangeFilter();
+            
+            // Filter expenses by date range
+            const filteredExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
+            });
+            
+            // Group by day/week based on range
+            const groupedData = dashboardState.periodType === 'year' ? 
+                groupExpensesByWeek(filteredExpenses) : 
+                groupExpensesByDay(filteredExpenses);
+            
+            const labels = Object.keys(groupedData).sort();
+            const data = labels.map(date => groupedData[date]);
+            
+            // If no data, show empty state
+            if (labels.length === 0) {
+                if (dashboardState.charts.spending) {
+                    dashboardState.charts.spending.destroy();
+                    dashboardState.charts.spending = null;
+                }
+                // Clear the canvas and show message
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.font = '16px system-ui';
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('No expense data for selected period', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+            
+            if (dashboardState.charts.spending) {
+                dashboardState.charts.spending.destroy();
             }
             
             return { start: startDate, end: endDate };
@@ -18365,6 +21920,7 @@
             
             // Get device and app info for support email
             const appVersion = '0.3.11'; // Current version
+            const appVersion = '0.3.9'; // Current version
             const userAgent = navigator.userAgent;
             const language = currentLanguage || 'en';
             const platform = navigator.platform;
@@ -18388,6 +21944,196 @@ Browser: ${userAgent}
             // Open email client with pre-filled content
             window.location.href = `mailto:${decodedEmail}?subject=${subject}&body=${body}`;
         }
+        
+        // Open FAQ
+        function openFAQ() {
+            showNotification(t('support.faqComingSoon') || 'FAQ section coming soon!', 'info');
+        }
+
+        // Make functions globally accessible
+        window.updateSubscriptionStatus = updateSubscriptionStatus;
+        window.showUpgradeModal = showUpgradeModal;
+        window.showSubscriptionDetails = showSubscriptionDetails;
+        window.openSupportContact = openSupportContact;
+        window.openFAQ = openFAQ;
+        window.initializeDashboard = initializeDashboard;
+        window.updateSpendingTrendChart = updateSpendingTrendChart;
+        window.updateCategoryBudgetChart = updateCategoryBudgetChart;
+        window.updateCashFlowSummary = updateCashFlowSummary;
+        window.generateSmartInsights = generateSmartInsights;
+        window.setupDashboardControls = setupDashboardControls;
+        window.updatePeriodDisplay = updatePeriodDisplay;
+        window.updateDashboardData = updateDashboardData;
+        window.navigatePeriod = navigatePeriod;
+        window.exportDashboardData = exportDashboardData;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(updatePremiumUIState, 1000);
+            
+            // Setup navigation tab click handlers
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', function(event) {
+                    const tabName = this.dataset.tab;
+                    
+                    // Hide all tab contents
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Remove active class from all nav tabs
+                    document.querySelectorAll('.nav-tab').forEach(navTab => {
+                        navTab.classList.remove('active');
+                    });
+                    
+                    // Show selected tab content
+                    document.getElementById(tabName + 'Tab').classList.add('active');
+                    
+                    // Add active class to clicked nav tab
+                    this.classList.add('active');
+                    
+                    // Update dashboard if switching to dashboard tab
+                    if (tabName === 'dashboard') {
+                        initializeDashboard();
+                    }
+                    
+                    // Initialize travel tab if switching to travel tab
+                    if (tabName === 'travel') {
+                        initializeTravelTab();
+                    }
+                    
+                    // Update subscription status if switching to settings tab
+                    if (tabName === 'settings') {
+                        updateSubscriptionStatus();
+                    }
+                });
+            });
+        });
+        
+        // Also run immediately if DOM is ready
+        if (document.readyState === 'interactive' || document.readyState === 'complete') {
+            setTimeout(updatePremiumUIState, 500);
+        }
+    })();
+    </script>
+    
+    <!-- Exchange Rate Modal -->
+    <div id="exchangeRateModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>💱 Currency Conversion</h2>
+                <button class="close-btn" onclick="closeExchangeRateModal()">&times;</button>
+            </div>
+            <div style="padding: 1.5rem;">
+                <p id="exchangeRatePrompt" style="margin-bottom: 1.5rem; text-align: center;">
+                    <!-- Dynamic content -->
+                </p>
+                <div class="form-group">
+                    <label for="exchangeRateInput">Exchange Rate</label>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span>1 <span id="fromCurrency"></span> =</span>
+                        <input type="number" id="exchangeRateInput" step="0.000001" placeholder="0.00" style="flex: 1;" onkeypress="if(event.key === 'Enter') confirmExchangeRate()">
+                        <span id="toCurrency"></span>
+                    </div>
+                    <small style="color: var(--text-secondary); display: block; margin-top: 0.5rem;">
+                        <span id="lastRateHint"></span>
+                    </small>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn btn-primary" onclick="confirmExchangeRate()" style="flex: 1;">
+                        ✅ Confirm
+                    </button>
+                    <button class="btn" onclick="closeExchangeRateModal()" style="flex: 1;">
+                        ❌ Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rollover Modal -->
+    <div id="rolloverModal" class="modal">
+        <div class="modal-content rollover-modal">
+            <div class="modal-header">
+                <h3>💰 Previous Month's Balance</h3>
+                <span class="close-modal" onclick="closeRolloverModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="rollover-amount-display">
+                    <p>You have <strong id="rolloverAmount"></strong> left from <span id="rolloverSource"></span></p>
+                </div>
+
+                <div class="rollover-options">
+                    <h4>What would you like to do with this balance?</h4>
+
+                    <div class="rollover-option" onclick="handleRolloverDecision('add_to_budget')">
+                        <div class="option-icon">💵</div>
+                        <div class="option-content">
+                            <h5>Add to Current Budget</h5>
+                            <p>Increase this month's budget by the leftover amount</p>
+                        </div>
+                    </div>
+
+                    <div class="rollover-option" onclick="handleRolloverDecision('save')">
+                        <div class="option-icon">🏦</div>
+                        <div class="option-content">
+                            <h5>Save as Reserve Fund</h5>
+                            <p>Put it aside for future use or emergencies</p>
+                        </div>
+                    </div>
+
+                    <div class="rollover-option" onclick="handleRolloverDecision('allocate')">
+                        <div class="option-icon">📊</div>
+                        <div class="option-content">
+                            <h5>Allocate to Categories</h5>
+                            <p>Split between different expense categories</p>
+                        </div>
+                    </div>
+
+                    <div class="rollover-option" onclick="handleRolloverDecision('carry_forward')">
+                        <div class="option-icon">📅</div>
+                        <div class="option-content">
+                            <h5>Carry Forward as Credit</h5>
+                            <p>Keep as a separate line item for tracking</p>
+                        </div>
+                    </div>
+                </div>
+
+                    </div>
+                    <small style="color: var(--text-secondary); display: block; margin-top: 0.5rem;">
+                        <span id="lastRateHint"></span>
+                    </small>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn btn-primary" onclick="confirmExchangeRate()" style="flex: 1;">
+                        ✅ Confirm
+                    </button>
+                    <button class="btn" onclick="closeExchangeRateModal()" style="flex: 1;">
+                        ❌ Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rollover Modal -->
+    <div id="rolloverModal" class="modal">
+        <div class="modal-content rollover-modal">
+            <div class="modal-header">
+                <h3>💰 Previous Month's Balance</h3>
+                <span class="close-modal" onclick="closeRolloverModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="rollover-amount-display">
+                    <p>You have <strong id="rolloverAmount"></strong> left from <span id="rolloverSource"></span></p>
+                </div>
+                
+                <div class="rollover-options">
+                    <h4>What would you like to do with this balance?</h4>
+                    
+                    <div class="rollover-option" onclick="handleRolloverDecision('add_to_budget')">
+                        <div class="option-icon">💵</div>
+                        <div class="option-content">
         
         // Open FAQ
         function openFAQ() {
@@ -18579,6 +22325,96 @@ Browser: ${userAgent}
         </div>
     </div>
 
+    <!-- Category Allocation Modal -->
+    <div id="categoryAllocationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📊 Allocate to Categories</h3>
+                <span class="close-modal" onclick="closeCategoryAllocationModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Total amount to allocate: <strong id="totalToAllocate"></strong></p>
+                <p>Remaining: <strong id="remainingToAllocate"></strong></p>
+                
+                <div id="categoryAllocationList">
+                    <!-- Populated dynamically -->
+                </div>
+                
+                <button class="btn" onclick="confirmCategoryAllocation()">Confirm Allocation</button>
+            </div>
+        </div>
+                            <h5>Add to Current Budget</h5>
+                            <p>Increase this month's budget by the leftover amount</p>
+                        </div>
+                    </div>
+                    
+                    <div class="rollover-option" onclick="handleRolloverDecision('save')">
+                        <div class="option-icon">🏦</div>
+                        <div class="option-content">
+                            <h5>Save as Reserve Fund</h5>
+                            <p>Put it aside for future use or emergencies</p>
+                        </div>
+                    </div>
+                    
+                    <div class="rollover-option" onclick="handleRolloverDecision('allocate')">
+                        <div class="option-icon">📊</div>
+                        <div class="option-content">
+                            <h5>Allocate to Categories</h5>
+                            <p>Split between different expense categories</p>
+                        </div>
+                    </div>
+                    
+                    <div class="rollover-option" onclick="handleRolloverDecision('carry_forward')">
+                        <div class="option-icon">📅</div>
+                        <div class="option-content">
+                            <h5>Carry Forward as Credit</h5>
+                            <p>Keep as a separate line item for tracking</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="rollover-preferences">
+                    <label>
+                        <input type="checkbox" id="rememberRolloverChoice" onchange="updateRolloverPreferences()">
+                        Remember my choice for automatic future rollovers
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Deficit Resolution Modal -->
+    <div id="deficitModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeDeficitModal()">&times;</span>
+            <h2>⚠️ Budget Deficit Detected</h2>
+
+            <div style="background: linear-gradient(135deg, #fee 0%, #fdd 100%); padding: 1.5rem; border-radius: var(--border-radius); margin: 1.5rem 0;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h3 style="margin: 0;">Overspent Amount:</h3>
+                    <h2 style="margin: 0; color: var(--danger);" id="deficitAmount">€0</h2>
+                </div>
+                <p style="margin: 0; color: var(--text-secondary);" id="deficitSource">From previous month</p>
+            </div>
+
+            <div id="deficitOptionsContainer">
+                <!-- Options will be inserted here dynamically -->
+            </div>
+
+            <div style="margin-top: 1.5rem; padding: 1rem; background: var(--hover-bg); border-radius: var(--border-radius);">
+                <p style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">
+                    💡 <strong>Tip:</strong> Managing deficits helps you stay on track with your budget goals.
+                </p>
+            </div>
+        </div>
+    </div>
+
+                </div>
+            </div>
+        </div>
+        </main>
+    </div>
+    
     <!-- Category Allocation Modal -->
     <div id="categoryAllocationModal" class="modal">
         <div class="modal-content">
