@@ -1,16 +1,28 @@
-const APP_VERSION = '0.3.9';
+const APP_VERSION = '0.3.12';
 const CACHE_NAME = `expense-tracker-v${APP_VERSION}`;
+const SCOPE_URL = new URL(self.registration.scope);
+const BASE_PATH = SCOPE_URL.pathname.replace(/\/$/, '');
+const INDEX_URL = `${BASE_PATH}/index.html`;
 const urlsToCache = [
-  '/tracker/',
-  '/tracker/index.html',
-  '/tracker/manifest.json',
-  '/tracker/locales/en.json',
-  '/tracker/locales/lt.json',
-  '/tracker/locales/es.json',
-  '/tracker/locales/fr.json',
-  '/tracker/locales/de.json',
+  `${BASE_PATH}/`,
+  INDEX_URL,
+  `${BASE_PATH}/manifest.json`,
+  `${BASE_PATH}/locales/en.json`,
+  `${BASE_PATH}/locales/lt.json`,
+  `${BASE_PATH}/locales/es.json`,
+  `${BASE_PATH}/locales/fr.json`,
+  `${BASE_PATH}/locales/de.json`,
   // Only cache files that exist
 ];
+
+function isCacheableRequest(request) {
+  try {
+    const url = new URL(request.url);
+    return request.method === 'GET' && (url.protocol === 'http:' || url.protocol === 'https:');
+  } catch (error) {
+    return false;
+  }
+}
 
 // Install event - cache resources
 self.addEventListener('install', event => {
@@ -49,12 +61,12 @@ self.addEventListener('activate', event => {
 // Fetch event - network first for HTML, cache first for others
 self.addEventListener('fetch', event => {
   // Skip non-GET requests and Chrome extension requests
-  if (event.request.method !== 'GET' || event.request.url.startsWith('chrome-extension://')) {
+  if (!isCacheableRequest(event.request)) {
     return;
   }
 
   // For HTML files (main app), always try network first to get latest version
-  if (event.request.destination === 'document' || event.request.url.includes('index.html') || event.request.url.endsWith('/tracker/')) {
+  if (event.request.destination === 'document' || event.request.url.includes('index.html') || event.request.url.endsWith(`${BASE_PATH}/`)) {
     event.respondWith(
       fetch(event.request)
         .then(response => {
@@ -63,7 +75,9 @@ self.addEventListener('fetch', event => {
             const responseToCache = response.clone();
             caches.open(CACHE_NAME)
               .then(cache => {
-                cache.put(event.request, responseToCache);
+                if (isCacheableRequest(event.request)) {
+                  cache.put(event.request, responseToCache);
+                }
               });
             return response;
           }
@@ -73,7 +87,7 @@ self.addEventListener('fetch', event => {
           // If network fails, fall back to cache
           return caches.match(event.request)
             .then(cachedResponse => {
-              return cachedResponse || caches.match('/tracker/index.html');
+              return cachedResponse || caches.match(INDEX_URL);
             });
         })
     );
@@ -101,7 +115,9 @@ self.addEventListener('fetch', event => {
 
           caches.open(CACHE_NAME)
             .then(cache => {
-              cache.put(event.request, responseToCache);
+              if (isCacheableRequest(event.request)) {
+                cache.put(event.request, responseToCache);
+              }
             });
 
           return response;
@@ -109,7 +125,7 @@ self.addEventListener('fetch', event => {
       }).catch(() => {
         // If both cache and network fail, show offline page for navigation requests
         if (event.request.destination === 'document') {
-          return caches.match('/tracker/index.html');
+          return caches.match(INDEX_URL);
         }
       })
   );

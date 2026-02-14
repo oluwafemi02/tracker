@@ -1,53 +1,47 @@
 // Security Fixes for Inline Event Handlers
 // Replace all onclick attributes with proper event listeners
 
+function safeBindClick(element, handlerName) {
+    if (!element) return;
+
+    const handler = window[handlerName];
+    if (typeof handler !== 'function') {
+        console.warn(`⚠️ Handler not available yet: ${handlerName}`);
+        return;
+    }
+
+    element.removeAttribute('onclick');
+    element.addEventListener('click', handler);
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     // Fix for projection card
     const projectionCard = document.getElementById('projectionCard');
-    if (projectionCard) {
-        projectionCard.removeAttribute('onclick');
-        projectionCard.addEventListener('click', showProjectionModal);
-    }
+    safeBindClick(projectionCard, 'showProjectionModal');
 
     // Fix for modal close buttons
     const modalButtons = [
-        { selector: '[onclick="closeCompleteTripModal()"]', handler: closeCompleteTripModal },
-        { selector: '[onclick="closeQRModal()"]', handler: closeQRModal },
-        { selector: '[onclick="closeQRScanner()"]', handler: closeQRScanner },
-        { selector: '[onclick="closeSyncSetupModal()"]', handler: closeSyncSetupModal },
-        { selector: '[onclick="closeSpentBreakdownModal()"]', handler: closeSpentBreakdownModal },
-        { selector: '[onclick="closeRemainingBreakdownModal()"]', handler: closeRemainingBreakdownModal },
-        { selector: '[onclick="closeExpenseDetailsModal()"]', handler: closeExpenseDetailsModal },
-        { selector: '[onclick="closeProjectionModal()"]', handler: closeProjectionModal }
+        { selector: '[onclick="closeCompleteTripModal()"]', handlerName: 'closeCompleteTripModal' },
+        { selector: '[onclick="closeQRModal()"]', handlerName: 'closeQRModal' },
+        { selector: '[onclick="closeQRScanner()"]', handlerName: 'closeQRScanner' },
+        { selector: '[onclick="closeSyncSetupModal()"]', handlerName: 'closeSyncSetupModal' },
+        { selector: '[onclick="closeSpentBreakdownModal()"]', handlerName: 'closeSpentBreakdownModal' },
+        { selector: '[onclick="closeRemainingBreakdownModal()"]', handlerName: 'closeRemainingBreakdownModal' },
+        { selector: '[onclick="closeExpenseDetailsModal()"]', handlerName: 'closeExpenseDetailsModal' },
+        { selector: '[onclick="closeProjectionModal()"]', handlerName: 'closeProjectionModal' }
     ];
 
-    modalButtons.forEach(({ selector, handler }) => {
+    modalButtons.forEach(({ selector, handlerName }) => {
         const button = document.querySelector(selector);
-        if (button) {
-            button.removeAttribute('onclick');
-            button.addEventListener('click', handler);
-        }
+        safeBindClick(button, handlerName);
     });
 
     // Fix for sync provider cards
-    const firebaseCard = document.querySelector('[onclick="setupFirebaseSync()"]');
-    if (firebaseCard) {
-        firebaseCard.removeAttribute('onclick');
-        firebaseCard.addEventListener('click', setupFirebaseSync);
-    }
-
-    const localSyncCard = document.querySelector('[onclick="setupLocalSync()"]');
-    if (localSyncCard) {
-        localSyncCard.removeAttribute('onclick');
-        localSyncCard.addEventListener('click', setupLocalSync);
-    }
+    safeBindClick(document.querySelector('[onclick="setupFirebaseSync()"]'), 'setupFirebaseSync');
+    safeBindClick(document.querySelector('[onclick="setupLocalSync()"]'), 'setupLocalSync');
 
     // Fix for manual QR input button
-    const manualQRBtn = document.querySelector('[onclick="processManualQRInput()"]');
-    if (manualQRBtn) {
-        manualQRBtn.removeAttribute('onclick');
-        manualQRBtn.addEventListener('click', processManualQRInput);
-    }
+    safeBindClick(document.querySelector('[onclick="processManualQRInput()"]'), 'processManualQRInput');
 });
 
 // Safe innerHTML replacements

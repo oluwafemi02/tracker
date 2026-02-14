@@ -2,7 +2,7 @@
   "name": "Expense Tracker",
   "short_name": "ExpenseTracker",
   "description": "Track, manage, and optimize your expenses with smart insights and analytics",
-  "version": "2.2.0",
+  "version": "0.3.12",
   "start_url": "/tracker/",
   "display": "standalone",
   "background_color": "#f8fafc",
@@ -10,10 +10,13 @@
   "orientation": "portrait-primary",
   "scope": "/tracker/",
   "id": "com.expensetracker.pwa",
-  "categories": ["finance", "productivity", "utilities"],
+  "categories": [
+    "finance",
+    "productivity",
+    "utilities"
+  ],
   "lang": "en",
   "dir": "ltr",
-  
   "icons": [
     {
       "src": "icons/icon-72x72.svg",
@@ -64,7 +67,6 @@
       "purpose": "any maskable"
     }
   ],
-  
   "shortcuts": [
     {
       "name": "Add Expense",
@@ -119,26 +121,25 @@
       ]
     }
   ],
-  
   "related_applications": [],
   "prefer_related_applications": false,
-  
   "share_target": {
     "action": "/tracker/",
-    "method": "GET",
+    "method": "POST",
     "params": {
       "title": "title",
       "text": "text",
       "url": "url"
-    }
+    },
+    "enctype": "multipart/form-data"
   },
-
-  "display_override": ["window-controls-overlay", "standalone"],
-  
+  "display_override": [
+    "window-controls-overlay",
+    "standalone"
+  ],
   "edge_side_panel": {
     "preferred_width": 400
   },
-
   "launch_handler": {
     "client_mode": "focus-existing"
   }
