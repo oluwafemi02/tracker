@@ -1,5 +1,5 @@
 {
-  "version": "0.3.9",
-  "releaseDate": "2024-01-15",
-  "description": "Fix translation keys and template variables in Smart Money Suggestions"
+  "version": "0.3.11",
+  "releaseDate": "2026-02-14",
+  "description": "Fix missing helper functions, align PWA share_target settings, and stabilize runtime initialization."
 }
