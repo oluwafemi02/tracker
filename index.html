@@ -29,13 +29,13 @@
     <meta name="msapplication-tap-highlight" content="no">
     
     <!-- Manifest -->
-    <link rel="manifest" href="manifest.json">
+    <link rel="manifest" href="/tracker/manifest.json">
     
     <!-- Icons -->
-    <link rel="icon" type="image/svg+xml" sizes="32x32" href="icons/favicon-32x32.svg">
-    <link rel="icon" type="image/svg+xml" sizes="16x16" href="icons/favicon-16x16.svg">
-    <link rel="apple-touch-icon" href="icons/apple-touch-icon.svg">
-    <link rel="mask-icon" href="icons/safari-pinned-tab.svg" color="#6366f1">
+    <link rel="icon" type="image/svg+xml" sizes="32x32" href="/tracker/icons/favicon-32x32.svg">
+    <link rel="icon" type="image/svg+xml" sizes="16x16" href="/tracker/icons/favicon-16x16.svg">
+    <link rel="apple-touch-icon" href="/tracker/icons/apple-touch-icon.svg">
+    <link rel="mask-icon" href="/tracker/icons/safari-pinned-tab.svg" color="#6366f1">
     
     <!-- Preconnect for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10277,9 +10277,7 @@
                     updateSpendingTrendChart();
                     updateCategoryBudgetChart();
                     updateCashFlowSummary();
-                    if (typeof updateRolloverAnalytics === 'function') {
-                        updateRolloverAnalytics();
-                    }
+                    updateRolloverAnalytics();
                     generateSmartInsights();
                 });
             }
@@ -13710,7 +13708,7 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', async () => {
                 try {
-                    swRegistration = await navigator.serviceWorker.register('sw.js');
+                    swRegistration = await navigator.serviceWorker.register('/tracker/sw.js');
                     console.log('✅ Service Worker registered:', swRegistration);
                     
                     // Force immediate update check
@@ -14766,7 +14764,7 @@
         // Check version on app load and force update if needed
         window.addEventListener('load', () => {
             // Add version to console for debugging
-            console.log('📱 App Version: 0.3.10');
+            console.log('📱 App Version: 2.1.1-all-toggles-fix');
             console.log('🔧 If you have cache issues, run: forceClearCacheAndReload()');
         });
 
@@ -17664,7 +17662,31 @@
                                                  usage > 80 ? 'linear-gradient(90deg, #ff9800 0%, #ffc107 100%)' :
                                                  'linear-gradient(90deg, #4caf50 0%, #8bc34a 100%)';
                 }
+            });
+        }
+        
+        // Initialize Dashboard
+        function initializeDashboard() {
+            setupDashboardControls();
+            updatePeriodDisplay();
+            updateDashboardData();
+        }
+
+        // Setup Dashboard Controls
+        function setupDashboardControls() {
+            // Period type selector
+            const periodSelector = document.getElementById('periodTypeSelector');
+            if (periodSelector) {
+                periodSelector.addEventListener('change', function() {
+                    dashboardState.periodType = this.value;
+                    updatePeriodDisplay();
+                    updateDashboardData();
+                });
             }
+
+            // Previous/Next buttons
+            const prevBtn = document.getElementById('prevPeriod');
+            const nextBtn = document.getElementById('nextPeriod');
             
             // Calculate daily average
             const days = Math.ceil((dateRange.end - dateRange.start) / (1000 * 60 * 60 * 24)) + 1;
@@ -17733,6 +17755,87 @@
                     endDate.setFullYear(dashboardState.selectedYear - 1, 11, 31);
                     endDate.setHours(23, 59, 59, 999);
                     break;
+                case 'year':
+                    startDate.setFullYear(dashboardState.selectedYear - 1, 0, 1);
+                    startDate.setHours(0, 0, 0, 0);
+                    endDate.setFullYear(dashboardState.selectedYear - 1, 11, 31);
+                    endDate.setHours(23, 59, 59, 999);
+                    break;
+            }
+            
+            return { start: startDate, end: endDate };
+        }
+
+        // Export dashboard data
+        function exportDashboardData() {
+            const dateRange = getDateRangeFilter();
+            const periodExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
+            });
+            
+            // Create CSV data
+            let csv = 'Date,Description,Category,Amount,Currency,Converted Amount,Tags\n';
+            
+            periodExpenses.forEach(expense => {
+                const tags = [];
+                if (expense.isRecurring) tags.push('Recurring');
+                if (expense.isFixedCost) tags.push('Fixed Cost');
+                
+                csv += `${expense.date},"${expense.description}","${expense.category}",${expense.amount},${expense.currency || mainCurrency},${expense.convertedAmount || expense.amount},"${tags.join(', ')}"\n`;
+            });
+            
+            // Download CSV
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `dashboard-export-${dateRange.start.toISOString().split('T')[0]}-to-${dateRange.end.toISOString().split('T')[0]}.csv`;
+            a.click();
+            
+            showNotification(t('dashboard.exported') || 'Dashboard data exported', 'success');
+        }
+
+        // Update spending trend chart
+        function updateSpendingTrendChart() {
+            const canvas = document.getElementById('spendingTrendChart');
+            if (!canvas) return; // Element not found, skip update
+            
+            const ctx = canvas.getContext('2d');
+            const dateRange = getDateRangeFilter();
+            
+            // Filter expenses by date range
+            const filteredExpenses = expenses.filter(expense => {
+                const expenseDate = new Date(expense.date);
+                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
+            });
+            
+            // Group by day/week based on range
+            const groupedData = dashboardState.periodType === 'year' ? 
+                groupExpensesByWeek(filteredExpenses) : 
+                groupExpensesByDay(filteredExpenses);
+            
+            const labels = Object.keys(groupedData).sort();
+            const data = labels.map(date => groupedData[date]);
+            
+            // If no data, show empty state
+            if (labels.length === 0) {
+                if (dashboardState.charts.spending) {
+                    dashboardState.charts.spending.destroy();
+                    dashboardState.charts.spending = null;
+                }
+                // Clear the canvas and show message
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.font = '16px system-ui';
+                ctx.fillStyle = '#666';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('No expense data for selected period', canvas.width / 2, canvas.height / 2);
+                return;
+            }
+            
+            if (dashboardState.charts.spending) {
+                dashboardState.charts.spending.destroy();
             }
             
             return { start: startDate, end: endDate };
@@ -18356,7 +18459,7 @@
             const decodedEmail = atob(encodedEmail);
             
             // Get device and app info for support email
-            const appVersion = '0.3.10'; // Current version
+            const appVersion = '0.3.9'; // Current version
             const userAgent = navigator.userAgent;
             const language = currentLanguage || 'en';
             const platform = navigator.platform;
@@ -18380,6 +18483,131 @@ Browser: ${userAgent}
             // Open email client with pre-filled content
             window.location.href = `mailto:${decodedEmail}?subject=${subject}&body=${body}`;
         }
+        
+        // Open FAQ
+        function openFAQ() {
+            showNotification(t('support.faqComingSoon') || 'FAQ section coming soon!', 'info');
+        }
+
+        // Make functions globally accessible
+        window.updateSubscriptionStatus = updateSubscriptionStatus;
+        window.showUpgradeModal = showUpgradeModal;
+        window.showSubscriptionDetails = showSubscriptionDetails;
+        window.openSupportContact = openSupportContact;
+        window.openFAQ = openFAQ;
+        window.initializeDashboard = initializeDashboard;
+        window.updateSpendingTrendChart = updateSpendingTrendChart;
+        window.updateCategoryBudgetChart = updateCategoryBudgetChart;
+        window.updateCashFlowSummary = updateCashFlowSummary;
+        window.generateSmartInsights = generateSmartInsights;
+        window.setupDashboardControls = setupDashboardControls;
+        window.updatePeriodDisplay = updatePeriodDisplay;
+        window.updateDashboardData = updateDashboardData;
+        window.navigatePeriod = navigatePeriod;
+        window.exportDashboardData = exportDashboardData;
+
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(updatePremiumUIState, 1000);
+            
+            // Setup navigation tab click handlers
+            document.querySelectorAll('.nav-tab').forEach(tab => {
+                tab.addEventListener('click', function(event) {
+                    const tabName = this.dataset.tab;
+                    
+                    // Hide all tab contents
+                    document.querySelectorAll('.tab-content').forEach(content => {
+                        content.classList.remove('active');
+                    });
+                    
+                    // Remove active class from all nav tabs
+                    document.querySelectorAll('.nav-tab').forEach(navTab => {
+                        navTab.classList.remove('active');
+                    });
+                    
+                    // Show selected tab content
+                    document.getElementById(tabName + 'Tab').classList.add('active');
+                    
+                    // Add active class to clicked nav tab
+                    this.classList.add('active');
+                    
+                    // Update dashboard if switching to dashboard tab
+                    if (tabName === 'dashboard') {
+                        initializeDashboard();
+                    }
+                    
+                    // Initialize travel tab if switching to travel tab
+                    if (tabName === 'travel') {
+                        initializeTravelTab();
+                    }
+                    
+                    // Update subscription status if switching to settings tab
+                    if (tabName === 'settings') {
+                        updateSubscriptionStatus();
+                    }
+                });
+            });
+        });
+        
+        // Also run immediately if DOM is ready
+        if (document.readyState === 'interactive' || document.readyState === 'complete') {
+            setTimeout(updatePremiumUIState, 500);
+        }
+    })();
+    </script>
+    
+    <!-- Exchange Rate Modal -->
+    <div id="exchangeRateModal" class="modal" style="display: none;">
+        <div class="modal-content" style="max-width: 400px;">
+            <div class="modal-header">
+                <h2>💱 Currency Conversion</h2>
+                <button class="close-btn" onclick="closeExchangeRateModal()">&times;</button>
+            </div>
+            <div style="padding: 1.5rem;">
+                <p id="exchangeRatePrompt" style="margin-bottom: 1.5rem; text-align: center;">
+                    <!-- Dynamic content -->
+                </p>
+                <div class="form-group">
+                    <label for="exchangeRateInput">Exchange Rate</label>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <span>1 <span id="fromCurrency"></span> =</span>
+                        <input type="number" id="exchangeRateInput" step="0.000001" placeholder="0.00" style="flex: 1;" onkeypress="if(event.key === 'Enter') confirmExchangeRate()">
+                        <span id="toCurrency"></span>
+                    </div>
+                    <small style="color: var(--text-secondary); display: block; margin-top: 0.5rem;">
+                        <span id="lastRateHint"></span>
+                    </small>
+                </div>
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    <button class="btn btn-primary" onclick="confirmExchangeRate()" style="flex: 1;">
+                        ✅ Confirm
+                    </button>
+                    <button class="btn" onclick="closeExchangeRateModal()" style="flex: 1;">
+                        ❌ Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Rollover Modal -->
+    <div id="rolloverModal" class="modal">
+        <div class="modal-content rollover-modal">
+            <div class="modal-header">
+                <h3>💰 Previous Month's Balance</h3>
+                <span class="close-modal" onclick="closeRolloverModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="rollover-amount-display">
+                    <p>You have <strong id="rolloverAmount"></strong> left from <span id="rolloverSource"></span></p>
+                </div>
+                
+                <div class="rollover-options">
+                    <h4>What would you like to do with this balance?</h4>
+                    
+                    <div class="rollover-option" onclick="handleRolloverDecision('add_to_budget')">
+                        <div class="option-icon">💵</div>
+                        <div class="option-content">
         
         // Open FAQ
         function openFAQ() {
@@ -18571,6 +18799,65 @@ Browser: ${userAgent}
         </div>
     </div>
 
+    <!-- Category Allocation Modal -->
+    <div id="categoryAllocationModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>📊 Allocate to Categories</h3>
+                <span class="close-modal" onclick="closeCategoryAllocationModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Total amount to allocate: <strong id="totalToAllocate"></strong></p>
+                <p>Remaining: <strong id="remainingToAllocate"></strong></p>
+                
+                <div id="categoryAllocationList">
+                    <!-- Populated dynamically -->
+                </div>
+                
+                <button class="btn" onclick="confirmCategoryAllocation()">Confirm Allocation</button>
+            </div>
+        </div>
+                            <h5>Add to Current Budget</h5>
+                            <p>Increase this month's budget by the leftover amount</p>
+                        </div>
+                    </div>
+                    
+                    <div class="rollover-option" onclick="handleRolloverDecision('save')">
+                        <div class="option-icon">🏦</div>
+                        <div class="option-content">
+                            <h5>Save as Reserve Fund</h5>
+                            <p>Put it aside for future use or emergencies</p>
+                        </div>
+                    </div>
+                    
+                    <div class="rollover-option" onclick="handleRolloverDecision('allocate')">
+                        <div class="option-icon">📊</div>
+                        <div class="option-content">
+                            <h5>Allocate to Categories</h5>
+                            <p>Split between different expense categories</p>
+                        </div>
+                    </div>
+                    
+                    <div class="rollover-option" onclick="handleRolloverDecision('carry_forward')">
+                        <div class="option-icon">📅</div>
+                        <div class="option-content">
+                            <h5>Carry Forward as Credit</h5>
+                            <p>Keep as a separate line item for tracking</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="rollover-preferences">
+                    <label>
+                        <input type="checkbox" id="rememberRolloverChoice" onchange="updateRolloverPreferences()">
+                        Remember my choice for automatic future rollovers
+                    </label>
+                </div>
+            </div>
+        </div>
+        </main>
+    </div>
+    
     <!-- Category Allocation Modal -->
     <div id="categoryAllocationModal" class="modal">
         <div class="modal-content">
