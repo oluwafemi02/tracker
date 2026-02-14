@@ -1,5 +1,5 @@
 {
-  "version": "0.3.9",
-  "releaseDate": "2024-01-15",
-  "description": "Fix translation keys and template variables in Smart Money Suggestions"
+  "version": "0.3.10",
+  "releaseDate": "2026-02-14",
+  "description": "Fix rollover modal markup, stabilize analytics calls, and harden service worker caching."
 }
