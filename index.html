@@ -14084,25 +14084,33 @@
             }
         }
 
-        function sendTestNotification() {
-            new Notification('Test Notification 📱', {
+        async function sendTestNotification() {
+            const options = {
                 body: 'Notifications are working! You will receive reminders for recurring expenses.',
                 icon: '/icons/icon-192x192.png',
                 badge: '/icons/badge-72x72.png',
                 tag: 'test-notification',
-                requireInteraction: false,
-                actions: [
-                    {
-                        action: 'view',
-                        title: 'View App'
-                    },
-                    {
-                        action: 'dismiss',
-                        title: 'Dismiss'
-                    }
-                ]
-            });
-            
+                requireInteraction: false
+            };
+
+            try {
+                if (swRegistration && typeof swRegistration.showNotification === 'function') {
+                    await swRegistration.showNotification('Test Notification 📱', {
+                        ...options,
+                        actions: [
+                            { action: 'view', title: 'View App' },
+                            { action: 'dismiss', title: 'Dismiss' }
+                        ]
+                    });
+                } else {
+                    new Notification('Test Notification 📱', options);
+                }
+            } catch (error) {
+                console.error('Failed to send test notification:', error);
+                showNotification('Unable to send test notification in this browser context.', 'error');
+                return;
+            }
+
             showNotification('Test notification sent! 📱', 'success');
             updateNotificationStatus();
         }
@@ -16951,28 +16959,8 @@
             }
         }
 
-        function sendTestNotification() {
-            new Notification('Test Notification 📱', {
-                body: 'Notifications are working! You will receive reminders for recurring expenses.',
-                icon: '/icons/icon-192x192.png',
-                badge: '/icons/badge-72x72.png',
-                tag: 'test-notification',
-                requireInteraction: false,
-                actions: [
-                    {
-                        action: 'view',
-                        title: 'View App'
-                    },
-                    {
-                        action: 'dismiss',
-                        title: 'Dismiss'
-                    }
-                ]
-            });
-            
-            showNotification('Test notification sent! 📱', 'success');
-            updateNotificationStatus();
-        }
+        async 
+
         // Update notification status display
         function updateNotificationStatus() {
             const statusDiv = document.getElementById('notificationStatus');
@@ -17601,39 +17589,13 @@
         }
 
         // Force cache clear and app reload (for debugging cache issues)
-        async function forceClearCacheAndReload() {
-            try {
-                // Clear all caches
-                if ('caches' in window) {
-                    const cacheNames = await caches.keys();
-                    await Promise.all(cacheNames.map(name => caches.delete(name)));
-                    console.log('🗑️ All caches cleared');
-                }
-                
-                // Unregister service worker
-                if ('serviceWorker' in navigator) {
-                    const registrations = await navigator.serviceWorker.getRegistrations();
-                    await Promise.all(registrations.map(reg => reg.unregister()));
-                    console.log('🚫 Service worker unregistered');
-                }
-                
-                // Force hard reload
-                window.location.reload(true);
-            } catch (error) {
-                console.error('❌ Error clearing cache:', error);
-                window.location.reload(true);
-            }
-        }
+        async 
+
 
         // Add to window for debugging
         window.forceClearCacheAndReload = forceClearCacheAndReload;
 
-        // Check version on app load and force update if needed
-        window.addEventListener('load', () => {
-            // Add version to console for debugging
-            console.log('📱 App Version: 2.1.1-all-toggles-fix');
-            console.log('🔧 If you have cache issues, run: forceClearCacheAndReload()');
-        });
+        
 
         // Listen for messages from service worker
         navigator.serviceWorker.addEventListener('message', event => {
@@ -19391,35 +19353,8 @@
         updateAvailable = updateAvailable || false;
 
         // Check for updates
-        async function checkForUpdates() {
-            try {
-                const response = await fetch('version.json?t=' + Date.now());
-                const latestVersionData = await response.json();
-                const latestVersion = latestVersionData.version;
-                
-                // Get current version from localStorage or default
-                const storedVersion = localStorage.getItem('appVersion') || currentVersion;
-                
-                if (compareVersions(latestVersion, storedVersion) > 0) {
-                    updateAvailable = true;
-                    showUpdateNotification(latestVersion, storedVersion);
-                    
-                    // Update version in localStorage after notification
-                    localStorage.setItem('appVersion', latestVersion);
-                    currentVersion = latestVersion;
-                } else if (storedVersion !== currentVersion) {
-                    // App was updated in background
-                    showUpdateSuccessNotification(latestVersion);
-                    currentVersion = latestVersion;
-                }
-                
-                // Update version display
-                updateVersionDisplay(latestVersion);
-                
-            } catch (error) {
-                console.error('Error checking for updates:', error);
-            }
-        }
+        async 
+
 
         // Compare version strings (returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal)
         function compareVersions(v1, v2) {
@@ -20528,51 +20463,12 @@
         }
         
         // Initialize Dashboard
-        function initializeDashboard() {
-            setupDashboardControls();
-            updatePeriodDisplay();
-            updateDashboardData();
-        }
+        
+
 
         // Setup Dashboard Controls
-        function setupDashboardControls() {
-            // Period type selector
-            const periodSelector = document.getElementById('periodTypeSelector');
-            if (periodSelector) {
-                periodSelector.addEventListener('change', function() {
-                    dashboardState.periodType = this.value;
-                    updatePeriodDisplay();
-                    updateDashboardData();
-                });
-            }
+        
 
-            // Previous/Next buttons
-            const prevBtn = document.getElementById('prevPeriod');
-            const nextBtn = document.getElementById('nextPeriod');
-            
-            if (prevBtn) {
-                prevBtn.addEventListener('click', () => navigatePeriod(-1));
-            }
-            
-            if (nextBtn) {
-                nextBtn.addEventListener('click', () => navigatePeriod(1));
-            }
-
-            // Refresh button
-            const refreshBtn = document.getElementById('refreshDashboard');
-            if (refreshBtn) {
-                refreshBtn.addEventListener('click', () => {
-                    updateDashboardData();
-                    showNotification(t('dashboard.refreshed') || 'Dashboard refreshed', 'success');
-                });
-            }
-
-            // Export button
-            const exportBtn = document.getElementById('exportDashboard');
-            if (exportBtn) {
-                exportBtn.addEventListener('click', exportDashboardData);
-            }
-        }
 
         // Navigate periods
         function navigatePeriod(direction) {
@@ -20633,45 +20529,8 @@
         }
 
         // Get date range based on selected period
-        function getDateRangeFilter() {
-            // Calculate daily average
-            const days = Math.ceil((dateRange.end - dateRange.start) / (1000 * 60 * 60 * 24)) + 1;
-            const dailyAvg = totalSpent / days;
-            const avgDailyEl = document.getElementById('avgDailyMetric');
-            if (avgDailyEl) {
-                avgDailyEl.textContent = formatCurrencyAmount(dailyAvg, mainCurrency);
-            }
-            
-            // Calculate projected monthly
-            const projectedEl = document.getElementById('projectedMonthly');
-            if (projectedEl) {
-                const projected = dailyAvg * 30;
-                projectedEl.textContent = `${formatCurrencyAmount(projected, mainCurrency)} ${t('metrics.projected') || 'projected'}`;
-            }
-            
-            // Transaction count and top category
-            const transactionCountEl = document.getElementById('transactionCountMetric');
-            if (transactionCountEl) {
-                transactionCountEl.textContent = periodExpenses.length;
-            }
-            
-            // Find top category
-            const categoryTotals = {};
-            periodExpenses.forEach(expense => {
-                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + getAmountInMainCurrency(expense);
-            });
-            
-            const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
-            const topCategoryEl = document.getElementById('topCategoryMetric');
-            if (topCategoryEl) {
-                if (topCategory) {
-                    const icon = categoryIcons[topCategory[0]] || '📝';
-                    topCategoryEl.textContent = `${icon} ${topCategory[0]}`;
-                } else {
-                    topCategoryEl.textContent = t('metrics.noData') || 'No data';
-                }
-            }
-        }
+        
+
 
         // Get previous period range for comparison
         function getPreviousPeriodRange() {
@@ -20737,35 +20596,35 @@
             showNotification(t('dashboard.exported') || 'Dashboard data exported', 'success');
         }
 
+        // Export dashboard data
+        
+
+
         // Update spending trend chart
         function updateSpendingTrendChart() {
             const canvas = document.getElementById('spendingTrendChart');
-            if (!canvas) return; // Element not found, skip update
-            
+            if (!canvas) return;
+
             const ctx = canvas.getContext('2d');
             const dateRange = getDateRangeFilter();
-            
-            // Filter expenses by date range
             const filteredExpenses = expenses.filter(expense => {
                 const expenseDate = new Date(expense.date);
                 return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
             });
-            
-            // Group by day/week based on range
-            const groupedData = dashboardState.periodType === 'year' ? 
-                groupExpensesByWeek(filteredExpenses) : 
-                groupExpensesByDay(filteredExpenses);
-            
+
+            const groupedData = dashboardState.periodType === 'year'
+                ? groupExpensesByWeek(filteredExpenses)
+                : groupExpensesByDay(filteredExpenses);
+
             const labels = Object.keys(groupedData).sort();
             const data = labels.map(date => groupedData[date]);
-            
-            // If no data, show empty state
+
+            if (dashboardState.charts.spending) {
+                dashboardState.charts.spending.destroy();
+                dashboardState.charts.spending = null;
+            }
+
             if (labels.length === 0) {
-                if (dashboardState.charts.spending) {
-                    dashboardState.charts.spending.destroy();
-                    dashboardState.charts.spending = null;
-                }
-                // Clear the canvas and show message
                 ctx.clearRect(0, 0, canvas.width, canvas.height);
                 ctx.font = '16px system-ui';
                 ctx.fillStyle = '#666';
@@ -20774,22 +20633,14 @@
                 ctx.fillText('No expense data for selected period', canvas.width / 2, canvas.height / 2);
                 return;
             }
-            
-            if (dashboardState.charts.spending) {
-                dashboardState.charts.spending.destroy();
-            }
-            
-            // Format labels for display
+
             const formattedLabels = labels.map(label => {
                 if (dashboardState.periodType === 'year' && label.includes('-W')) {
-                    // Convert week format to readable
-                    const [year, week] = label.split('-W');
-                    return `Week ${parseInt(week)}`;
-                } else {
-                    // Convert date to readable format
-                    const date = new Date(label);
-                    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+                    const [, week] = label.split('-W');
+                    return `Week ${parseInt(week, 10)}`;
                 }
+                const date = new Date(label);
+                return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
             });
 
             dashboardState.charts.spending = new Chart(ctx, {
@@ -20798,7 +20649,7 @@
                     labels: formattedLabels,
                     datasets: [{
                         label: t('charts.dailySpending') || 'Daily Spending',
-                        data: data,
+                        data,
                         borderColor: '#007bff',
                         backgroundColor: 'rgba(0, 123, 255, 0.1)',
                         tension: 0.3,
@@ -20809,30 +20660,10 @@
                     responsive: true,
                     maintainAspectRatio: false,
                     plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        },
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
                                     return formatCurrencyAmount(context.parsed.y, mainCurrency);
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: {
-                                autoSkip: true,
-                                maxTicksLimit: 10
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return formatCurrencyAmount(value, mainCurrency);
                                 }
                             }
                         }
@@ -20841,229 +20672,13 @@
             });
         }
 
-        // Update category vs budget chart
-        function updateCategoryBudgetChart() {
-            const canvas = document.getElementById('categoryBudgetChart');
-            if (!canvas) return; // Element not found, skip update
-            
-            const ctx = canvas.getContext('2d');
-            const dateRange = getDateRangeFilter();
-            
-            // Calculate category totals
-            const categoryTotals = {};
-            const categoryBudgets = {};
-            
-            return { start: startDate, end: endDate };
-        }
-
         // Export dashboard data
-        function exportDashboardData() {
-            const dateRange = getDateRangeFilter();
-            const periodExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
-            });
-            
-            // Create CSV data
-            let csv = 'Date,Description,Category,Amount,Currency,Converted Amount,Tags\n';
-            
-            periodExpenses.forEach(expense => {
-                const tags = [];
-                if (expense.isRecurring) tags.push('Recurring');
-                if (expense.isFixedCost) tags.push('Fixed Cost');
-                
-                csv += `${expense.date},"${expense.description}","${expense.category}",${expense.amount},${expense.currency || mainCurrency},${expense.convertedAmount || expense.amount},"${tags.join(', ')}"\n`;
-            });
-            
-            // Download CSV
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `dashboard-export-${dateRange.start.toISOString().split('T')[0]}-to-${dateRange.end.toISOString().split('T')[0]}.csv`;
-            a.click();
-            
-            showNotification(t('dashboard.exported') || 'Dashboard data exported', 'success');
-        }
+        
+
 
         // Update spending trend chart
-        function updateSpendingTrendChart() {
-            const canvas = document.getElementById('spendingTrendChart');
-            if (!canvas) return; // Element not found, skip update
-            
-            const ctx = canvas.getContext('2d');
-            const dateRange = getDateRangeFilter();
-            
-            // Filter expenses by date range
-            const filteredExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
-            });
-            
-            // Group by day/week based on range
-            const groupedData = dashboardState.periodType === 'year' ? 
-                groupExpensesByWeek(filteredExpenses) : 
-                groupExpensesByDay(filteredExpenses);
-            
-            const labels = Object.keys(groupedData).sort();
-            const data = labels.map(date => groupedData[date]);
-            
-            // If no data, show empty state
-            if (labels.length === 0) {
-                if (dashboardState.charts.spending) {
-                    dashboardState.charts.spending.destroy();
-                    dashboardState.charts.spending = null;
-                }
-                // Clear the canvas and show message
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.font = '16px system-ui';
-                ctx.fillStyle = '#666';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('No expense data for selected period', canvas.width / 2, canvas.height / 2);
-                return;
-            }
-            
-            if (dashboardState.charts.spending) {
-                dashboardState.charts.spending.destroy();
-            }
-            
-            return { start: startDate, end: endDate };
-        }
+        
 
-        // Export dashboard data
-        function exportDashboardData() {
-            const dateRange = getDateRangeFilter();
-            const periodExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
-            });
-            
-            // Create CSV data
-            let csv = 'Date,Description,Category,Amount,Currency,Converted Amount,Tags\n';
-            
-            periodExpenses.forEach(expense => {
-                const tags = [];
-                if (expense.isRecurring) tags.push('Recurring');
-                if (expense.isFixedCost) tags.push('Fixed Cost');
-                
-                csv += `${expense.date},"${expense.description}","${expense.category}",${expense.amount},${expense.currency || mainCurrency},${expense.convertedAmount || expense.amount},"${tags.join(', ')}"\n`;
-            });
-            
-            // Download CSV
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `dashboard-export-${dateRange.start.toISOString().split('T')[0]}-to-${dateRange.end.toISOString().split('T')[0]}.csv`;
-            a.click();
-            
-            showNotification(t('dashboard.exported') || 'Dashboard data exported', 'success');
-        }
-
-        // Update spending trend chart
-        function updateSpendingTrendChart() {
-            const canvas = document.getElementById('spendingTrendChart');
-            if (!canvas) return; // Element not found, skip update
-            
-            const ctx = canvas.getContext('2d');
-            const dateRange = getDateRangeFilter();
-            
-            // Filter expenses by date range
-            const filteredExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
-            });
-            
-            // Group by day/week based on range
-            const groupedData = dashboardState.periodType === 'year' ? 
-                groupExpensesByWeek(filteredExpenses) : 
-                groupExpensesByDay(filteredExpenses);
-            
-            const labels = Object.keys(groupedData).sort();
-            const data = labels.map(date => groupedData[date]);
-            
-            // If no data, show empty state
-            if (labels.length === 0) {
-                if (dashboardState.charts.spending) {
-                    dashboardState.charts.spending.destroy();
-                    dashboardState.charts.spending = null;
-                }
-                // Clear the canvas and show message
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                ctx.font = '16px system-ui';
-                ctx.fillStyle = '#666';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                ctx.fillText('No expense data for selected period', canvas.width / 2, canvas.height / 2);
-                return;
-            }
-            
-            if (dashboardState.charts.spending) {
-                dashboardState.charts.spending.destroy();
-            }
-            
-            // Format labels for display
-            const formattedLabels = labels.map(label => {
-                if (dashboardState.periodType === 'year' && label.includes('-W')) {
-                    // Convert week format to readable
-                    const [year, week] = label.split('-W');
-                    return `Week ${parseInt(week)}`;
-                } else {
-                    // Convert date to readable format
-                    const date = new Date(label);
-                    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-                }
-            });
-
-            dashboardState.charts.spending = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: formattedLabels,
-                    datasets: [{
-                        label: t('charts.dailySpending') || 'Daily Spending',
-                        data: data,
-                        borderColor: '#007bff',
-                        backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                        tension: 0.3,
-                        fill: true
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: true,
-                            position: 'top'
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return formatCurrencyAmount(context.parsed.y, mainCurrency);
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            ticks: {
-                                autoSkip: true,
-                                maxTicksLimit: 10
-                            }
-                        },
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return formatCurrencyAmount(value, mainCurrency);
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-        }
 
         // Update category vs budget chart
         function updateCategoryBudgetChart() {
