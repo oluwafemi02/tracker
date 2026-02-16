@@ -10,5 +10,8 @@
     "progressive-web-app",
     "budget",
     "finance"
-  ]
+  ],
+  "scripts": {
+    "check:duplicates": "node scripts/check-duplicate-functions.js"
+  }
 }
