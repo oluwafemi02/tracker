@@ -20597,34 +20597,8 @@
         }
 
         // Export dashboard data
-        function exportDashboardData() {
-            const dateRange = getDateRangeFilter();
-            const periodExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
-            });
-            
-            // Create CSV data
-            let csv = 'Date,Description,Category,Amount,Currency,Converted Amount,Tags\n';
-            
-            periodExpenses.forEach(expense => {
-                const tags = [];
-                if (expense.isRecurring) tags.push('Recurring');
-                if (expense.isFixedCost) tags.push('Fixed Cost');
-                
-                csv += `${expense.date},"${expense.description}","${expense.category}",${expense.amount},${expense.currency || mainCurrency},${expense.convertedAmount || expense.amount},"${tags.join(', ')}"\n`;
-            });
-            
-            // Download CSV
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `dashboard-export-${dateRange.start.toISOString().split('T')[0]}-to-${dateRange.end.toISOString().split('T')[0]}.csv`;
-            a.click();
-            
-            showNotification(t('dashboard.exported') || 'Dashboard data exported', 'success');
-        }
+        
+
 
         // Update spending trend chart
         function updateSpendingTrendChart() {
@@ -20699,34 +20673,8 @@
         }
 
         // Export dashboard data
-        function exportDashboardData() {
-            const dateRange = getDateRangeFilter();
-            const periodExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
-            });
-            
-            // Create CSV data
-            let csv = 'Date,Description,Category,Amount,Currency,Converted Amount,Tags\n';
-            
-            periodExpenses.forEach(expense => {
-                const tags = [];
-                if (expense.isRecurring) tags.push('Recurring');
-                if (expense.isFixedCost) tags.push('Fixed Cost');
-                
-                csv += `${expense.date},"${expense.description}","${expense.category}",${expense.amount},${expense.currency || mainCurrency},${expense.convertedAmount || expense.amount},"${tags.join(', ')}"\n`;
-            });
-            
-            // Download CSV
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `dashboard-export-${dateRange.start.toISOString().split('T')[0]}-to-${dateRange.end.toISOString().split('T')[0]}.csv`;
-            a.click();
-            
-            showNotification(t('dashboard.exported') || 'Dashboard data exported', 'success');
-        }
+        
+
 
         // Update spending trend chart
         
