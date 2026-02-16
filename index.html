@@ -9768,7 +9768,7 @@
                 mainCurrency = newCurrency;
                 localStorage.setItem('mainCurrency', mainCurrency);
                 updateBudgetCurrencySymbol();
-                showNotification(`Main currency set to ${newCurrency}`, 'success');
+                showNotification(t('notifications.currencySet', { currency: newCurrency }) || `Main currency set to ${newCurrency}`, 'success');
                 
                 // Update expense form currency dropdown default
                 document.getElementById('currency').value = mainCurrency;
@@ -16554,73 +16554,6 @@
             }
         }
 
-        // Compare version strings (returns 1 if v1 > v2, -1 if v1 < v2, 0 if equal)
-        function compareVersions(v1, v2) {
-            const parts1 = v1.split('.').map(Number);
-            const parts2 = v2.split('.').map(Number);
-            
-            for (let i = 0; i < 3; i++) {
-                if (parts1[i] > parts2[i]) return 1;
-                if (parts1[i] < parts2[i]) return -1;
-            }
-            return 0;
-        }
-
-        // Show update notification
-        function showUpdateNotification(newVersion, oldVersion) {
-            const notification = document.createElement('div');
-            notification.className = 'update-notification';
-            notification.innerHTML = `
-                <div class="update-content">
-                    <span class="update-icon">🎉</span>
-                    <div class="update-text">
-                        <strong>New Update Available!</strong>
-                        <span>Version ${newVersion} is ready (current: ${oldVersion})</span>
-                    </div>
-                    <div class="update-actions">
-                        <button class="btn btn-primary btn-sm" onclick="refreshApp()">
-                            <span>🔄</span> Refresh
-                        </button>
-                        <button class="btn btn-secondary btn-sm" onclick="dismissUpdateNotification(this)">
-                            Later
-                        </button>
-                    </div>
-                </div>
-            `;
-                    </div>
-                `;
-            }).join('');
-
-            // Add savings goal display if applicable
-            if (monthlyBudget > 0 && expenses.length > 0) {
-                const remaining = monthlyBudget - expenses.filter(expense => {
-                    const expenseDate = new Date(expense.date);
-                    const now = new Date();
-                    return expenseDate.getMonth() === now.getMonth() && expenseDate.getFullYear() === now.getFullYear();
-                }).reduce((total, expense) => total + expense.amount, 0);
-
-                if (remaining > 0) {
-                    const recommendedSavings = Math.max(remaining * 0.2, 10);
-                    suggestionsContent.innerHTML += `
-                        <div class="savings-goal">
-                            <div class="savings-amount">💰 €${recommendedSavings.toFixed(2)}</div>
-                            <div data-i18n="suggestions.recommendedSavings">Recommended monthly savings from remaining budget</div>
-                        </div>
-                    `;
-                }
-            }
-        }
-
-        // Enhanced updateMainBudgetSummary to include suggestions
-        const originalUpdateMainBudgetSummary = updateMainBudgetSummary;
-        updateMainBudgetSummary = function() {
-            // Call original function
-            originalUpdateMainBudgetSummary();
-            
-            // Generate and render suggestions
-            renderSmartSuggestions();
-        };
-
         // Close modal when clicking outside
         window.onclick = function(event) {
             const insightsModal = document.getElementById('insightsModal');
@@ -16633,10 +16566,10 @@
             }
         };
 
-        // PWA Installation and Notification Management
-        let deferredPrompt;
-        let swRegistration = null;
-        let notificationPermission = 'default';
+        // PWA Installation and Notification Management (reusing existing variables)
+        deferredPrompt = deferredPrompt || null;
+        swRegistration = swRegistration || null;
+        notificationPermission = notificationPermission || 'default';
 
         // Register Service Worker and setup PWA features with aggressive updates
         if ('serviceWorker' in navigator) {
@@ -17354,8 +17287,8 @@
         ];
          }
 
-         let currentGuideStep = 0;
-         let isGuideActive = false;
+         currentGuideStep = currentGuideStep || 0;
+         isGuideActive = isGuideActive || false;
 
          function startGuide(isQuickTour = false) {
              if (isQuickTour) {
@@ -19454,8 +19387,8 @@
         }
 
         // Version Management System
-        let currentVersion = '0.0.1';
-        let updateAvailable = false;
+        currentVersion = currentVersion || '0.0.1';
+        updateAvailable = updateAvailable || false;
 
         // Check for updates
         async function checkForUpdates() {
@@ -20264,67 +20197,6 @@
             const analyticsCard = document.getElementById('rolloverAnalyticsCard');
             const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
             
-        }
-        
-        // Fix 4: Override the demo activation
-        function overrideDemoActivation() {
-            if (!window.premiumManager || !window.premiumManager.redirectToCheckout) {
-                setTimeout(overrideDemoActivation, 100);
-                return;
-            }
-            
-            window.premiumManager.redirectToCheckout = function() {
-                if (window.analytics) {
-                    window.analytics.track('checkout_started', {
-                        source: 'paywall',
-                        tier: 'premium'
-                    });
-                }
-                
-                alert('Payment integration coming soon! For now, enjoy the free version.');
-                
-                const mockLicense = `PREMIUM-${Date.now()}-DEMO-KEY`;
-                if (confirm('Would you like to activate a demo Premium license for testing?')) {
-                    // Use the fixed validateLicense
-                    this.validateLicense(mockLicense);
-                    
-                    // Close modal
-                    document.querySelector('.premium-paywall-modal')?.remove();
-                    
-                    // Update UI immediately
-                    setTimeout(updatePremiumUIState, 100);
-                    
-                    // Show success message
-                    if (window.showNotification) {
-                        window.showNotification('🎉 Demo Premium license activated! Export features are now available.', 'success');
-                    }
-                }
-            };
-        }
-        
-        // Initialize everything
-        fixPremiumManager();
-        overrideDemoActivation();
-        
-        // Enhanced Dashboard Functions
-        let dashboardState = {
-            periodType: 'month',
-            currentDate: new Date(),
-            selectedMonth: new Date().getMonth(),
-            selectedYear: new Date().getFullYear(),
-            selectedQuarter: Math.floor(new Date().getMonth() / 3),
-            charts: {
-                spending: null,
-                category: null,
-                trend: null
-            }
-        };
-
-        // Update rollover analytics
-        function updateRolloverAnalytics() {
-            const analyticsCard = document.getElementById('rolloverAnalyticsCard');
-            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
-            
             // Show card if there's rollover history
             if (rolloverData.history.length > 0 || rolloverData.reserveFund > 0) {
                 analyticsCard.style.display = 'block';
@@ -20367,103 +20239,27 @@
                 analyticsCard.style.display = 'none';
             }
         }
-        
+
         // Update rollover trend chart
         function updateRolloverTrendChart() {
             const ctx = document.getElementById('rolloverTrendChart').getContext('2d');
-            
-            // Prepare data for last 6 months
+
             const months = [];
             const rolloverAmounts = [];
             const decisions = [];
             const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
-            
-            // Get last 6 months of data
+
             const sortedHistory = rolloverData.history.slice(-6);
-            
             sortedHistory.forEach(item => {
                 months.push(item.month);
                 rolloverAmounts.push(item.amount);
                 decisions.push(item.decision);
             });
-            
-            // Destroy existing chart if any
+
             if (window.rolloverTrendChart && typeof window.rolloverTrendChart.destroy === 'function') {
                 window.rolloverTrendChart.destroy();
             }
-            
-            // Create new chart
-            window.rolloverTrendChart = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: months,
-                    datasets: [{
-                        label: 'Rollover Amount',
-                        data: rolloverAmounts,
-                        backgroundColor: rolloverAmounts.map((_, index) => {
-                            const decision = decisions[index];
-                            if (decision === 'saved_to_reserve') return 'rgba(34, 197, 94, 0.8)';
-                            if (decision === 'add_to_budget') return 'rgba(59, 130, 246, 0.8)';
-                            if (decision === 'allocated_to_categories') return 'rgba(168, 85, 247, 0.8)';
-                            return 'rgba(156, 163, 175, 0.8)';
-                        }),
-                        borderColor: rolloverAmounts.map((_, index) => {
-                            const decision = decisions[index];
-                            if (decision === 'saved_to_reserve') return 'rgb(34, 197, 94)';
-                            if (decision === 'add_to_budget') return 'rgb(59, 130, 246)';
-                            if (decision === 'allocated_to_categories') return 'rgb(168, 85, 247)';
-                            return 'rgb(156, 163, 175)';
-                        }),
-                        borderWidth: 2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            display: false
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const decision = decisions[context.dataIndex];
-                                    const decisionText = decision.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-                                    return [
-                                        `Amount: ${currencySymbol}${context.parsed.y.toFixed(2)}`,
-                                        `Action: ${decisionText}`
-                                    ];
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            ticks: {
-                                callback: function(value) {
-                                    return currencySymbol + value.toFixed(0);
-                                }
-                            }
-                        }
-                    }
-            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
-            
-            // Get last 6 months of data
-            const sortedHistory = rolloverData.history.slice(-6);
-            
-            sortedHistory.forEach(item => {
-                months.push(item.month);
-                rolloverAmounts.push(item.amount);
-                decisions.push(item.decision);
-            });
-            
-            // Destroy existing chart if any
-            if (window.rolloverTrendChart && typeof window.rolloverTrendChart.destroy === 'function') {
-                window.rolloverTrendChart.destroy();
-            }
-            
-            // Create new chart
+
             window.rolloverTrendChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
@@ -20521,7 +20317,7 @@
                 }
             });
         }
-        
+
         // Initialize Dashboard
         function initializeDashboard() {
             setupDashboardControls();
@@ -20728,7 +20524,7 @@
                                                  usage > 80 ? 'linear-gradient(90deg, #ff9800 0%, #ffc107 100%)' :
                                                  'linear-gradient(90deg, #4caf50 0%, #8bc34a 100%)';
                 }
-            });
+            }
         }
         
         // Initialize Dashboard
@@ -20881,170 +20677,15 @@
         function getPreviousPeriodRange() {
             const startDate = new Date();
             const endDate = new Date();
-            
-            switch(dashboardState.periodType) {
-                case 'month':
-                    startDate.setFullYear(dashboardState.selectedYear, dashboardState.selectedMonth, 1);
-                    startDate.setHours(0, 0, 0, 0);
-                    endDate.setFullYear(dashboardState.selectedYear, dashboardState.selectedMonth + 1, 0);
-                    endDate.setHours(23, 59, 59, 999);
-                    break;
-                case 'quarter':
-                    const startMonth = dashboardState.selectedQuarter * 3;
-                    startDate.setFullYear(dashboardState.selectedYear, startMonth, 1);
-                    startDate.setHours(0, 0, 0, 0);
-                    endDate.setFullYear(dashboardState.selectedYear, startMonth + 3, 0);
-                    endDate.setHours(23, 59, 59, 999);
-                    break;
-                case 'year':
-                    startDate.setFullYear(dashboardState.selectedYear, 0, 1);
-                    startDate.setHours(0, 0, 0, 0);
-                    endDate.setFullYear(dashboardState.selectedYear, 11, 31);
-                    endDate.setHours(23, 59, 59, 999);
-                    break;
-            }
-            
-            return { start: startDate, end: endDate };
-        }
 
-        // Update all dashboard data
-        function updateDashboardData() {
-            // Only update if dashboard is active
-            const dashboardTab = document.getElementById('dashboardTab');
-            if (!dashboardTab || !dashboardTab.classList.contains('active')) {
-                return;
-            }
-            
-            const dateRange = getDateRangeFilter();
-            
-            // Filter expenses for the selected period
-            const periodExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate >= dateRange.start && expenseDate <= dateRange.end;
-            });
-            
-            // Update metrics
-            updateDashboardMetrics(periodExpenses, dateRange);
-            
-            // Update existing dashboard components
-            updateDashboard();
-            
-            // Update new charts with a slight delay to ensure DOM is ready
-            requestAnimationFrame(() => {
-                updateSpendingTrendChart();
-                updateCategoryBudgetChart();
-                updateCashFlowSummary();
-                generateSmartInsights();
-            });
-        }
-
-        // Update dashboard metrics
-        function updateDashboardMetrics(periodExpenses, dateRange) {
-            const currencySymbol = CURRENCIES[mainCurrency]?.symbol || mainCurrency;
-            
-            // Calculate total spent
-            const totalSpent = periodExpenses.reduce((sum, expense) => sum + getAmountInMainCurrency(expense), 0);
-            const totalSpentEl = document.getElementById('totalSpentMetric');
-            if (totalSpentEl) {
-                totalSpentEl.textContent = formatCurrencyAmount(totalSpent, mainCurrency);
-            }
-            
-            // Calculate comparison with previous period
-            const prevRange = getPreviousPeriodRange();
-            const prevExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate >= prevRange.start && expenseDate <= prevRange.end;
-            });
-            const prevTotal = prevExpenses.reduce((sum, expense) => sum + getAmountInMainCurrency(expense), 0);
-            
-            const changeEl = document.getElementById('spentChange');
-            if (changeEl && prevTotal > 0) {
-                const percentChange = ((totalSpent - prevTotal) / prevTotal) * 100;
-                const arrow = percentChange > 0 ? '↑' : '↓';
-                const changeClass = percentChange > 0 ? 'negative' : 'positive';
-                changeEl.className = `metric-change ${changeClass}`;
-                changeEl.innerHTML = `<span class="change-arrow">${arrow}</span><span class="change-value">${Math.abs(percentChange).toFixed(1)}%</span>`;
-            }
-            
-            // Calculate budget usage
-            const budgetUsageEl = document.getElementById('budgetUsageMetric');
-            const progressBar = document.getElementById('budgetProgressBar');
-            if (budgetUsageEl && monthlyBudget > 0) {
-                const usage = (totalSpent / monthlyBudget) * 100;
-                budgetUsageEl.textContent = `${Math.round(usage)}%`;
-                if (progressBar) {
-                    progressBar.style.width = `${Math.min(usage, 100)}%`;
-                    progressBar.style.background = usage > 100 ? 'linear-gradient(90deg, #f44336 0%, #ff5252 100%)' : 
-                                                 usage > 80 ? 'linear-gradient(90deg, #ff9800 0%, #ffc107 100%)' :
-                                                 'linear-gradient(90deg, #4caf50 0%, #8bc34a 100%)';
-                }
-            }
-            
-            // Calculate daily average
-            const days = Math.ceil((dateRange.end - dateRange.start) / (1000 * 60 * 60 * 24)) + 1;
-            const dailyAvg = totalSpent / days;
-            const avgDailyEl = document.getElementById('avgDailyMetric');
-            if (avgDailyEl) {
-                avgDailyEl.textContent = formatCurrencyAmount(dailyAvg, mainCurrency);
-            }
-            
-            // Calculate projected monthly
-            const projectedEl = document.getElementById('projectedMonthly');
-            if (projectedEl) {
-                const projected = dailyAvg * 30;
-                projectedEl.textContent = `${formatCurrencyAmount(projected, mainCurrency)} ${t('metrics.projected') || 'projected'}`;
-            }
-            
-            // Transaction count and top category
-            const transactionCountEl = document.getElementById('transactionCountMetric');
-            if (transactionCountEl) {
-                transactionCountEl.textContent = periodExpenses.length;
-            }
-            
-            // Find top category
-            const categoryTotals = {};
-            periodExpenses.forEach(expense => {
-                categoryTotals[expense.category] = (categoryTotals[expense.category] || 0) + getAmountInMainCurrency(expense);
-            });
-            
-            const topCategory = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1])[0];
-            const topCategoryEl = document.getElementById('topCategoryMetric');
-            if (topCategoryEl) {
-                if (topCategory) {
-                    const icon = categoryIcons[topCategory[0]] || '📝';
-                    topCategoryEl.textContent = `${icon} ${topCategory[0]}`;
-                } else {
-                    topCategoryEl.textContent = t('metrics.noData') || 'No data';
-                }
-            }
-        }
-
-        // Get previous period range for comparison
-        function getPreviousPeriodRange() {
-            const startDate = new Date();
-            const endDate = new Date();
-            
-            switch(dashboardState.periodType) {
+            switch (dashboardState.periodType) {
                 case 'month':
                     startDate.setFullYear(dashboardState.selectedYear, dashboardState.selectedMonth - 1, 1);
                     startDate.setHours(0, 0, 0, 0);
                     endDate.setFullYear(dashboardState.selectedYear, dashboardState.selectedMonth, 0);
                     endDate.setHours(23, 59, 59, 999);
                     break;
-                case 'quarter':
-                    const prevQuarter = dashboardState.selectedQuarter - 1;
-                    const prevYear = prevQuarter < 0 ? dashboardState.selectedYear - 1 : dashboardState.selectedYear;
-                    const adjustedQuarter = prevQuarter < 0 ? 3 : prevQuarter;
-                    const startMonth = adjustedQuarter * 3;
-                    startDate.setFullYear(prevYear, startMonth, 1);
-                    startDate.setHours(0, 0, 0, 0);
-                    endDate.setFullYear(prevYear, startMonth + 3, 0);
-                    startDate.setFullYear(dashboardState.selectedYear, dashboardState.selectedMonth - 1, 1);
-                    startDate.setHours(0, 0, 0, 0);
-                    endDate.setFullYear(dashboardState.selectedYear, dashboardState.selectedMonth, 0);
-                    endDate.setHours(23, 59, 59, 999);
-                    break;
-                case 'quarter':
+                case 'quarter': {
                     const prevQuarter = dashboardState.selectedQuarter - 1;
                     const prevYear = prevQuarter < 0 ? dashboardState.selectedYear - 1 : dashboardState.selectedYear;
                     const adjustedQuarter = prevQuarter < 0 ? 3 : prevQuarter;
@@ -21054,18 +20695,7 @@
                     endDate.setFullYear(prevYear, startMonth + 3, 0);
                     endDate.setHours(23, 59, 59, 999);
                     break;
-                case 'year':
-                    startDate.setFullYear(dashboardState.selectedYear - 1, 0, 1);
-                    startDate.setHours(0, 0, 0, 0);
-                    endDate.setFullYear(dashboardState.selectedYear - 1, 11, 31);
-                    endDate.setHours(23, 59, 59, 999);
-                    break;
-                case 'year':
-                    startDate.setFullYear(dashboardState.selectedYear - 1, 0, 1);
-                    startDate.setHours(0, 0, 0, 0);
-                    endDate.setFullYear(dashboardState.selectedYear - 1, 11, 31);
-                    endDate.setHours(23, 59, 59, 999);
-                    break;
+                }
                 case 'year':
                     startDate.setFullYear(dashboardState.selectedYear - 1, 0, 1);
                     startDate.setHours(0, 0, 0, 0);
@@ -21073,7 +20703,7 @@
                     endDate.setHours(23, 59, 59, 999);
                     break;
             }
-            
+
             return { start: startDate, end: endDate };
         }
 
@@ -21920,7 +21550,6 @@
             
             // Get device and app info for support email
             const appVersion = '0.3.11'; // Current version
-            const appVersion = '0.3.9'; // Current version
             const userAgent = navigator.userAgent;
             const language = currentLanguage || 'en';
             const platform = navigator.platform;
