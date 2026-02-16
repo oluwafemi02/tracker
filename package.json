@@ -12,6 +12,8 @@
     "finance"
   ],
   "scripts": {
-    "check:duplicates": "node scripts/check-duplicate-functions.js"
+    "check:duplicates": "node scripts/check-duplicate-functions.js",
+    "check:runtime": "node scripts/check-runtime-guards.js",
+    "check:quality": "npm run -s check:duplicates && npm run -s check:runtime"
   }
 }
