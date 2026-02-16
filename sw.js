@@ -1,5 +1,4 @@
 const APP_VERSION = '0.3.11';
-const APP_VERSION = '0.3.10';
 const CACHE_NAME = `expense-tracker-v${APP_VERSION}`;
 const SCOPE_URL = new URL(self.registration.scope);
 const BASE_PATH = SCOPE_URL.pathname.replace(/\/$/, '');
@@ -138,8 +137,8 @@ self.addEventListener('push', event => {
   
   let options = {
     body: 'You have a new notification from Expense Tracker',
-    icon: '/icons/icon-192x192.png',
-    badge: '/icons/badge-72x72.png',
+    icon: 'icons/icon-192x192.svg',
+    badge: 'icons/icon-72x72.svg',
     tag: 'expense-notification',
     requireInteraction: false,
     actions: [
@@ -324,7 +323,7 @@ async function syncOfflineExpenses() {
       // Notify user of successful sync
       self.registration.showNotification('Expenses Synced', {
         body: `${offlineExpenses.length} offline expenses have been synced.`,
-        icon: '/icons/icon-192x192.png',
+        icon: 'icons/icon-192x192.svg',
         tag: 'sync-complete'
       });
     }
@@ -370,8 +369,8 @@ function scheduleReminderNotification(data) {
     
     self.registration.showNotification(title, {
       body: body,
-      icon: '/icons/icon-192x192.png',
-      badge: '/icons/badge-72x72.png',
+      icon: 'icons/icon-192x192.svg',
+      badge: 'icons/icon-72x72.svg',
       tag: 'reminder-later',
       requireInteraction: true,
       actions: [
@@ -478,8 +477,8 @@ async function checkBudgetStatus() {
       
       self.registration.showNotification('Budget Alert', {
         body: `You've used ${percentUsed}% of your monthly budget.`,
-        icon: '/icons/icon-192x192.png',
-        badge: '/icons/badge-72x72.png',
+        icon: 'icons/icon-192x192.svg',
+        badge: 'icons/icon-72x72.svg',
         tag: 'budget-warning',
         requireInteraction: true,
         actions: [
@@ -561,8 +560,8 @@ async function checkRecurringExpenses() {
           title: `Recurring Expense Due ${dayText === 'today' ? 'Today' : dayText.charAt(0).toUpperCase() + dayText.slice(1)}`,
           body: `${icon} ${recurring.description} - €${recurring.amount.toFixed(2)}`,
           tag: `recurring-${recurring.id}-${daysUntilDue}`,
-          icon: '/icons/icon-192x192.png',
-          badge: '/icons/badge-72x72.png',
+          icon: 'icons/icon-192x192.svg',
+          badge: 'icons/icon-72x72.svg',
           requireInteraction: daysUntilDue === 0, // Require interaction for due today
           actions: [
             {
