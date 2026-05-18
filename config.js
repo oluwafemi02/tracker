@@ -7,7 +7,7 @@ const CONFIG = {
     
     // App Info
     APP_NAME: 'ExpenseTracker Pro',
-    APP_VERSION: '2.2.0',
+    APP_VERSION: '0.3.11',
     
     // Feature Flags
     FEATURES: {

@@ -12,6 +12,10 @@
     "finance"
   ],
   "scripts": {
-    "check:duplicates": "node scripts/check-duplicate-functions.js"
+    "check:duplicates": "node scripts/check-duplicate-functions.js",
+    "check:versions": "node scripts/sync-version.js",
+    "check:manifest": "node scripts/validate-manifest.js",
+    "check:smoke": "node scripts/smoke-test.js",
+    "lint": "node --check *.js && node --check scripts/*.js && node --check js/*.js"
   }
 }
