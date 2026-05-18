@@ -8106,9 +8106,90 @@
         let totalFilteredExpenses = 0;
 
         // Travel tracker variables
-        let travelExpenses = JSON.parse(localStorage.getItem('travelExpenses')) || [];
-        let trips = JSON.parse(localStorage.getItem('trips')) || [];
-        let currentTrip = JSON.parse(localStorage.getItem('currentTrip')) || null;
+        function safeParseJSON(value, fallback) {
+            try {
+                return value ? JSON.parse(value) : fallback;
+            } catch (error) {
+                return fallback;
+            }
+        }
+
+        function loadTripDataWithRecovery() {
+            const tripKeyCandidates = ['trips', 'tripData', 'travelTrips', 'trip_history_backup'];
+            const expenseKeyCandidates = ['travelExpenses', 'tripExpenses', 'travel_expenses_backup'];
+            const currentTripCandidates = ['currentTrip', 'activeTrip'];
+
+            let recoveredTrips = [];
+            let recoveredTravelExpenses = [];
+            let recoveredCurrentTrip = null;
+
+            for (const key of tripKeyCandidates) {
+                const parsed = safeParseJSON(localStorage.getItem(key), []);
+                if (Array.isArray(parsed) && parsed.length) {
+                    recoveredTrips = parsed;
+                    break;
+                }
+            }
+
+            for (const key of expenseKeyCandidates) {
+                const parsed = safeParseJSON(localStorage.getItem(key), []);
+                if (Array.isArray(parsed) && parsed.length) {
+                    recoveredTravelExpenses = parsed;
+                    break;
+                }
+            }
+
+            for (const key of currentTripCandidates) {
+                const parsed = safeParseJSON(localStorage.getItem(key), null);
+                if (parsed && typeof parsed === 'object') {
+                    recoveredCurrentTrip = parsed;
+                    break;
+                }
+            }
+
+            if (!recoveredCurrentTrip && recoveredTrips.length) {
+                recoveredCurrentTrip = recoveredTrips.find(t => t.status === 'ongoing' || t.status === 'upcoming') || recoveredTrips[0];
+            }
+
+            return { recoveredTrips, recoveredTravelExpenses, recoveredCurrentTrip };
+        }
+
+        function persistTripRecoverySnapshots(tripsData, expenseData, activeTripData) {
+            localStorage.setItem('trip_history_backup', JSON.stringify(tripsData || []));
+            localStorage.setItem('travel_expenses_backup', JSON.stringify(expenseData || []));
+            localStorage.setItem('activeTrip', JSON.stringify(activeTripData || null));
+        }
+
+        let travelExpenses = safeParseJSON(localStorage.getItem('travelExpenses'), []);
+        let trips = safeParseJSON(localStorage.getItem('trips'), []);
+        let currentTrip = safeParseJSON(localStorage.getItem('currentTrip'), null);
+
+        if ((!Array.isArray(trips) || trips.length === 0) || (!Array.isArray(travelExpenses) || travelExpenses.length === 0)) {
+            const recovered = loadTripDataWithRecovery();
+            if ((!trips || trips.length === 0) && recovered.recoveredTrips.length) {
+                trips = recovered.recoveredTrips;
+            }
+            if ((!travelExpenses || travelExpenses.length === 0) && recovered.recoveredTravelExpenses.length) {
+                travelExpenses = recovered.recoveredTravelExpenses;
+            }
+            if (!currentTrip && recovered.recoveredCurrentTrip) {
+                currentTrip = recovered.recoveredCurrentTrip;
+            }
+
+            localStorage.setItem('trips', JSON.stringify(trips || []));
+            localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses || []));
+            localStorage.setItem('currentTrip', JSON.stringify(currentTrip || null));
+        }
+
+        persistTripRecoverySnapshots(trips, travelExpenses, currentTrip);
+
+        setInterval(() => {
+            persistTripRecoverySnapshots(trips, travelExpenses, currentTrip);
+        }, 30000);
+
+        window.addEventListener('beforeunload', () => {
+            persistTripRecoverySnapshots(trips, travelExpenses, currentTrip);
+        });
         let travelEditingId = null;
 
         // Initialize app
