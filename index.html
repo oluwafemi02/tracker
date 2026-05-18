@@ -7454,7 +7454,17 @@
     <noscript><img src="https://queue.simpleanalyticscdn.com/noscript.gif" alt="" referrerpolicy="no-referrer-when-downgrade" /></noscript>
     -->
     
+    <script src="js/app-core.js"></script>
+    <script src="js/notifications.js"></script>
+    <script src="js/premium.js"></script>
+    <script src="js/travel.js"></script>
+
     <script>
+        if (window.AppCore) window.AppCore.init();
+        if (window.NotificationsModule) window.NotificationsModule.init();
+        if (window.PremiumModule) window.PremiumModule.init();
+        if (window.TravelModule) window.TravelModule.init();
+
         // Global variables
         let expenses = JSON.parse(localStorage.getItem('familyExpenses')) || [];
         let monthlyBudget = parseFloat(localStorage.getItem('monthlyBudget')) || 0;
@@ -8096,9 +8106,90 @@
         let totalFilteredExpenses = 0;
 
         // Travel tracker variables
-        let travelExpenses = JSON.parse(localStorage.getItem('travelExpenses')) || [];
-        let trips = JSON.parse(localStorage.getItem('trips')) || [];
-        let currentTrip = JSON.parse(localStorage.getItem('currentTrip')) || null;
+        function safeParseJSON(value, fallback) {
+            try {
+                return value ? JSON.parse(value) : fallback;
+            } catch (error) {
+                return fallback;
+            }
+        }
+
+        function loadTripDataWithRecovery() {
+            const tripKeyCandidates = ['trips', 'tripData', 'travelTrips', 'trip_history_backup'];
+            const expenseKeyCandidates = ['travelExpenses', 'tripExpenses', 'travel_expenses_backup'];
+            const currentTripCandidates = ['currentTrip', 'activeTrip'];
+
+            let recoveredTrips = [];
+            let recoveredTravelExpenses = [];
+            let recoveredCurrentTrip = null;
+
+            for (const key of tripKeyCandidates) {
+                const parsed = safeParseJSON(localStorage.getItem(key), []);
+                if (Array.isArray(parsed) && parsed.length) {
+                    recoveredTrips = parsed;
+                    break;
+                }
+            }
+
+            for (const key of expenseKeyCandidates) {
+                const parsed = safeParseJSON(localStorage.getItem(key), []);
+                if (Array.isArray(parsed) && parsed.length) {
+                    recoveredTravelExpenses = parsed;
+                    break;
+                }
+            }
+
+            for (const key of currentTripCandidates) {
+                const parsed = safeParseJSON(localStorage.getItem(key), null);
+                if (parsed && typeof parsed === 'object') {
+                    recoveredCurrentTrip = parsed;
+                    break;
+                }
+            }
+
+            if (!recoveredCurrentTrip && recoveredTrips.length) {
+                recoveredCurrentTrip = recoveredTrips.find(t => t.status === 'ongoing' || t.status === 'upcoming') || recoveredTrips[0];
+            }
+
+            return { recoveredTrips, recoveredTravelExpenses, recoveredCurrentTrip };
+        }
+
+        function persistTripRecoverySnapshots(tripsData, expenseData, activeTripData) {
+            localStorage.setItem('trip_history_backup', JSON.stringify(tripsData || []));
+            localStorage.setItem('travel_expenses_backup', JSON.stringify(expenseData || []));
+            localStorage.setItem('activeTrip', JSON.stringify(activeTripData || null));
+        }
+
+        let travelExpenses = safeParseJSON(localStorage.getItem('travelExpenses'), []);
+        let trips = safeParseJSON(localStorage.getItem('trips'), []);
+        let currentTrip = safeParseJSON(localStorage.getItem('currentTrip'), null);
+
+        if ((!Array.isArray(trips) || trips.length === 0) || (!Array.isArray(travelExpenses) || travelExpenses.length === 0)) {
+            const recovered = loadTripDataWithRecovery();
+            if ((!trips || trips.length === 0) && recovered.recoveredTrips.length) {
+                trips = recovered.recoveredTrips;
+            }
+            if ((!travelExpenses || travelExpenses.length === 0) && recovered.recoveredTravelExpenses.length) {
+                travelExpenses = recovered.recoveredTravelExpenses;
+            }
+            if (!currentTrip && recovered.recoveredCurrentTrip) {
+                currentTrip = recovered.recoveredCurrentTrip;
+            }
+
+            localStorage.setItem('trips', JSON.stringify(trips || []));
+            localStorage.setItem('travelExpenses', JSON.stringify(travelExpenses || []));
+            localStorage.setItem('currentTrip', JSON.stringify(currentTrip || null));
+        }
+
+        persistTripRecoverySnapshots(trips, travelExpenses, currentTrip);
+
+        setInterval(() => {
+            persistTripRecoverySnapshots(trips, travelExpenses, currentTrip);
+        }, 30000);
+
+        window.addEventListener('beforeunload', () => {
+            persistTripRecoverySnapshots(trips, travelExpenses, currentTrip);
+        });
         let travelEditingId = null;
 
         // Initialize app
@@ -16621,386 +16712,9 @@
             });
         }
 
-        // PWA Install prompt
-        window.addEventListener('beforeinstallprompt', (e) => {
-            console.log('💾 PWA install prompt available');
-            e.preventDefault();
-            deferredPrompt = e;
-            showInstallButton();
-        });
+        // Duplicate PWA/notification block removed; canonical implementation retained above.
 
-        // Handle successful PWA installation
-        window.addEventListener('appinstalled', () => {
-            console.log('✅ PWA installed successfully');
-            hideInstallButton();
-            showNotification('App installed! You can now use Expense Tracker offline.', 'success');
-        });
-
-        // Show/hide install button
-        function showInstallButton() {
-            // Create install button if it doesn't exist
-            if (!document.getElementById('installButton')) {
-                const installBtn = document.createElement('button');
-                installBtn.id = 'installButton';
-                installBtn.className = 'btn btn-primary install-button';
-                installBtn.textContent = '📱 Install App';
-                installBtn.addEventListener('click', installPWA);
-                installBtn.style.cssText = `
-                    position: fixed;
-                    bottom: 100px;
-                    right: 20px;
-                    z-index: 998;
-                    display: flex;
-                    align-items: center;
-                    gap: 0.5rem;
-                    box-shadow: var(--shadow-lg);
-                    animation: bounce 2s infinite;
-                `;
-                document.body.appendChild(installBtn);
-            }
-        }
-
-        function hideInstallButton() {
-            const installBtn = document.getElementById('installButton');
-            if (installBtn) {
-                installBtn.remove();
-            }
-        }
-
-        // Install PWA
-        async function installPWA() {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                
-                if (outcome === 'accepted') {
-                    console.log('✅ User accepted PWA install');
-                } else {
-                    console.log('❌ User declined PWA install');
-                }
-                
-                deferredPrompt = null;
-                hideInstallButton();
-            }
-        }
-
-        // Notification Permission Management
-        async function requestNotificationPermission() {
-            if (!('Notification' in window)) {
-                console.log('❌ This browser does not support notifications');
-                return false;
-            }
-
-            if (Notification.permission === 'granted') {
-                return true;
-            }
-
-            if (Notification.permission === 'denied') {
-                showNotification('Notifications are blocked. Please enable them in your browser settings.', 'error');
-                return false;
-            }
-
-            try {
-                const permission = await Notification.requestPermission();
-                notificationPermission = permission;
-                
-                if (permission === 'granted') {
-                    console.log('✅ Notification permission granted');
-                    setupPushNotifications();
-                    return true;
-                } else {
-                    console.log('❌ Notification permission denied');
-                    return false;
-                }
-            } catch (error) {
-                console.error('❌ Error requesting notification permission:', error);
-                return false;
-            }
-        }
-
-        // Setup Push Notifications
-        async function setupPushNotifications() {
-            if (!swRegistration) {
-                console.log('❌ Service Worker not registered');
-                return;
-            }
-
-            try {
-                // Setup local notifications
-                setupLocalNotifications();
-                
-            } catch (error) {
-                console.error('❌ Error setting up push notifications:', error);
-            }
-        }
-
-        // Setup local notifications for budget alerts and reminders
-        function setupLocalNotifications() {
-            // Check budget status daily
-            setInterval(checkBudgetAndNotify, 24 * 60 * 60 * 1000); // 24 hours
-            
-            // Check for recurring expense reminders every hour
-            setInterval(checkRecurringReminders, 60 * 60 * 1000); // 1 hour
-            
-            // Also check immediately when app loads
-            setTimeout(checkRecurringReminders, 5000); // 5 seconds after load
-            
-            console.log('🔔 Notification system initialized - will check recurring expenses every hour');
-        }
-
-        // Check budget and send notification if needed
-        function checkBudgetAndNotify() {
-            if (Notification.permission !== 'granted') return;
-
-            const currentMonth = new Date().getMonth();
-            const currentYear = new Date().getFullYear();
-            const monthlyExpenses = expenses.filter(expense => {
-                const expenseDate = new Date(expense.date);
-                return expenseDate.getMonth() === currentMonth && expenseDate.getFullYear() === currentYear;
-            });
-
-            const monthlyTotal = monthlyExpenses.reduce((total, expense) => total + expense.amount, 0);
-            const budgetUsedPercentage = monthlyBudget > 0 ? (monthlyTotal / monthlyBudget) * 100 : 0;
-
-            if (budgetUsedPercentage >= 80 && budgetUsedPercentage < 100) {
-                new Notification(t('notifications.budgetAlert'), {
-                    body: t('notifications.budgetUsedPercent', { percentage: Math.round(budgetUsedPercentage) }),
-                    icon: '/icons/icon-192x192.png',
-                    tag: 'budget-warning'
-                });
-            } else if (budgetUsedPercentage >= 100) {
-                new Notification('Budget Exceeded!', {
-                    body: `You've exceeded your monthly budget by €${Math.abs(monthlyBudget - monthlyTotal).toFixed(2)}.`,
-                    icon: '/icons/icon-192x192.png',
-                    tag: 'budget-exceeded'
-                });
-            }
-        }
-
-        // Check recurring expenses and send reminders
-        function checkRecurringReminders() {
-            if (Notification.permission !== 'granted') {
-                console.log('📵 Notifications not permitted - cannot send reminders');
-                return;
-            }
-
-            if (!recurringExpenses || recurringExpenses.length === 0) {
-                console.log('📝 No recurring expenses to check');
-                return;
-            }
-
-            const today = new Date();
-            const todayDateString = today.toDateString();
-            
-            // Get or initialize notification tracking
-            let notificationHistory = JSON.parse(localStorage.getItem('notificationHistory') || '{}');
-            
-            console.log(`🔍 Checking ${recurringExpenses.length} recurring expenses for reminders...`);
-
-            recurringExpenses.forEach(recurring => {
-                if (!recurring.isActive) return;
-
-                const nextDueDate = calculateNextDueDate(recurring.lastProcessedDate, recurring.frequency);
-                const daysUntilDue = Math.ceil((nextDueDate - today) / (1000 * 60 * 60 * 24));
-                
-                const expenseId = recurring.id;
-                const nextDueDateString = nextDueDate.toDateString();
-                
-                // Create unique keys for 3-day and 1-day reminders
-                const reminder3DayKey = `${expenseId}_3day_${nextDueDateString}`;
-                const reminder1DayKey = `${expenseId}_1day_${nextDueDateString}`;
-                
-                // Check for 3-day reminder
-                if (daysUntilDue === 3 && !notificationHistory[reminder3DayKey]) {
-                    const icon = categoryIcons[recurring.category] || '📝';
-                    
-                    new Notification('Upcoming Expense Reminder', {
-                        body: `${icon} ${recurring.category} (€${recurring.amount.toFixed(2)}) is due in 3 days on ${nextDueDate.toLocaleDateString()}`,
-                        icon: '/icons/icon-192x192.png',
-                        badge: '/icons/badge-72x72.png',
-                        tag: `recurring-3day-${expenseId}`,
-                        requireInteraction: false,
-                        actions: [
-                            {
-                                action: 'add-expense',
-                                title: 'Add Now'
-                            },
-                            {
-                                action: 'view-recurring',
-                                title: 'View Details'
-                            }
-                        ],
-                        data: {
-                            type: 'recurring-reminder',
-                            recurringId: expenseId,
-                            daysUntilDue: 3,
-                            category: recurring.category,
-                            amount: recurring.amount
-                        }
-                    });
-                    
-                    // Mark as sent
-                    notificationHistory[reminder3DayKey] = {
-                        sent: true,
-                        timestamp: Date.now(),
-                        type: '3-day-reminder'
-                    };
-                    
-                    console.log(`📱 Sent 3-day reminder for: ${recurring.category} (€${recurring.amount})`);
-                }
-                
-                // Check for 1-day reminder
-                if (daysUntilDue === 1 && !notificationHistory[reminder1DayKey]) {
-                    const icon = categoryIcons[recurring.category] || '📝';
-                    
-                    new Notification('Expense Due Tomorrow!', {
-                        body: `${icon} ${recurring.category} (€${recurring.amount.toFixed(2)}) is due tomorrow!`,
-                        icon: '/icons/icon-192x192.png',
-                        badge: '/icons/badge-72x72.png',
-                        tag: `recurring-1day-${expenseId}`,
-                        requireInteraction: true, // More urgent
-                        actions: [
-                            {
-                                action: 'add-expense',
-                                title: 'Add Now'
-                            },
-                            {
-                                action: 'remind-later',
-                                title: 'Remind Later'
-                            }
-                        ],
-                        data: {
-                            type: 'recurring-reminder',
-                            recurringId: expenseId,
-                            daysUntilDue: 1,
-                            category: recurring.category,
-                            amount: recurring.amount
-                        }
-                    });
-                    
-                    // Mark as sent
-                    notificationHistory[reminder1DayKey] = {
-                        sent: true,
-                        timestamp: Date.now(),
-                        type: '1-day-reminder'
-                    };
-                    
-                    console.log(`📱 Sent 1-day reminder for: ${recurring.category} (€${recurring.amount})`);
-                }
-                
-                // Check for overdue expenses
-                if (daysUntilDue < 0) {
-                    const overdueDays = Math.abs(daysUntilDue);
-                    const overdueKey = `${expenseId}_overdue_${nextDueDateString}`;
-                    
-                    if (!notificationHistory[overdueKey]) {
-                        const icon = categoryIcons[recurring.category] || '📝';
-                        
-                        new Notification('Overdue Expense!', {
-                            body: `${icon} ${recurring.category} (€${recurring.amount.toFixed(2)}) is overdue by ${overdueDays} day${overdueDays > 1 ? 's' : ''}!`,
-                            icon: '/icons/icon-192x192.png',
-                            badge: '/icons/badge-72x72.png',
-                            tag: `recurring-overdue-${expenseId}`,
-                            requireInteraction: true,
-                            actions: [
-                                {
-                                    action: 'add-expense',
-                                    title: 'Add Now'
-                                },
-                                {
-                                    action: 'view-recurring',
-                                    title: 'Manage'
-                                }
-                            ],
-                            data: {
-                                type: 'recurring-overdue',
-                                recurringId: expenseId,
-                                daysOverdue: overdueDays,
-                                category: recurring.category,
-                                amount: recurring.amount
-                            }
-                        });
-                        
-                        notificationHistory[overdueKey] = {
-                            sent: true,
-                            timestamp: Date.now(),
-                            type: 'overdue-reminder'
-                        };
-                        
-                        console.log(`📱 Sent overdue reminder for: ${recurring.category} (€${recurring.amount}) - ${overdueDays} days overdue`);
-                    }
-                }
-            });
-            
-            // Clean up old notification history (older than 30 days)
-            const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
-            Object.keys(notificationHistory).forEach(key => {
-                if (notificationHistory[key].timestamp < thirtyDaysAgo) {
-                    delete notificationHistory[key];
-                }
-            });
-            
-            // Save updated notification history
-            localStorage.setItem('notificationHistory', JSON.stringify(notificationHistory));
-            
-            console.log('✅ Recurring expense reminder check completed');
-        }
-
-        // Test notification function
-        function testNotification() {
-            if (Notification.permission !== 'granted') {
-                requestNotificationPermission().then(() => {
-                    if (Notification.permission === 'granted') {
-                        sendTestNotification();
-                    }
-                });
-            } else {
-                sendTestNotification();
-            }
-        }
-
-        async 
-
-        // Update notification status display
-        function updateNotificationStatus() {
-            const statusDiv = document.getElementById('notificationStatus');
-            if (!statusDiv) return;
-
-            const permission = Notification.permission;
-            let statusText = '';
-            let statusClass = '';
-
-            if (permission === 'granted') {
-                statusText = '✅ Notifications enabled - You will receive reminders for recurring expenses';
-                statusClass = 'status-success';
-                statusDiv.style.backgroundColor = 'var(--success-light, #d4edda)';
-                statusDiv.style.color = 'var(--success-dark, #155724)';
-                statusDiv.style.borderColor = 'var(--success-color, #28a745)';
-            } else if (permission === 'denied') {
-                statusText = '❌ Notifications blocked - Please enable in browser settings to receive reminders';
-                statusClass = 'status-error';
-                statusDiv.style.backgroundColor = 'var(--danger-light, #f8d7da)';
-                statusDiv.style.color = 'var(--danger-dark, #721c24)';
-                statusDiv.style.borderColor = 'var(--danger-color, #dc3545)';
-            } else {
-                statusText = '⚠️ Notifications not enabled - Click "Test Notification" to enable reminders';
-                statusClass = 'status-warning';
-                statusDiv.style.backgroundColor = 'var(--warning-light, #fff3cd)';
-                statusDiv.style.color = 'var(--warning-dark, #856404)';
-                statusDiv.style.borderColor = 'var(--warning-color, #ffc107)';
-            }
-
-            statusDiv.textContent = statusText;
-            statusDiv.className = statusClass;
-
-            // Show reminder count if there are active recurring expenses
-            const activeRecurring = recurringExpenses.filter(r => r.isActive);
-            if (activeRecurring.length > 0 && permission === 'granted') {
-                statusDiv.textContent += ` (${activeRecurring.length} recurring expense${activeRecurring.length > 1 ? 's' : ''} being monitored)`;
-                         }
-         }
-
-         // Interactive Guide System
+        // Interactive Guide System
          function getGuideSteps() {
              return [
             {
