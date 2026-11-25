@@ -1,6 +1,6 @@
 // Service worker: offline app shell, push notifications, notification taps.
 // The deploy workflow rewrites CACHE_NAME on every deploy so phones pick up new files.
-const CACHE_NAME = 'tracker-v1.0.0';
+const CACHE_NAME = 'tracker-v1.3.0';
 const STATE_CACHE = 'ledger-state';
 
 const SHELL = [
@@ -21,6 +21,7 @@ const SHELL = [
   'js/recover.js',
   'js/applepay.js',
   'js/backup.js',
+  'js/version.js',
   'js/ui.js',
   'js/forms.js',
   'js/reminders.js',

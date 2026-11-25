@@ -325,6 +325,10 @@ input[type='date'].input, input[type='time'].input { min-width: 0; max-width: 10
 .segmented span { display: block; text-align: center; padding: 8px; border-radius: 9px; font-size: 14.5px; cursor: pointer; }
 .segmented input:checked + span { background: var(--card); font-weight: 650; box-shadow: var(--shadow); }
 .segmented input:focus-visible + span { outline: 2.5px solid var(--pine); }
+.sheet .segmented { margin-bottom: 2px; }
+.sheet [data-end] { margin-top: 10px; }
+.schedule-summary { font-size: 14px; color: var(--pine); font-weight: 560; margin: 10px 2px 0; min-height: 1.2em; }
+[hidden] { display: none !important; }
 .plain-list { list-style: none; }
 .plain-list li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .file-btn { cursor: pointer; }
@@ -336,6 +340,7 @@ input[type='date'].input, input[type='time'].input { min-width: 0; max-width: 10
 .review-list .input { grid-column: 1 / -1; }
 .review-amt { font-weight: 600; font-variant-numeric: tabular-nums; }
 .tag-check { color: var(--marigold); background: var(--marigold-soft); }
+.tag-plain { color: var(--ink-2); background: var(--paper); }
 .recover-list { list-style: none; display: grid; gap: 4px; margin: 4px 0 12px; }
 .recover-list .toggle { margin-top: 10px; }
 .recover-results .callout { margin: 8px 0 12px; }

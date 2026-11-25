@@ -1,7 +1,7 @@
 // Bills screen and the bill detail sheet.
 
 import { esc, openSheet, closeSheet, toast, emptyState, haptic } from './ui.js';
-import { today, addDays, monthBounds, monthKey, shortDate, relativeDue, FREQUENCIES } from './dates.js';
+import { today, addDays, monthBounds, monthKey, shortDate, relativeDue, describeSchedule } from './dates.js';
 import { fmt, lastRate } from './money.js';
 import * as store from './store.js';
 import { billRow } from './views-home.js';
@@ -64,7 +64,8 @@ export function billDetail(id) {
       </header>
       <div class="bill-hero st-${status}">
         <p class="hero-amount">${fmt(bill.amount, bill.currency)}</p>
-        <p class="hero-caption">${status === 'inactive' ? 'Paused' : `${FREQUENCIES[bill.frequency]?.label}, next due ${shortDate(bill.nextDue)} (${relativeDue(bill.nextDue)})`}</p>
+        <p class="hero-caption">${status === 'inactive' ? (bill.nextDue ? 'Paused' : 'Finished, all payments made') : `Next due ${shortDate(bill.nextDue)} (${relativeDue(bill.nextDue)})`}</p>
+        ${bill.nextDue ? `<p class="schedule-summary">${describeSchedule(bill)}</p>` : ''}
         <p class="muted small">Reminder ${bill.remindDays ? `${bill.remindDays} day${bill.remindDays > 1 ? 's' : ''} before and ` : ''}on the day${bill.autopay ? '. Logged automatically on the due date.' : '.'}</p>
       </div>
       ${status !== 'inactive' ? `<div class="action-grid">

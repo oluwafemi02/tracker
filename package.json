@@ -1,6 +1,6 @@
 {
   "name": "tracker",
-  "version": "1.0.0",
+  "version": "1.3.0",
   "private": true,
   "description": "Personal expense tracker PWA with bill reminders and trips",
   "type": "module",
@@ -8,7 +8,7 @@
   "scripts": {
     "test": "node --test test/*.test.js",
     "lint": "for f in js/*.js sw.js push-worker/src/*.js; do node --check \"$f\" || exit 1; done",
-    "check": "npm run lint && npm test && node scripts/check-shell.js",
+    "check": "npm run lint && npm test && node scripts/check-shell.js && node scripts/check-version.js",
     "serve": "python3 -m http.server 8080",
     "test:e2e": "playwright test -c e2e",
     "test:e2e:live": "BASE_URL=https://oluwafemi02.github.io/tracker/ playwright test -c e2e"

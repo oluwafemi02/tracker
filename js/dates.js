@@ -144,3 +144,39 @@ export function relativeDue(iso, ref = today()) {
   if (n < 14) return `in ${n} days`;
   return shortDate(iso);
 }
+
+// The n-th payment date (1 = startISO itself).
+export function nthOccurrence(startISO, frequency, n, anchorDay) {
+  let d = startISO;
+  for (let i = 1; i < n && d; i++) d = nextOccurrence(d, frequency, anchorDay);
+  return d;
+}
+
+// How many payments from nextDue up to and including endISO.
+export function countOccurrences(nextDue, frequency, endISO, anchorDay) {
+  if (!nextDue) return 0;
+  if (frequency === 'once') return 1;
+  if (!endISO) return Infinity;
+  let n = 0, d = nextDue, guard = 0;
+  while (d && d <= endISO && guard++ < 10000) { n++; d = nextOccurrence(d, frequency, anchorDay); }
+  return n;
+}
+
+const ord = (n) => `${n}${[11, 12, 13].includes(n % 100) ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th')}`;
+
+// "Monthly on the 10th, no end date" / "Every 2 weeks, 12 payments left, last on 4 Jun 2027" / "One time, due 3 Dec"
+export function describeSchedule({ frequency, nextDue, endDate, anchorDay }) {
+  if (!nextDue) return '';
+  if (frequency === 'once') return `One time, due ${shortDate(nextDue)}`;
+  const day = anchorDay || parseISO(nextDue).getDate();
+  const wd = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][parseISO(nextDue).getDay()];
+  const how = {
+    weekly: `Every ${wd}`, biweekly: `Every other ${wd}`, monthly: `Monthly on the ${ord(day)}`,
+    quarterly: `Every 3 months on the ${ord(day)}`, semiannual: `Every 6 months on the ${ord(day)}`, yearly: `Every year on ${shortDate(nextDue).replace(/ \d{4}$/, '')}`,
+  }[frequency] || FREQUENCIES[frequency]?.label || '';
+  if (!endDate) return `${how}, no end date`;
+  const left = countOccurrences(nextDue, frequency, endDate, day);
+  if (left <= 0) return `${how}, ended`;
+  const last = nthOccurrence(nextDue, frequency, left, day);
+  return `${how}, ${left} payment${left === 1 ? '' : 's'} left, last on ${shortDate(last)}`;
+}

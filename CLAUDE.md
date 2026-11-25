@@ -60,6 +60,7 @@ Month "spent" = expenses in the month + trip expenses with `countInMonthly`.
 - Do not add frameworks, bundlers or CDN scripts. The CSP in `index.html` blocks external scripts.
 - iOS constraints: no background timers, no `new Notification()` (use `registration.showNotification`), notifications only in the installed app, permission must come from a tap. Inputs need font-size 16px or more to avoid zoom.
 - UI copy: plain English, sentence case, short. Buttons say what they do ("Mark as paid", "Add bill"). No em dashes.
+- Every change to the app bumps the version: `js/version.js`, `package.json`, `version.json`, `sw.js` CACHE_NAME and a new `CHANGELOG.md` entry (patch for fixes, minor for features). `npm run check` fails if app files change without a bump.
 - Run `npm run check` (and `cd push-worker && npm test` if the worker changed) before committing.
 - UI changes: run `npm run test:e2e` (Playwright, iPhone size). Add or update a spec in `e2e/` for any new behaviour. `npm run test:e2e:live` runs the same suite against the live site.
 

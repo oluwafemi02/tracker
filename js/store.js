@@ -21,6 +21,7 @@ const DEFAULT_STATE = () => ({
     calendarExportedHash: null,
     migratedAt: null,
     lastBackupAt: null,
+    lastSeenVersion: null,
     applePay: { enabled: false, token: '', lastFetch: null, lastError: null },
     cloudBackup: { enabled: false, keyRaw: '', backupId: '', lastAt: null, lastHash: null, lastError: null },
   },

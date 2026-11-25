@@ -1,5 +1,6 @@
 // Shared setup for the end-to-end tests.
 import { test as base, expect } from '@playwright/test';
+import { VERSION } from '../js/version.js';
 
 // "Now" for every test unless a test changes it: Wed 25 Nov 2026, 10:00 in Vilnius.
 export const NOW = new Date('2026-11-25T10:00:00+02:00');
@@ -106,7 +107,8 @@ export async function clickToastAction(page) {
 export function state({ settings = {}, bills = [], expenses = [], trips = [], tripExpenses = [] } = {}) {
   return {
     version: 1,
-    settings: { currency: 'EUR', monthlyBudget: 0, theme: 'system', remindDays: 2, remindTime: '09:00', migratedAt: '2026-11-01T00:00:00Z', ...settings },
+    // lastSeenVersion = current, so seeded data does not trigger the "Updated" message.
+    settings: { currency: 'EUR', monthlyBudget: 0, theme: 'system', remindDays: 2, remindTime: '09:00', migratedAt: '2026-11-01T00:00:00Z', lastSeenVersion: VERSION, ...settings },
     bills: bills.map((b, i) => ({
       id: `bill${i + 1}`, currency: 'EUR', category: 'other', frequency: 'monthly', remindDays: 2, autopay: false, active: true,
       history: [], notes: '', endDate: null, anchorDay: Number(b.nextDue.slice(8)), startDate: b.nextDue, ...b,

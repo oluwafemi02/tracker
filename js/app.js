@@ -10,6 +10,7 @@ import { renderSettings, mountSettings, backup, csv, reimport, erase, deleteCate
 import { expenseSheet, billSheet, tripSheet, tripExpenseSheet, reviewSheet } from './forms.js';
 import * as rem from './reminders.js';
 import * as push from './push.js';
+import { VERSION } from './version.js';
 
 const view = $('#view');
 let route = { name: 'home' };
@@ -219,6 +220,12 @@ function init() {
   applyTheme();
   bindActions(document);
   handleDeepLink();
+  const seen = store.getState().settings.lastSeenVersion;
+  if (seen !== VERSION) {
+    const hasData = store.getState().expenses.length || store.getState().bills.length;
+    if (!migration && hasData) setTimeout(() => toast(`Updated to version ${VERSION}`), 600);
+    store.update((s) => { s.settings.lastSeenVersion = VERSION; }, { silent: true });
+  }
   if (migration) {
     const parts = [`${migration.expenses} expenses`, `${migration.bills} bills`, `${migration.trips} trips`].join(', ');
     setTimeout(() => toast(`Welcome back. Imported ${parts} from the old version.`), 400);

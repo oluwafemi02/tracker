@@ -1,1 +1,5 @@
-{ "version": "1.0.0", "releaseDate": "2026-11-25", "description": "Rebuilt app: bills with reminders that work on iPhone, calendar export, optional push server, new design." }
+{
+  "version": "1.3.0",
+  "releaseDate": "2026-11-25",
+  "description": "Bills: one time or repeating, with end options. Version shown in the app."
+}

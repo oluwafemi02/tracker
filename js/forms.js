@@ -1,7 +1,7 @@
 // Bottom-sheet forms for expenses, bills, trips and trip expenses.
 
 import { esc, openSheet, closeSheet, toast, parseAmount, confirmSheet, haptic } from './ui.js';
-import { today, addDays, FREQUENCIES, shortDate } from './dates.js';
+import { today, addDays, FREQUENCIES, shortDate, nthOccurrence, countOccurrences, describeSchedule } from './dates.js';
 import { fmt, CURRENCY_CODES, fetchRate, lastRate, rememberRate, round2, rateText } from './money.js';
 import { TRIP_CATEGORIES, slug } from './categories.js';
 import * as store from './store.js';
@@ -199,27 +199,47 @@ export function billSheet(existing = null) {
   const s = S();
   const b = existing || { name: '', amount: '', currency: s.settings.currency, category: 'subscriptions', frequency: 'monthly', nextDue: addDays(today(), 7), remindDays: s.settings.remindDays, autopay: false, endDate: '', notes: '' };
   const cats = store.categoriesByUse();
+  const once = b.frequency === 'once';
+  const endMode = b.endDate ? (b.endMode === 'count' ? 'count' : 'date') : 'never';
+  const anchor = b.anchorDay || Number((b.nextDue || today()).slice(8));
+  const leftNow = b.endDate && !once ? countOccurrences(b.nextDue, b.frequency, b.endDate, anchor) : 12;
+  const repeatOptions = Object.entries(FREQUENCIES).filter(([k]) => k !== 'once');
   openSheet(`<form class="sheet-body" novalidate>
       <header class="sheet-head">
         <h2 class="sheet-title">${existing ? 'Edit bill' : 'New bill'}</h2>
         <button type="button" class="icon-btn" data-close aria-label="Close">✕</button>
       </header>
-      <input name="name" class="input input-lg" placeholder="What is it? e.g. Rent, Netflix" value="${esc(b.name)}" maxlength="60" ${existing ? '' : 'autofocus'}>
+      <input name="name" class="input input-lg" placeholder="What is it? e.g. Mortgage, Netflix" value="${esc(b.name)}" maxlength="60" ${existing ? '' : 'autofocus'}>
       <div class="amount-field amount-sm">
         <input name="amount" type="text" inputmode="decimal" placeholder="Amount" value="${b.amount || ''}" autocomplete="off" aria-label="Amount">
         ${currencySelect('currency', b.currency)}
       </div>
-      <div class="grid-2">
-        <label class="field"><span>Next due</span><input type="date" name="nextDue" class="input" value="${b.nextDue || today()}" required></label>
-        <label class="field"><span>Repeats</span><select name="frequency" class="input">${Object.entries(FREQUENCIES).map(([k, f]) => `<option value="${k}" ${k === b.frequency ? 'selected' : ''}>${f.label}</option>`).join('')}</select></label>
+      <div class="field-label">How is it paid?</div>
+      <div class="segmented" role="radiogroup" aria-label="How is it paid">
+        <label><input type="radio" name="kind" value="repeat" ${once ? '' : 'checked'}><span>Repeats</span></label>
+        <label><input type="radio" name="kind" value="once" ${once ? 'checked' : ''}><span>One time</span></label>
       </div>
+      <div class="grid-2 bill-when">
+        <label class="field"><span data-due-label>${once ? 'Due on' : 'Next payment'}</span><input type="date" name="nextDue" class="input" value="${b.nextDue || today()}" required></label>
+        <label class="field" data-repeat-only><span>How often</span><select name="frequency" class="input">${repeatOptions.map(([k, f]) => `<option value="${k}" ${k === (once ? 'monthly' : b.frequency) ? 'selected' : ''}>${f.label}</option>`).join('')}</select></label>
+      </div>
+      <div data-repeat-only>
+        <div class="field-label">Ends</div>
+        <div class="segmented" role="radiogroup" aria-label="Ends">
+          <label><input type="radio" name="endMode" value="never" ${endMode === 'never' ? 'checked' : ''}><span>Never</span></label>
+          <label><input type="radio" name="endMode" value="date" ${endMode === 'date' ? 'checked' : ''}><span>On a date</span></label>
+          <label><input type="radio" name="endMode" value="count" ${endMode === 'count' ? 'checked' : ''}><span>After</span></label>
+        </div>
+        <label class="field" data-end="date"><span>Last payment on</span><input type="date" name="endDate" class="input" value="${b.endDate || ''}"></label>
+        <label class="field" data-end="count"><span>Number of payments left, including the next one</span><input type="number" name="endCount" class="input" min="1" max="1200" inputmode="numeric" value="${leftNow === Infinity ? 12 : leftNow}"></label>
+      </div>
+      <p class="schedule-summary" aria-live="polite"></p>
       <div class="field-label">Remind me</div>
       <div class="chip-row">${REMIND_OPTIONS.map(([v, l]) => chip('remindDays', v, l, Number(b.remindDays) === v)).join('')}</div>
       <label class="toggle"><input type="checkbox" name="autopay" ${b.autopay ? 'checked' : ''}><span class="toggle-ui"></span><span class="toggle-text"><b>Paid automatically</b><small>Direct debit or card. It gets logged for you on the due date.</small></span></label>
       <label class="field"><span>Category</span><select name="category" class="input">${cats.map((c) => `<option value="${c.id}" ${c.id === b.category ? 'selected' : ''}>${c.icon} ${esc(c.name)}</option>`).join('')}</select></label>
-      <details class="more-cats" ${b.endDate || b.notes ? 'open' : ''}><summary>End date and notes</summary>
-        <label class="field"><span>Last payment on (optional)</span><input type="date" name="endDate" class="input" value="${b.endDate || ''}"></label>
-        <input name="notes" class="input" placeholder="Notes, account number hint, etc." value="${esc(b.notes || '')}" maxlength="200">
+      <details class="more-cats" ${b.notes ? 'open' : ''}><summary>Notes</summary>
+        <input name="notes" class="input" placeholder="Account number hint, reference, etc." value="${esc(b.notes || '')}" maxlength="200">
       </details>
       <p class="form-error" role="alert"></p>
       <div class="sheet-foot">
@@ -230,6 +250,36 @@ export function billSheet(existing = null) {
     tall: true,
     onMount(sheet) {
       const form = sheet.querySelector('form');
+      const kind = () => form.querySelector('[name="kind"]:checked').value;
+      const mode = () => form.querySelector('[name="endMode"]:checked').value;
+      // Work out the schedule the form describes. Returns { frequency, endDate, endMode } or { error }.
+      const schedule = () => {
+        const nextDue = form.nextDue.value;
+        if (kind() === 'once') return { frequency: 'once', endDate: null, endMode: 'never', nextDue };
+        const frequency = form.frequency.value;
+        const day = Number(nextDue.slice(8));
+        if (mode() === 'never') return { frequency, endDate: null, endMode: 'never', nextDue };
+        if (mode() === 'date') {
+          const end = form.endDate.value;
+          if (!end) return { error: 'Pick the date of the last payment.' };
+          if (end < nextDue) return { error: 'The last payment is before the next one.' };
+          return { frequency, endDate: end, endMode: 'date', nextDue };
+        }
+        const n = parseInt(form.endCount.value, 10);
+        if (!(n >= 1)) return { error: 'Enter how many payments are left.' };
+        return { frequency, endDate: nthOccurrence(nextDue, frequency, Math.min(n, 1200), day), endMode: 'count', nextDue };
+      };
+      const refresh = () => {
+        const isOnce = kind() === 'once';
+        sheet.querySelectorAll('[data-repeat-only]').forEach((el) => { el.hidden = isOnce; });
+        sheet.querySelector('[data-due-label]').textContent = isOnce ? 'Due on' : 'Next payment';
+        sheet.querySelectorAll('[data-end]').forEach((el) => { el.hidden = isOnce || el.dataset.end !== mode(); });
+        const sc = form.nextDue.value ? schedule() : { error: '' };
+        sheet.querySelector('.schedule-summary').textContent = sc.error ? '' : describeSchedule({ ...sc, anchorDay: Number(sc.nextDue.slice(8)) });
+      };
+      form.addEventListener('change', refresh);
+      form.addEventListener('input', (e) => { if (['endCount', 'nextDue', 'endDate'].includes(e.target.name)) refresh(); });
+      refresh();
       sheet.querySelector('[data-delete]')?.addEventListener('click', async () => {
         if (await confirmSheet({ title: `Delete ${existing.name}?`, body: 'Past payments stay in your activity.' })) {
           store.deleteBill(existing.id);
@@ -244,13 +294,15 @@ export function billSheet(existing = null) {
         const name = form.name.value.trim();
         if (!name) { err.textContent = 'Give the bill a name.'; form.name.focus(); return; }
         if (!(amount > 0)) { err.textContent = 'Enter an amount above zero.'; form.amount.focus(); return; }
-        if (!form.nextDue.value) { err.textContent = 'Pick the next due date.'; return; }
+        if (!form.nextDue.value) { err.textContent = kind() === 'once' ? 'Pick the date it is due.' : 'Pick the next payment date.'; return; }
+        const sc = schedule();
+        if (sc.error) { err.textContent = sc.error; return; }
         store.saveBill({
           ...(existing ? { id: existing.id } : {}),
           name, amount, currency: form.currency.value, category: form.category.value,
-          frequency: form.frequency.value, nextDue: form.nextDue.value,
+          frequency: sc.frequency, nextDue: form.nextDue.value, endDate: sc.endDate, endMode: sc.endMode,
           remindDays: Number(form.querySelector('[name="remindDays"]:checked')?.value ?? 2),
-          autopay: form.autopay.checked, endDate: form.endDate.value || null, notes: form.notes.value.trim(),
+          autopay: form.autopay.checked, notes: form.notes.value.trim(),
           active: true,
         });
         haptic();

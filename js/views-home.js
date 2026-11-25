@@ -1,13 +1,21 @@
 // Home and Activity screens.
 
 import { esc, emptyState } from './ui.js';
-import { today, monthKey, monthName, parseISO, dayHeading, relativeDue, shortDate, shiftMonth, monthBounds } from './dates.js';
+import { today, monthKey, monthName, parseISO, dayHeading, relativeDue, shortDate, shiftMonth, monthBounds, countOccurrences } from './dates.js';
 import { fmt } from './money.js';
 import * as store from './store.js';
 import { permission, calendarOutOfDate } from './reminders.js';
 
 const S = () => store.getState();
 const cur = () => S().settings.currency;
+
+function scheduleTag(bill) {
+  if (!bill.active || !bill.nextDue) return '';
+  if (bill.frequency === 'once') return ' <span class="tag tag-plain">One time</span>';
+  if (!bill.endDate) return '';
+  const left = countOccurrences(bill.nextDue, bill.frequency, bill.endDate, bill.anchorDay);
+  return left > 0 ? ` <span class="tag tag-plain">${left === 1 ? 'Last one' : `${left} left`}</span>` : '';
+}
 
 export function billRow(bill, { compact } = {}) {
   const status = store.billStatus(bill);
@@ -17,7 +25,7 @@ export function billRow(bill, { compact } = {}) {
     <span class="bill-icon" aria-hidden="true">${cat.icon}</span>
     <span class="bill-main">
       <span class="bill-name">${esc(bill.name)}</span>
-      <span class="bill-when">${status === 'inactive' ? 'Paused' : `Due ${relativeDue(bill.nextDue)}`}${bill.autopay ? ' <span class="tag">Autopay</span>' : ''}</span>
+      <span class="bill-when">${status === 'inactive' ? (bill.nextDue ? 'Paused' : 'Finished') : `Due ${relativeDue(bill.nextDue)}`}${scheduleTag(bill)}${bill.autopay ? ' <span class="tag">Autopay</span>' : ''}</span>
     </span>
     <span class="bill-amt">${fmt(bill.amount, bill.currency)}</span>
     ${showPay && !compact ? `<button class="pay-btn" data-action="pay" data-id="${bill.id}" aria-label="Mark ${esc(bill.name)} paid">Paid</button>` : ''}

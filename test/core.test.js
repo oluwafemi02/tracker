@@ -136,3 +136,16 @@ test('exchange rates keep their precision', () => {
   assert.equal(rateText(1724.1379), '1724.1');
   assert.equal(rateText(0), '');
 });
+
+test('bill schedules: payments left, last payment, summaries', async () => {
+  const { nthOccurrence, countOccurrences, describeSchedule } = await import('../js/dates.js');
+  assert.equal(nthOccurrence('2026-12-10', 'monthly', 12, 10), '2027-11-10');
+  assert.equal(nthOccurrence('2026-01-31', 'monthly', 2, 31), '2026-02-28');
+  assert.equal(countOccurrences('2026-12-10', 'monthly', '2027-11-10', 10), 12);
+  assert.equal(countOccurrences('2026-12-10', 'monthly', null, 10), Infinity);
+  assert.equal(countOccurrences('2026-12-10', 'once', null, 10), 1);
+  assert.equal(describeSchedule({ frequency: 'monthly', nextDue: '2026-12-10', endDate: null }), 'Monthly on the 10th, no end date');
+  assert.equal(describeSchedule({ frequency: 'monthly', nextDue: '2026-12-01', endDate: '2027-11-30' }), 'Monthly on the 1st, 12 payments left, last on 1 Nov 2027');
+  assert.equal(describeSchedule({ frequency: 'once', nextDue: '2026-12-03' }), 'One time, due 3 Dec');
+  assert.equal(describeSchedule({ frequency: 'weekly', nextDue: '2026-11-30', endDate: '2026-12-14' }), 'Every Monday, 3 payments left, last on 14 Dec');
+});

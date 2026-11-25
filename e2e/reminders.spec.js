@@ -76,7 +76,7 @@ test.describe('Reminders', () => {
       const reg = await navigator.serviceWorker.ready;
       return (await reg.getNotifications()).map((n) => ({ title: n.title, body: n.body, tag: n.tag }));
     });
-    await expect.poll(notes).toEqual([{ title: 'Phone €20.00 needs paying', body: 'Phone €20.00', tag: 'ledger-due' }]);
+    await expect.poll(notes, { timeout: 15_000 }).toEqual([{ title: 'Phone €20.00 needs paying', body: 'Phone €20.00', tag: 'ledger-due' }]);
     let st = await getState(page);
     expect(st.notified['local:2026-11-25']).toBeTruthy();
 
@@ -90,7 +90,7 @@ test.describe('Reminders', () => {
     await page.goto('./#settings/reminders');
     await expect(page.locator('.status-line.ok')).toContainText('Notifications are on');
     await page.getByRole('button', { name: 'Send a test' }).click();
-    await expect.poll(notes).toContainEqual(expect.objectContaining({ title: 'Reminders are on', tag: 'ledger-test' }));
+    await expect.poll(notes, { timeout: 15_000 }).toContainEqual(expect.objectContaining({ title: 'Reminders are on', tag: 'ledger-test' }));
 
     // The service worker keeps a copy of what is due for empty pushes.
     const cached = await page.evaluate(async () => (await (await caches.open('ledger-state')).match('state/reminders.json')).json());

@@ -11,7 +11,8 @@ import * as rem from './reminders.js';
 import * as push from './push.js';
 
 const S = () => store.getState();
-export const APP_VERSION = '1.0.0';
+import { VERSION, RELEASED } from './version.js';
+export const APP_VERSION = VERSION;
 // Femi's push server (deployed by .github/workflows/push-server.yml).
 const DEFAULT_PUSH_URL = 'https://tracker-push.femisteve02.workers.dev';
 
@@ -164,7 +165,7 @@ export function renderSettings(section) {
         <button class="link-btn danger-text" data-action="erase">Erase all data</button>
       </div>
     </section>
-    <p class="about muted small">Tracker ${APP_VERSION}${s.settings.migratedAt ? `. Imported from the old version on ${shortDate(s.settings.migratedAt.slice(0, 10))}.` : ''}</p>`;
+    <p class="about muted small">Tracker version ${APP_VERSION}, updated ${shortDate(RELEASED)}${s.settings.migratedAt ? `. Imported from the old version on ${shortDate(s.settings.migratedAt.slice(0, 10))}.` : ''}</p>`;
 }
 
 export function mountSettings(root, section) {
