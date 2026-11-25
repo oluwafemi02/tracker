@@ -23,8 +23,12 @@ Live: https://oluwafemi02.github.io/tracker/
 - **Settings** has reminders, budget and currency, theme, categories, and backup,
   restore and CSV export.
 
-All data stays on the phone (localStorage). Download a backup now and then from
-Settings.
+- **Apple Pay logging**: an iPhone Shortcut sends each Apple Pay payment to the push
+  server; the app adds them the next time it opens and remembers each shop's category.
+- **Cloud backup**: an encrypted copy on the push server, restorable on a new phone
+  with just your passphrase.
+
+Data lives on the phone (localStorage), with the optional encrypted cloud backup.
 
 ## Reminders on iPhone
 

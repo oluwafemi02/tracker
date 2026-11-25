@@ -25,7 +25,9 @@ No build step, no framework, no runtime dependencies (Playwright is a dev depend
 | `js/categories.js` | Default spend and trip categories, matching |
 | `js/reminders.js` | Badge, local notification on open, reminder schedule for push, calendar export |
 | `js/ics.js` | `.ics` builder shared with the push worker |
-| `js/push.js` | Client for the push worker |
+| `js/push.js` | Client for the push worker: reminders sync, Apple Pay inbox fetch, encrypted backup upload/restore |
+| `js/applepay.js` | Parses Wallet Shortcut amounts, remembers shop categories (`merchantRules`), turns inbox items into expenses |
+| `js/backup.js` | Passphrase key derivation (PBKDF2 600k), AES-GCM encrypt/decrypt, restore helpers |
 | `js/ui.js` | Escaping, bottom sheets, toasts, delegated `data-action` clicks |
 | `js/forms.js` | Sheets: expense, bill, pay bill, trip, trip expense, new category |
 | `js/views-*.js` | Screens. Each returns an HTML string; `app.js` re-renders on any state change |
@@ -36,8 +38,9 @@ No build step, no framework, no runtime dependencies (Playwright is a dev depend
 
 ## Data model (`ledger.v1`)
 
-- `settings`: currency, monthlyBudget, theme, remindDays, remindTime, hideAmountsInPush, push {url, deviceId, secret, enabled, lastSync, lastError}, calendarExportedHash, migratedAt, lastBackupAt
-- `expenses[]`: {id, amount, currency, baseAmount (main currency), category, note, date, billId?, person, createdAt}
+- `settings`: currency, monthlyBudget, theme, remindDays, remindTime, hideAmountsInPush, push {url, deviceId, secret, enabled, lastSync, lastError}, calendarExportedHash, migratedAt, lastBackupAt, applePay {enabled, token, lastFetch, lastError}, cloudBackup {enabled, keyRaw, backupId, lastAt, lastHash, lastError}
+- `expenses[]`: {id, amount, currency, baseAmount (main currency), category, note, date, billId?, person, createdAt, source? ('applepay'), inboxId?, card?, needsReview?}
+- `merchantRules`: {shopKey: categoryId, '*firstword': categoryId}
 - `bills[]`: {id, name, amount, currency, category, frequency (weekly|biweekly|monthly|quarterly|semiannual|yearly|once), anchorDay, startDate, nextDue, endDate, remindDays, autopay, active, notes, history[{due, paidOn, expenseId, amount} | {due, skipped}]}
 - `trips[]`: {id, name, destination, startDate, endDate, budget, currency, people[], countInMonthly, closed}
 - `tripExpenses[]`: {id, tripId, amount, currency, tripAmount (trip currency), baseAmount (main currency), category (t-*), note, date, payer, split, countInMonthly}
@@ -65,6 +68,12 @@ Month "spent" = expenses in the month + trip expenses with `countInMonthly`.
 1. In-app: badge (`navigator.setAppBadge`), one summary notification per day when opened, Needs paying list.
 2. Calendar export: repeating VEVENTs with VALARMs (`js/ics.js`).
 3. Push worker: the phone sends `reminderSchedule()` (100 days) on every change and on open; cron every 15 min sends due items. Optional webcal feed at `/cal/<id>.ics`.
+
+## Apple Pay logging and cloud backup
+
+- A Wallet "Transaction" Shortcut automation POSTs {amount, merchant, card} to `/in/<deviceId>/<token>` (write-only). The app fetches `/inbox` on every open, adds the payments, then acks them. Unknown shops get `needsReview` and show on Home as "to check".
+- Cloud backup: passphrase -> PBKDF2 -> AES key + backup id. Ciphertext only on the server (`PUT/GET /backup/<id>`, latest + previous). Auto backup on open, at most daily, only when `dataHash` changed. Restore needs only the passphrase.
+- The push server deploys from `.github/workflows/push-server.yml` (secrets CLOUDFLARE_API_TOKEN, CLOUDFLARE_ACCOUNT_ID). Live at https://tracker-push.femisteve02.workers.dev
 
 ## Design
 

@@ -328,6 +328,14 @@ input[type='date'].input, input[type='time'].input { min-width: 0; max-width: 10
 .plain-list { list-style: none; }
 .plain-list li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .file-btn { cursor: pointer; }
+.shortcut-steps summary { font-size: 14.5px; color: var(--pine); font-weight: 600; padding: 4px 0; cursor: pointer; }
+.shortcut-steps .steps li { margin: 6px 0; font-size: 14.5px; }
+.address { word-break: break-all; }
+.review-list { list-style: none; display: grid; gap: 10px; margin: 6px 0 4px; }
+.review-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+.review-list .input { grid-column: 1 / -1; }
+.review-amt { font-weight: 600; font-variant-numeric: tabular-nums; }
+.tag-check { color: var(--marigold); background: var(--marigold-soft); }
 .recover-list { list-style: none; display: grid; gap: 4px; margin: 4px 0 12px; }
 .recover-list .toggle { margin-top: 10px; }
 .recover-results .callout { margin: 8px 0 12px; }

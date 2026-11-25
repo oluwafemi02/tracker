@@ -433,3 +433,52 @@ export function tripExpenseSheet(existing, trip, { amount: prefill } = {}) {
     },
   });
 }
+
+// ---------- check Apple Pay payments
+
+export function reviewSheet() {
+  const s = S();
+  const items = s.expenses.filter((e) => e.needsReview).sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1));
+  if (!items.length) return;
+  const cats = store.categoriesByUse();
+  openSheet(`<form class="sheet-body">
+      <header class="sheet-head"><h2 class="sheet-title">Check payments</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+      <p class="muted small">Pick a category for each shop. Next time, payments there are filed for you.</p>
+      <ul class="review-list">${items.map((e) => `<li>
+          <span class="tx-main"><span class="tx-title">${esc(e.note)}</span><span class="tx-sub">${shortDate(e.date)}${e.card ? `, ${esc(e.card)}` : ''}</span></span>
+          <span class="review-amt">${fmt(e.amount, e.currency)}</span>
+          <select class="input" name="${e.id}" aria-label="Category for ${esc(e.note)}">
+            <option value="">Choose a category</option>
+            ${cats.map((c) => `<option value="${c.id}" ${c.id === e.category && e.category !== 'other' ? 'selected' : ''}>${c.icon} ${esc(c.name)}</option>`).join('')}
+          </select>
+          ${e.currency !== s.settings.currency && e.baseAmount === e.amount ? `<button type="button" class="link-btn" data-fix-rate="${e.id}">Add the ${e.currency} rate</button>` : ''}
+        </li>`).join('')}</ul>
+      <div class="sheet-foot"><button class="btn btn-primary btn-wide">Save</button></div>
+    </form>`, {
+    tall: true,
+    onMount(sheet) {
+      const form = sheet.querySelector('form');
+      // Choosing a category for one payment fills in the same shop's other rows.
+      form.addEventListener('change', (ev) => {
+        const sel = ev.target.closest('select');
+        if (!sel || !sel.value) return;
+        const shop = items.find((x) => x.id === sel.name)?.note.toLowerCase();
+        for (const other of items) if (other.note.toLowerCase() === shop && !form[other.id].value) form[other.id].value = sel.value;
+      });
+      sheet.querySelectorAll('[data-fix-rate]').forEach((b) => b.addEventListener('click', () => {
+        const e = S().expenses.find((x) => x.id === b.dataset.fixRate);
+        closeSheet();
+        setTimeout(() => expenseSheet(e), 280);
+      }));
+      form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const choices = items.map((e) => ({ id: e.id, category: form[e.id].value })).filter((c) => c.category);
+        if (!choices.length) { toast('Pick a category first'); return; }
+        const also = store.reviewPayments(choices);
+        closeSheet();
+        const left = store.reviewCount();
+        toast(`Saved${also ? `, plus ${also} more from the same shop${also === 1 ? '' : 's'}` : ''}${left ? `. ${left} left to check` : ''}`);
+      });
+    },
+  });
+}

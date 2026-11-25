@@ -82,7 +82,7 @@ function expenseRow(e) {
   const main = isTrip ? e.baseAmount : (e.baseAmount ?? e.amount);
   return `<li class="tx-row" data-action="${isTrip ? 'trip-expense' : 'expense'}" data-id="${e.id}">
     <span class="tx-icon" aria-hidden="true">${isTrip ? '✈️' : cat.icon}</span>
-    <span class="tx-main"><span class="tx-title">${esc(e.note && !isTrip ? e.note : cat.name)}</span><span class="tx-sub">${esc(e.note && !isTrip ? cat.name : sub)}${e.billId ? ' <span class="tag">Bill</span>' : ''}</span></span>
+    <span class="tx-main"><span class="tx-title">${esc(e.note && !isTrip ? e.note : cat.name)}</span><span class="tx-sub">${esc(e.note && !isTrip ? cat.name : sub)}${e.billId ? ' <span class="tag">Bill</span>' : ''}${e.needsReview ? ' <span class="tag tag-check">Check</span>' : ''}</span></span>
     <span class="tx-amt">${fmt(main, cur())}${e.currency !== cur() ? `<small>${fmt(e.amount, e.currency)}</small>` : ''}</span>
   </li>`;
 }
@@ -135,6 +135,7 @@ export function renderHome() {
       ${heroBlock(sum)}
       ${runway(sum)}
     </section>
+    ${store.reviewCount() ? `<button class="nudge review-nudge" data-action="review-payments"><b>${store.reviewCount()} Apple Pay payment${store.reviewCount() === 1 ? '' : 's'} to check.</b> Pick a category once per shop.</button>` : ''}
     ${reminderNudge()}
     ${attention.length ? `<section class="block"><h2 class="block-title attention">Needs paying</h2><ul class="list">${attention.map((b) => billRow(b)).join('')}</ul></section>` : ''}
     <section class="block">

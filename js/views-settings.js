@@ -67,12 +67,76 @@ function remindersSection() {
   </section>`;
 }
 
+const when = (iso) => (iso ? new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : 'never');
+
+function applePaySection() {
+  const s = S();
+  const ap = s.settings.applePay || {};
+  const connected = !!(s.settings.push.deviceId && s.settings.push.secret);
+  let body;
+  if (!connected) {
+    body = '<p class="muted small">Connect push notifications above first. Payments are passed through the same server.</p>';
+  } else if (!ap.enabled) {
+    body = `<p class="muted small">Each Apple Pay payment is added for you, even if you do not open the app for days. Shops you have used before get their category automatically.</p>
+      <button class="btn btn-primary btn-wide" data-action="applepay-setup">Set up Apple Pay logging</button>`;
+  } else {
+    const url = push.inboxUrl();
+    body = `<p class="status-line ${ap.lastError ? 'warn' : 'ok'}">${ap.lastError ? `Could not check for payments: ${esc(ap.lastError)}` : `On. Last checked ${when(ap.lastFetch)}.`}</p>
+      <details class="shortcut-steps" ${ap.lastFetch ? '' : 'open'}><summary>Shortcut setup steps</summary>
+        <ol class="steps">
+          <li>Copy your payment address: <button class="btn btn-quiet btn-sm" data-action="applepay-copy">Copy address</button></li>
+          <li>Open the <b>Shortcuts</b> app, tap <b>Automation</b>, then <b>+</b>.</li>
+          <li>Choose <b>Transaction</b>. Leave all cards selected, pick <b>Run Immediately</b>, turn off <b>Notify When Run</b>, tap <b>Next</b>.</li>
+          <li>Tap <b>New Blank Automation</b>, then <b>Add Action</b>, and search for <b>Get Contents of URL</b>.</li>
+          <li>Tap <b>URL</b> and paste the address.</li>
+          <li>Tap the arrow to show more. Set <b>Method</b> to <b>POST</b> and <b>Request Body</b> to <b>JSON</b>.</li>
+          <li>Add three <b>Text</b> fields: <code>amount</code> = Shortcut Input, then tap it and choose <b>Amount</b>; <code>merchant</code> = Shortcut Input, <b>Merchant</b>; <code>card</code> = Shortcut Input, <b>Card or Pass</b>.</li>
+          <li>Tap <b>Done</b>. Pay with Apple Pay, then open Tracker.</li>
+        </ol>
+        <p class="muted small">Only Apple Pay payments from this iPhone or your Apple Watch are sent, not a plastic card. Refunds are left out.</p>
+      </details>
+      <div class="row-actions"><button class="btn btn-quiet" data-action="applepay-check">Check for payments now</button></div>
+      <p class="muted small address" data-applepay-url>${esc(url || '')}</p>
+      <button class="link-btn danger-text" data-action="applepay-stop">Turn off Apple Pay logging</button>`;
+  }
+  return `<section class="set-block" id="set-applepay"><h2 class="set-title">Apple Pay logging</h2>${body}</section>`;
+}
+
+function cloudBackupBlock() {
+  const s = S();
+  const cb = s.settings.cloudBackup || {};
+  const connected = !!(s.settings.push.deviceId && s.settings.push.secret);
+  if (cb.enabled) {
+    return `<h3 class="set-sub">Cloud backup</h3>
+      <p class="status-line ${cb.lastError ? 'warn' : 'ok'}">${cb.lastError ? `Last backup failed: ${esc(cb.lastError)}` : `On. Last backup ${when(cb.lastAt)}.`}</p>
+      <p class="muted small">Encrypted on this phone with your passphrase before it is sent. Runs by itself once a day when something changed. To restore on a new phone, you only need the passphrase.</p>
+      <div class="row-actions"><button class="btn btn-quiet" data-action="cloud-backup-now">Back up now</button></div>
+      <button class="link-btn danger-text" data-action="cloud-backup-off">Turn off cloud backup</button>`;
+  }
+  return `<h3 class="set-sub">Cloud backup</h3>
+    <p class="muted small">Keeps an encrypted copy on your push server, so a lost or new phone does not mean lost data. Only someone with your passphrase can open it.</p>
+    ${connected ? `<form class="stack" data-cloud-start novalidate>
+        <input class="input" type="password" name="pass" autocomplete="new-password" placeholder="Passphrase, at least 10 characters" minlength="10" required>
+        <input class="input" type="password" name="pass2" autocomplete="new-password" placeholder="Same passphrase again" required>
+        <p class="muted small">Write it down somewhere safe. If you forget it, nobody can open the backup.</p>
+        <button class="btn btn-primary btn-wide">Turn on cloud backup</button>
+      </form>` : '<p class="muted small">Connect push notifications in Reminders first.</p>'}
+    <details class="more-cats"><summary>Restore from cloud (new phone)</summary>
+      <form class="stack" data-cloud-restore novalidate>
+        <input class="input" type="url" name="url" value="${esc(s.settings.push.url || DEFAULT_PUSH_URL)}" aria-label="Push server address">
+        <input class="input" type="password" name="pass" autocomplete="current-password" placeholder="Your backup passphrase" required>
+        <button class="btn btn-quiet btn-wide">Find my backup</button>
+      </form>
+    </details>`;
+}
+
 export function renderSettings(section) {
   const s = S();
   const custom = s.categories.filter((c) => c.custom);
   const legacy = hasLegacyData((k) => localStorage.getItem(k));
   return `<header class="top top-detail"><button class="back" data-action="tab" data-tab="home">Home</button><h1 class="top-title small">Settings</h1><span></span></header>
     ${remindersSection()}
+    ${applePaySection()}
     <section class="set-block" id="set-budget">
       <h2 class="set-title">Budget</h2>
       <div class="grid-2">
@@ -88,7 +152,8 @@ export function renderSettings(section) {
     ${custom.length ? `<section class="set-block"><h2 class="set-title">Your categories</h2><ul class="plain-list">${custom.map((c) => `<li><span>${c.icon} ${esc(c.name)}</span><button class="link-btn danger-text" data-action="delete-category" data-id="${c.id}">Remove</button></li>`).join('')}</ul></section>` : ''}
     <section class="set-block" id="set-data">
       <h2 class="set-title">Your data</h2>
-      <p class="muted small">Everything is stored on this phone only. Download a backup now and then${s.settings.lastBackupAt ? ` (last one ${shortDate(s.settings.lastBackupAt.slice(0, 10))})` : ''}.</p>
+      ${cloudBackupBlock()}
+      <h3 class="set-sub">Files</h3>
       <div class="stack">
         <button class="btn btn-quiet btn-wide" data-action="backup">Download backup</button>
         <label class="btn btn-quiet btn-wide file-btn">Restore from backup<input type="file" accept="application/json,.json" data-restore hidden></label>
@@ -102,6 +167,32 @@ export function renderSettings(section) {
 }
 
 export function mountSettings(root, section) {
+  root.querySelector('[data-cloud-start]')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    const pass = f.pass.value;
+    if (pass.length < 10) return toast('Use at least 10 characters.', { tone: 'warn' });
+    if (pass !== f.pass2.value) return toast('The two passphrases do not match.', { tone: 'warn' });
+    const btn = f.querySelector('button');
+    btn.disabled = true; btn.textContent = 'Encrypting';
+    try { await push.startBackup(pass); toast('Cloud backup is on'); }
+    catch (err) { toast(err.message, { tone: 'warn' }); btn.disabled = false; btn.textContent = 'Turn on cloud backup'; }
+  });
+  root.querySelector('[data-cloud-restore]')?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const f = e.target;
+    if (!f.pass.value) return toast('Enter your backup passphrase.', { tone: 'warn' });
+    const btn = f.querySelector('button');
+    btn.disabled = true; btn.textContent = 'Looking';
+    try {
+      const { state, at } = await push.fetchBackup(f.url.value, f.pass.value);
+      btn.disabled = false; btn.textContent = 'Find my backup';
+      if (await confirmSheet({ title: 'Restore this backup?', body: `From ${when(at)}: ${state.expenses?.length || 0} expenses, ${state.bills?.length || 0} bills, ${state.trips?.length || 0} trips. Everything on this phone will be replaced.`, confirm: 'Restore', danger: true })) {
+        store.replaceAll(state);
+        toast('Backup restored. Turn on notifications again in Reminders.');
+      }
+    } catch (err) { toast(err.message, { tone: 'warn' }); btn.disabled = false; btn.textContent = 'Find my backup'; }
+  });
   if (section) setTimeout(() => root.querySelector(`#set-${section}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
   root.querySelectorAll('[data-setting]').forEach((el) => el.addEventListener('change', () => {
     const key = el.dataset.setting;

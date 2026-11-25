@@ -77,7 +77,49 @@ assert.match(ics, /RRULE:FREQ=MONTHLY;INTERVAL=1;BYMONTHDAY=1/);
 r = await call('GET', `/cal/${deviceId}.ics?k=nope`);
 assert.equal(r.status, 404);
 
+// ---- Apple Pay inbox
+const token = 'a1'.repeat(16);
+r = await call('POST', `/in/${deviceId}/${token}`, { amount: '€12.50', merchant: 'Rimi' });
+assert.equal(r.status, 404, 'no inbox before setup');
+r = await call('POST', '/inbox/setup', { deviceId, token }, 'wrong-secret-wrong-secret');
+assert.equal(r.status, 403);
+r = await call('POST', '/inbox/setup', { deviceId, token }, secret);
+assert.equal(r.status, 200);
+r = await call('POST', `/in/${deviceId}/${token}`, { amount: '€12.50', merchant: 'Rimi', card: 'Revolut' });
+assert.equal(r.status, 200);
+r = await worker.fetch(new Request(`https://w.example/in/${deviceId}/${token}`, { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: 'amount=3%2C20+%E2%82%AC&merchant=Caffeine' }), env);
+assert.equal(r.status, 200, 'form bodies work too');
+r = await call('POST', `/in/${deviceId}/${'b2'.repeat(16)}`, { amount: '€1' });
+assert.equal(r.status, 404, 'wrong token');
+r = await call('POST', `/in/${deviceId}/${token}`, { merchant: 'No amount' });
+assert.equal(r.status, 400);
+r = await worker.fetch(new Request(`https://w.example/inbox?id=${deviceId}`, { headers: { Authorization: 'Bearer nope-nope-nope-nope' } }), env);
+assert.equal(r.status, 403, 'the inbox cannot be read without the device secret');
+r = await worker.fetch(new Request(`https://w.example/inbox?id=${deviceId}`, { headers: { Authorization: `Bearer ${secret}` } }), env);
+const inbox = (await r.json()).items;
+assert.deepEqual(inbox.map((i) => [i.amount, i.merchant]).sort(), [['3,20 €', 'Caffeine'], ['€12.50', 'Rimi']]);
+assert.ok(inbox.every((i) => i.id && i.receivedAt));
+r = await call('POST', '/inbox/ack', { deviceId, ids: [inbox[0].id] }, secret);
+assert.equal((await r.json()).removed, 1);
+r = await worker.fetch(new Request(`https://w.example/inbox?id=${deviceId}`, { headers: { Authorization: `Bearer ${secret}` } }), env);
+assert.equal((await r.json()).items.length, 1);
+
+// ---- Encrypted backups
+const bid = 'c3'.repeat(32);
+r = await worker.fetch(new Request(`https://w.example/backup/${bid}`), env);
+assert.equal(r.status, 404);
+const put = (blob, auth = secret) => worker.fetch(new Request(`https://w.example/backup/${bid}`, { method: 'PUT', headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth}` }, body: JSON.stringify({ deviceId, blob }) }), env);
+r = await put({ v: 1, iv: 'aaa', data: 'first' }, 'wrong-secret-wrong-secret');
+assert.equal(r.status, 403, 'only a registered device can write backups');
+assert.equal((await put({ v: 1, iv: 'aaa', data: 'first' })).status, 200);
+assert.equal((await put({ v: 1, iv: 'bbb', data: 'second' })).status, 200);
+r = await worker.fetch(new Request(`https://w.example/backup/${bid}`), env);
+const got = await r.json();
+assert.equal(got.latest.blob.data, 'second');
+assert.equal(got.previous.blob.data, 'first', 'the copy before is kept');
+assert.equal((await put({ v: 1, iv: 'x', data: 'x'.repeat(5 * 1024 * 1024 + 10) })).status, 413);
+
 r = await call('DELETE', '/device', { deviceId }, secret);
 assert.equal(r.status, 200);
-assert.equal(kv.size, 0);
+assert.equal([...kv.keys()].filter((k) => !k.startsWith('b:')).length, 0, 'device and inbox removed; backups stay for restoring');
 console.log('worker ok:', delivered.length, 'pushes delivered and decrypted');

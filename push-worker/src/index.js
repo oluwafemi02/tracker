@@ -8,17 +8,29 @@
 //   POST   /test                       { deviceId }                             Bearer <secret>
 //   DELETE /device                     (deviceId from body or ?id=)             Bearer <secret>
 //   GET    /cal/<deviceId>.ics?k=<secret>  calendar feed of bills
+//
+// Apple Pay inbox (payments sent by an iPhone Shortcut, picked up by the app)
+//   POST   /inbox/setup                { deviceId, token }                       Bearer <secret>
+//   POST   /in/<deviceId>/<token>      { amount, merchant, card }                (the Shortcut; write only)
+//   GET    /inbox?id=<deviceId>                                                  Bearer <secret>
+//   POST   /inbox/ack                  { deviceId, ids }                         Bearer <secret>
+//
+// Encrypted backups (the server only ever sees ciphertext)
+//   PUT    /backup/<backupId>          { deviceId, blob }                        Bearer <secret>
+//   GET    /backup/<backupId>          latest and previous copy
 
 import { sendPush } from './webpush.js';
 import { buildICS } from './ics.js';
 
 const MAX_ITEMS = 400;
+const MAX_INBOX = 300;
+const MAX_BACKUP_BYTES = 5 * 1024 * 1024;
 const LATE_WINDOW_MS = 12 * 3600e3; // do not send reminders that are more than 12h stale
 
 function cors(env) {
   return {
     'Access-Control-Allow-Origin': env.ALLOWED_ORIGIN || '*',
-    'Access-Control-Allow-Methods': 'GET, POST, DELETE, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age': '86400',
   };
@@ -92,6 +104,51 @@ async function handle(req, env) {
     });
   }
 
+  // ---- Apple Pay inbox: the Shortcut posts here. The token can only add payments.
+  const inMatch = path.match(/^\/in\/([a-f0-9]{8,64})\/([a-f0-9]{16,128})$/);
+  if (req.method === 'POST' && inMatch) {
+    const [, id, token] = inMatch;
+    const rec = await loadDevice(env, id);
+    if (!rec || !rec.inboxTokenHash || rec.inboxTokenHash !== await sha256(token)) return json(env, { error: 'Unknown inbox' }, 404);
+    const raw = await req.text();
+    let data = {};
+    try { data = JSON.parse(raw); } catch { data = Object.fromEntries(new URLSearchParams(raw)); }
+    const tx = {
+      amount: String(data.amount ?? data.Amount ?? '').slice(0, 40),
+      merchant: String(data.merchant ?? data.Merchant ?? data.name ?? '').slice(0, 80),
+      card: String(data.card ?? data.Card ?? '').slice(0, 60),
+      receivedAt: new Date().toISOString(),
+    };
+    if (!tx.amount) return json(env, { error: 'Missing amount' }, 400);
+    const list = await env.DEVICES.list({ prefix: `i:${id}:` });
+    if (list.keys.length >= MAX_INBOX) return json(env, { error: 'Inbox is full. Open Tracker to empty it.' }, 429);
+    const key = `i:${id}:${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+    await env.DEVICES.put(key, JSON.stringify(tx), { expirationTtl: 120 * 86400 });
+    return json(env, { ok: true });
+  }
+
+  // ---- Encrypted backups
+  const bk = path.match(/^\/backup\/([a-f0-9]{64})$/);
+  if (bk && req.method === 'GET') {
+    const [latest, previous] = await Promise.all([env.DEVICES.get(`b:${bk[1]}:latest`, 'json'), env.DEVICES.get(`b:${bk[1]}:previous`, 'json')]);
+    if (!latest) return json(env, { error: 'No backup found for that passphrase' }, 404);
+    return json(env, { latest, previous });
+  }
+  if (bk && req.method === 'PUT') {
+    const raw = await req.text();
+    if (raw.length > MAX_BACKUP_BYTES) return json(env, { error: 'Backup is too large' }, 413);
+    const data = JSON.parse(raw || '{}');
+    const a = await authed(env, req, data.deviceId);
+    if (a.error) return json(env, { error: a.error }, a.status);
+    const blob = data.blob;
+    if (!blob || typeof blob.data !== 'string' || typeof blob.iv !== 'string') return json(env, { error: 'Invalid backup' }, 400);
+    const latest = await env.DEVICES.get(`b:${bk[1]}:latest`);
+    if (latest) await env.DEVICES.put(`b:${bk[1]}:previous`, latest);
+    const at = new Date().toISOString();
+    await env.DEVICES.put(`b:${bk[1]}:latest`, JSON.stringify({ at, blob }));
+    return json(env, { ok: true, at });
+  }
+
   let body = {};
   if (req.method === 'POST' || req.method === 'DELETE') body = await req.json().catch(() => ({}));
   const deviceId = body.deviceId || url.searchParams.get('id');
@@ -149,10 +206,41 @@ async function handle(req, env) {
     return json(env, { ok: true });
   }
 
+  if (req.method === 'POST' && path === '/inbox/setup') {
+    const a = await authed(env, req, deviceId);
+    if (a.error) return json(env, { error: a.error }, a.status);
+    if (typeof body.token !== 'string' || !/^[a-f0-9]{16,128}$/.test(body.token)) return json(env, { error: 'Invalid token' }, 400);
+    a.rec.inboxTokenHash = await sha256(body.token);
+    await saveDevice(env, deviceId, a.rec);
+    return json(env, { ok: true });
+  }
+
+  if (req.method === 'GET' && path === '/inbox') {
+    const a = await authed(env, req, deviceId);
+    if (a.error) return json(env, { error: a.error }, a.status);
+    const list = await env.DEVICES.list({ prefix: `i:${deviceId}:` });
+    const items = [];
+    for (const k of list.keys) {
+      const v = await env.DEVICES.get(k.name, 'json');
+      if (v) items.push({ id: k.name.split(':')[2], ...v });
+    }
+    return json(env, { items });
+  }
+
+  if (req.method === 'POST' && path === '/inbox/ack') {
+    const a = await authed(env, req, deviceId);
+    if (a.error) return json(env, { error: a.error }, a.status);
+    const ids = Array.isArray(body.ids) ? body.ids.filter((x) => typeof x === 'string' && /^[a-z0-9]{4,40}$/.test(x)).slice(0, MAX_INBOX) : [];
+    await Promise.all(ids.map((x) => env.DEVICES.delete(`i:${deviceId}:${x}`)));
+    return json(env, { ok: true, removed: ids.length });
+  }
+
   if (req.method === 'DELETE' && path === '/device') {
     const a = await authed(env, req, deviceId);
     if (a.error) return json(env, { error: a.error }, a.status);
     await env.DEVICES.delete(`d:${deviceId}`);
+    const inbox = await env.DEVICES.list({ prefix: `i:${deviceId}:` });
+    await Promise.all(inbox.keys.map((k) => env.DEVICES.delete(k.name)));
     return json(env, { ok: true });
   }
 

@@ -7,7 +7,7 @@ import { renderHome, renderActivity, setActivityMonth, setActivityFilter } from 
 import { renderBills, billDetail, payNow } from './views-bills.js';
 import { renderTrips, renderTrip } from './views-trips.js';
 import { renderSettings, mountSettings, backup, csv, reimport, erase, deleteCategory, recoverTrips } from './views-settings.js';
-import { expenseSheet, billSheet, tripSheet, tripExpenseSheet } from './forms.js';
+import { expenseSheet, billSheet, tripSheet, tripExpenseSheet, reviewSheet } from './forms.js';
 import * as rem from './reminders.js';
 import * as push from './push.js';
 
@@ -127,6 +127,39 @@ on('push-sync', async () => {
   render({ keepScroll: true });
 });
 on('push-disconnect', async () => { await push.disconnect(); toast('Push server disconnected'); });
+on('review-payments', () => reviewSheet());
+on('applepay-setup', async (_, el) => {
+  el.disabled = true;
+  try { await push.setupInbox(); toast('Apple Pay logging is ready. Follow the steps to add the Shortcut.'); }
+  catch (e) { toast(e.message, { tone: 'warn' }); el.disabled = false; }
+});
+on('applepay-copy', async () => {
+  const url = push.inboxUrl();
+  try { await navigator.clipboard.writeText(url); toast('Address copied'); }
+  catch {
+    // Clipboard blocked: select the address so it can be copied by hand.
+    const el = document.querySelector('[data-applepay-url]');
+    if (el) { const r = document.createRange(); r.selectNodeContents(el); getSelection().removeAllRanges(); getSelection().addRange(r); }
+    toast('Copy the address shown under the button');
+  }
+});
+on('applepay-check', async () => {
+  try {
+    const r = await push.fetchInbox();
+    toast(r?.added ? `Added ${r.added} payment${r.added === 1 ? '' : 's'}` : 'No new payments');
+  } catch (e) { toast(e.message, { tone: 'warn' }); }
+  render({ keepScroll: true });
+});
+on('applepay-stop', () => { push.stopInbox(); toast('Apple Pay logging is off. Delete the Shortcut automation too.'); });
+on('cloud-backup-now', async (_, el) => {
+  el.disabled = true;
+  try { await push.backupNow(); toast('Backed up'); } catch (e) { toast(e.message, { tone: 'warn' }); }
+  render({ keepScroll: true });
+});
+on('cloud-backup-off', () => {
+  store.update((s) => { s.settings.cloudBackup = { enabled: false, keyRaw: '', backupId: '', lastAt: null, lastHash: null, lastError: null }; });
+  toast('Cloud backup is off. The last copy stays on the server.');
+});
 on('backup', () => backup());
 on('csv', () => csv());
 on('recover-trips', () => recoverTrips());
@@ -163,6 +196,10 @@ async function onResume() {
   await rem.refreshBadge();
   await rem.localCheck().catch(() => {});
   push.sync().catch(() => {});
+  push.fetchInbox().then((r) => {
+    if (r?.added) toast(r.review ? `Added ${r.added} Apple Pay payment${r.added === 1 ? '' : 's'}. ${r.review} to check.` : `Added ${r.added} Apple Pay payment${r.added === 1 ? '' : 's'}`);
+  }).catch(() => {});
+  push.autoBackup().catch(() => {});
 }
 
 function handleDeepLink() {

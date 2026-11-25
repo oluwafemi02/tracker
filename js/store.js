@@ -4,6 +4,7 @@ import { today, addDays, nextOccurrence, occurrencesBetween, monthBounds, monthK
 import { SPEND_CATEGORIES, TRIP_CATEGORIES } from './categories.js';
 import { round2 } from './money.js';
 import { migrateLegacy, hasLegacyData } from './migrate.js';
+import { learn, merchantKey } from './applepay.js';
 
 export const STORAGE_KEY = 'ledger.v1';
 
@@ -20,12 +21,15 @@ const DEFAULT_STATE = () => ({
     calendarExportedHash: null,
     migratedAt: null,
     lastBackupAt: null,
+    applePay: { enabled: false, token: '', lastFetch: null, lastError: null },
+    cloudBackup: { enabled: false, keyRaw: '', backupId: '', lastAt: null, lastHash: null, lastError: null },
   },
   categories: SPEND_CATEGORIES.map((c) => ({ ...c, kind: 'spend' })),
   expenses: [],
   bills: [],
   trips: [],
   tripExpenses: [],
+  merchantRules: {},
   notified: {},
 });
 
@@ -118,6 +122,10 @@ export function categoriesByUse() {
 
 export function saveExpense(data) {
   update((s) => {
+    if (data.source === 'applepay' && data.category) {
+      learn(s.merchantRules, data.note, data.category);
+      data = { ...data, needsReview: false };
+    }
     const base = data.currency === s.settings.currency ? data.amount : data.baseAmount;
     const rec = { ...data, amount: round2(data.amount), baseAmount: round2(base ?? data.amount) };
     const i = s.expenses.findIndex((e) => e.id === rec.id);
@@ -400,3 +408,30 @@ export function settleUp(balances) {
 }
 
 export { daysInMonth };
+
+// ---------- Apple Pay payments
+
+export const reviewCount = () => state.expenses.filter((e) => e.needsReview).length;
+
+// Set categories for payments being checked, remember each shop, and apply the
+// choice to other unchecked payments from the same shop.
+export function reviewPayments(choices) {
+  let alsoApplied = 0;
+  update((s) => {
+    for (const { id, category } of choices) {
+      const e = s.expenses.find((x) => x.id === id);
+      if (!e || !category) continue;
+      e.category = category;
+      e.needsReview = false;
+      learn(s.merchantRules, e.note, category);
+      for (const other of s.expenses) {
+        if (other.needsReview && other.id !== e.id && merchantKey(other.note) === merchantKey(e.note) && !choices.some((c) => c.id === other.id)) {
+          other.category = category;
+          other.needsReview = false;
+          alsoApplied++;
+        }
+      }
+    }
+  });
+  return alsoApplied;
+}

@@ -19,6 +19,8 @@ const SHELL = [
   'js/ics.js',
   'js/migrate.js',
   'js/recover.js',
+  'js/applepay.js',
+  'js/backup.js',
   'js/ui.js',
   'js/forms.js',
   'js/reminders.js',

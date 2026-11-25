@@ -2,7 +2,10 @@
 // The phone keeps all data. It sends the server only the reminder schedule
 // (bill name, amount unless hidden, and when to alert) plus a calendar list of bills.
 
-import { getState, update, attentionCount } from './store.js';
+import { getState, update, attentionCount, uid } from './store.js';
+import { inboxToExpenses } from './applepay.js';
+import { lastRate, fetchRate, ECB } from './money.js';
+import { encryptJSON, decryptJSON, backupPayload, dataHash, deriveKeys, restoredState } from './backup.js';
 import { reminderSchedule } from './reminders.js';
 
 const b64ToBytes = (b64) => {
@@ -98,4 +101,126 @@ export function calendarFeedUrl() {
   const { url, deviceId, secret, enabled } = getState().settings.push;
   if (!enabled || !url) return null;
   return `${cleanUrl(url).replace(/^https:/, 'webcal:')}/cal/${deviceId}.ics?k=${secret}`;
+}
+
+// ---------- Apple Pay inbox
+
+export const inboxReady = () => {
+  const s = getState().settings;
+  return !!(s.push.deviceId && s.push.secret && s.push.url && s.applePay?.enabled && s.applePay?.token);
+};
+
+export function inboxUrl() {
+  const { url, deviceId } = getState().settings.push;
+  const { token } = getState().settings.applePay || {};
+  return url && deviceId && token ? `${cleanUrl(url)}/in/${deviceId}/${token}` : null;
+}
+
+export async function setupInbox() {
+  const s = getState().settings;
+  if (!s.push.deviceId || !s.push.secret) throw new Error('Connect push reminders first.');
+  const token = s.applePay?.token || randomToken(24);
+  await api('/inbox/setup', { deviceId: s.push.deviceId, token });
+  update((st) => { st.settings.applePay = { ...st.settings.applePay, enabled: true, token, lastError: null }; });
+}
+
+export function stopInbox() {
+  update((st) => { st.settings.applePay = { enabled: false, token: '', lastFetch: null, lastError: null }; });
+}
+
+let fetching = null;
+// Pick up payments the Shortcut sent, add them, then clear them from the server.
+export function fetchInbox() {
+  if (!inboxReady()) return Promise.resolve(null);
+  if (fetching) return fetching;
+  fetching = (async () => {
+    const { deviceId } = getState().settings.push;
+    try {
+      const { items = [] } = await api(`/inbox?id=${deviceId}`, null, 'GET');
+      if (!items.length) {
+        update((st) => { st.settings.applePay.lastFetch = new Date().toISOString(); st.settings.applePay.lastError = null; }, { silent: true });
+        return { added: 0 };
+      }
+      const main = getState().settings.currency;
+      const curs = new Set(items.map((i) => (String(i.amount).match(/\b[A-Z]{3}\b/) || [])[0]).filter(Boolean));
+      for (const c of curs) if (c !== main && ECB.has(c) && !lastRate(c, main)) await fetchRate(c, main);
+      const res = inboxToExpenses(items, {
+        main, rules: getState().merchantRules, existing: getState().expenses, uid, rate: (c) => lastRate(c, main),
+      });
+      update((st) => {
+        st.expenses.push(...res.expenses);
+        st.settings.applePay.lastFetch = new Date().toISOString();
+        st.settings.applePay.lastError = null;
+      });
+      await api('/inbox/ack', { deviceId, ids: res.done });
+      return { added: res.expenses.length, review: res.expenses.filter((e) => e.needsReview).length, refunds: res.refunds };
+    } catch (err) {
+      update((st) => { st.settings.applePay.lastError = err.message; }, { silent: true });
+      throw err;
+    } finally {
+      fetching = null;
+    }
+  })();
+  return fetching;
+}
+
+// ---------- Encrypted cloud backup
+
+export const backupReady = () => {
+  const s = getState().settings;
+  return !!(s.push.deviceId && s.push.secret && s.push.url && s.cloudBackup?.enabled && s.cloudBackup?.keyRaw);
+};
+
+export async function startBackup(passphrase) {
+  const s = getState().settings;
+  if (!s.push.deviceId || !s.push.secret) throw new Error('Connect push reminders first. Backups are stored on the same server.');
+  const { keyRaw, backupId } = await deriveKeys(passphrase);
+  update((st) => { st.settings.cloudBackup = { ...st.settings.cloudBackup, enabled: true, keyRaw, backupId, lastError: null, lastHash: null }; }, { silent: true });
+  return backupNow();
+}
+
+export async function backupNow() {
+  const s = getState();
+  const { keyRaw, backupId } = s.settings.cloudBackup;
+  try {
+    const blob = await encryptJSON(backupPayload(s), keyRaw);
+    const hash = dataHash(s);
+    const res = await api(`/backup/${backupId}`, { deviceId: s.settings.push.deviceId, blob }, 'PUT');
+    update((st) => { Object.assign(st.settings.cloudBackup, { lastAt: res.at || new Date().toISOString(), lastHash: hash, lastError: null }); });
+    return res;
+  } catch (err) {
+    update((st) => { st.settings.cloudBackup.lastError = err.message; }, { silent: true });
+    throw err;
+  }
+}
+
+// At most once a day, and only when something changed.
+export async function autoBackup() {
+  if (!backupReady()) return false;
+  const cb = getState().settings.cloudBackup;
+  if (cb.lastAt && Date.now() - new Date(cb.lastAt).getTime() < 20 * 3600e3) return false;
+  if (cb.lastHash && cb.lastHash === dataHash(getState())) return false;
+  await backupNow();
+  return true;
+}
+
+// On a new phone: find and open the backup with only the passphrase.
+export async function fetchBackup(serverUrl, passphrase) {
+  const url = cleanUrl(serverUrl);
+  if (!/^https:\/\//.test(url)) throw new Error('Use the https:// address of your push server.');
+  const { keyRaw, backupId } = await deriveKeys(passphrase);
+  const res = await fetch(`${url}/backup/${backupId}`).catch(() => null);
+  if (!res) throw new Error('Could not reach the server. Check the address.');
+  if (res.status === 404) throw new Error('No backup found for that passphrase.');
+  if (!res.ok) throw new Error(`Server replied ${res.status}`);
+  const { latest, previous } = await res.json();
+  let payload, at = latest.at;
+  try { payload = await decryptJSON(latest.blob, keyRaw); } catch (err) {
+    if (!previous) throw err;
+    payload = await decryptJSON(previous.blob, keyRaw);
+    at = previous.at;
+  }
+  const state = restoredState(payload, { enabled: true, keyRaw, backupId, lastAt: at, lastHash: null, lastError: null });
+  state.settings.push.url = url;
+  return { state, at };
 }
