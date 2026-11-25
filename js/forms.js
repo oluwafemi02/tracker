@@ -1,0 +1,435 @@
+// Bottom-sheet forms for expenses, bills, trips and trip expenses.
+
+import { esc, openSheet, closeSheet, toast, parseAmount, confirmSheet, haptic } from './ui.js';
+import { today, addDays, FREQUENCIES, shortDate } from './dates.js';
+import { fmt, CURRENCY_CODES, fetchRate, lastRate, rememberRate, round2 } from './money.js';
+import { TRIP_CATEGORIES, slug } from './categories.js';
+import * as store from './store.js';
+
+const S = () => store.getState();
+
+function currencySelect(name, value) {
+  const codes = [...new Set([value, S().settings.currency, ...CURRENCY_CODES])];
+  return `<select name="${name}" class="cur-select" aria-label="Currency">${codes.map((c) => `<option ${c === value ? 'selected' : ''}>${c}</option>`).join('')}</select>`;
+}
+
+function chip(name, value, label, checked, extra = '') {
+  return `<label class="chip"${extra}><input type="radio" name="${name}" value="${esc(value)}" ${checked ? 'checked' : ''}><span>${label}</span></label>`;
+}
+
+function dateChips(name, value) {
+  const t = today(), y = addDays(t, -1);
+  const other = value !== t && value !== y;
+  return `<div class="date-row">
+    ${chip(`${name}-quick`, t, 'Today', value === t)}
+    ${chip(`${name}-quick`, y, 'Yesterday', value === y)}
+    <label class="chip chip-date ${other ? 'on' : ''}"><span>${other ? shortDate(value) : 'Other day'}</span><input type="date" name="${name}" value="${value}" aria-label="Date"></label>
+  </div>`;
+}
+
+function wireDateChips(sheet, name) {
+  const input = sheet.querySelector(`input[name="${name}"]`);
+  const pill = input.closest('.chip-date');
+  sheet.querySelectorAll(`input[name="${name}-quick"]`).forEach((r) => r.addEventListener('change', () => {
+    input.value = r.value; pill.classList.remove('on'); pill.querySelector('span').textContent = 'Other day';
+  }));
+  input.addEventListener('change', () => {
+    if (!input.value) return;
+    sheet.querySelectorAll(`input[name="${name}-quick"]`).forEach((r) => { r.checked = r.value === input.value; });
+    const quick = [...sheet.querySelectorAll(`input[name="${name}-quick"]`)].some((r) => r.checked);
+    pill.classList.toggle('on', !quick);
+    pill.querySelector('span').textContent = quick ? 'Other day' : shortDate(input.value);
+  });
+}
+
+// Live conversion line under the amount when a foreign currency is picked.
+function wireConversion(sheet, { amountName = 'amount', curName = 'currency', target }) {
+  const amountEl = sheet.querySelector(`[name="${amountName}"]`);
+  const curEl = sheet.querySelector(`[name="${curName}"]`);
+  const box = sheet.querySelector('.convert');
+  const rateEl = box.querySelector('input');
+  const out = box.querySelector('.convert-out');
+  const tgt = typeof target === 'function' ? target : () => target;
+  const render = () => {
+    const to = tgt();
+    const from = curEl.value;
+    box.hidden = from === to;
+    box.querySelector('.convert-label').textContent = `1 ${from} =`;
+    box.querySelector('.convert-to').textContent = to;
+    const a = parseAmount(amountEl.value), r = parseFloat(rateEl.value);
+    out.textContent = a > 0 && r > 0 ? `≈ ${fmt(a * r, to)}` : '';
+  };
+  const refreshRate = async () => {
+    const from = curEl.value, to = tgt();
+    if (from === to) { render(); return; }
+    rateEl.value = lastRate(from, to)?.toFixed(4) || '';
+    render();
+    const live = await fetchRate(from, to);
+    if (live && curEl.value === from) { rateEl.value = Number(live).toFixed(4); render(); }
+  };
+  amountEl.addEventListener('input', render);
+  rateEl.addEventListener('input', render);
+  curEl.addEventListener('change', refreshRate);
+  refreshRate();
+  return {
+    rate: () => (curEl.value === tgt() ? 1 : parseFloat(rateEl.value)),
+    refresh: refreshRate,
+  };
+}
+
+const convertBox = () => `<div class="convert" hidden><span class="convert-label"></span><input type="number" step="any" inputmode="decimal" aria-label="Exchange rate"><span class="convert-to"></span><span class="convert-out"></span></div>`;
+
+function categoryGrid(cats, selected, name = 'category') {
+  return `<div class="cat-grid">${cats.map((c) => chip(name, c.id, `<i>${c.icon}</i>${esc(c.name)}`, c.id === selected, ' data-cat')).join('')}</div>`;
+}
+
+// ---------- expense (everyday or trip)
+
+export function expenseSheet(existing = null, { tripId } = {}) {
+  const s = S();
+  const trip = tripId ? s.trips.find((t) => t.id === tripId) : (!existing ? store.activeTrip() : null);
+  if (existing?.tripId || (tripId && trip)) return tripExpenseSheet(existing, trip || s.trips.find((t) => t.id === existing.tripId));
+  const e = existing || { amount: '', currency: s.settings.currency, category: '', note: '', date: today() };
+  const cats = store.categoriesByUse();
+  const first = cats.slice(0, 8);
+  const rest = cats.slice(8);
+  if (e.category && rest.some((c) => c.id === e.category)) { first.push(...rest.splice(rest.findIndex((c) => c.id === e.category), 1)); }
+
+  openSheet(`<form class="sheet-body" novalidate>
+      <header class="sheet-head">
+        <h2 class="sheet-title">${existing ? 'Edit expense' : 'New expense'}</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Close">✕</button>
+      </header>
+      ${trip && !existing ? `<button type="button" class="trip-switch" data-to-trip>Spending on ${esc(trip.name)}? <b>Add to trip</b></button>` : ''}
+      <div class="amount-field">
+        <input name="amount" type="text" inputmode="decimal" placeholder="0" value="${e.amount || ''}" autocomplete="off" ${existing ? '' : 'autofocus'} aria-label="Amount">
+        ${currencySelect('currency', e.currency)}
+      </div>
+      ${convertBox()}
+      <div class="field-label">Category</div>
+      ${categoryGrid(first, e.category)}
+      ${rest.length ? `<details class="more-cats"><summary>More categories</summary>${categoryGrid(rest, e.category)}</details>` : ''}
+      <button type="button" class="link-btn" data-new-cat>+ New category</button>
+      <input name="note" class="input" placeholder="Note (optional)" value="${esc(e.note)}" maxlength="120">
+      ${dateChips('date', e.date)}
+      <p class="form-error" role="alert"></p>
+      <div class="sheet-foot">
+        ${existing ? '<button type="button" class="btn btn-quiet danger-text" data-delete>Delete</button>' : ''}
+        <button class="btn btn-primary btn-wide">${existing ? 'Save changes' : 'Add expense'}</button>
+      </div>
+    </form>`, {
+    onMount(sheet) {
+      const form = sheet.querySelector('form');
+      wireDateChips(sheet, 'date');
+      const conv = wireConversion(sheet, { target: s.settings.currency });
+      if (existing && existing.currency !== s.settings.currency && existing.baseAmount) {
+        sheet.querySelector('.convert input').value = (existing.baseAmount / existing.amount).toFixed(4);
+      }
+      sheet.querySelector('[data-to-trip]')?.addEventListener('click', () => {
+        const amount = form.amount.value;
+        closeSheet();
+        setTimeout(() => tripExpenseSheet(null, trip, { amount }), 280);
+      });
+      sheet.querySelector('[data-new-cat]').addEventListener('click', () => newCategorySheet((cat) => {
+        const grid = sheet.querySelector('.cat-grid');
+        grid.insertAdjacentHTML('afterbegin', chip('category', cat.id, `<i>${cat.icon}</i>${esc(cat.name)}`, true, ' data-cat'));
+      }));
+      sheet.querySelector('[data-delete]')?.addEventListener('click', async () => {
+        if (await confirmSheet({ title: 'Delete this expense?', body: `${fmt(existing.amount, existing.currency)}, ${store.category(existing.category).name}` })) {
+          const copy = { ...existing };
+          store.deleteExpense(existing.id);
+          closeSheet();
+          toast('Expense deleted', { action: 'Undo', onAction: () => store.saveExpense(copy) });
+        }
+      });
+      form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const err = sheet.querySelector('.form-error');
+        const amount = parseAmount(form.amount.value);
+        const category = form.querySelector('input[name="category"]:checked')?.value;
+        if (!(amount > 0)) { err.textContent = 'Enter an amount above zero.'; form.amount.focus(); return; }
+        if (!category) { err.textContent = 'Pick a category.'; return; }
+        const currency = form.currency.value;
+        const rate = conv.rate();
+        if (currency !== s.settings.currency && !(rate > 0)) { err.textContent = `Enter the ${currency} to ${s.settings.currency} rate.`; return; }
+        if (currency !== s.settings.currency) rememberRate(currency, s.settings.currency, rate);
+        store.saveExpense({
+          ...(existing || {}),
+          amount, currency, baseAmount: round2(amount * rate), category,
+          note: form.note.value.trim(), date: form.date.value || today(),
+        });
+        haptic();
+        closeSheet();
+        toast(existing ? 'Changes saved' : `Added ${fmt(amount, currency)}`);
+      });
+    },
+  });
+}
+
+export function newCategorySheet(onDone) {
+  openSheet(`<form class="sheet-body">
+    <header class="sheet-head"><h2 class="sheet-title">New category</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+    <div class="split">
+      <input name="icon" class="input icon-input" value="🏷️" maxlength="4" aria-label="Emoji">
+      <input name="name" class="input" placeholder="Name, e.g. Gym" maxlength="30" autofocus required>
+    </div>
+    <div class="sheet-foot"><button class="btn btn-primary btn-wide">Add category</button></div>
+  </form>`, {
+    onMount(sheet) {
+      sheet.querySelector('form').addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const name = ev.target.name.value.trim();
+        if (!name) return;
+        let id = slug(name);
+        while (S().categories.some((c) => c.id === id)) id += '-x';
+        const cat = { id, name, icon: ev.target.icon.value.trim() || '🏷️', kind: 'spend', custom: true };
+        store.update((st) => { st.categories.push(cat); }, { silent: true });
+        closeSheet();
+        onDone?.(cat);
+      });
+    },
+  });
+}
+
+// ---------- bill
+
+const REMIND_OPTIONS = [[0, 'On the day'], [1, '1 day before'], [2, '2 days before'], [3, '3 days before'], [7, '1 week before']];
+
+export function billSheet(existing = null) {
+  const s = S();
+  const b = existing || { name: '', amount: '', currency: s.settings.currency, category: 'subscriptions', frequency: 'monthly', nextDue: addDays(today(), 7), remindDays: s.settings.remindDays, autopay: false, endDate: '', notes: '' };
+  const cats = store.categoriesByUse();
+  openSheet(`<form class="sheet-body" novalidate>
+      <header class="sheet-head">
+        <h2 class="sheet-title">${existing ? 'Edit bill' : 'New bill'}</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Close">✕</button>
+      </header>
+      <input name="name" class="input input-lg" placeholder="What is it? e.g. Rent, Netflix" value="${esc(b.name)}" maxlength="60" ${existing ? '' : 'autofocus'}>
+      <div class="amount-field amount-sm">
+        <input name="amount" type="text" inputmode="decimal" placeholder="Amount" value="${b.amount || ''}" autocomplete="off" aria-label="Amount">
+        ${currencySelect('currency', b.currency)}
+      </div>
+      <div class="grid-2">
+        <label class="field"><span>Next due</span><input type="date" name="nextDue" class="input" value="${b.nextDue || today()}" required></label>
+        <label class="field"><span>Repeats</span><select name="frequency" class="input">${Object.entries(FREQUENCIES).map(([k, f]) => `<option value="${k}" ${k === b.frequency ? 'selected' : ''}>${f.label}</option>`).join('')}</select></label>
+      </div>
+      <div class="field-label">Remind me</div>
+      <div class="chip-row">${REMIND_OPTIONS.map(([v, l]) => chip('remindDays', v, l, Number(b.remindDays) === v)).join('')}</div>
+      <label class="toggle"><input type="checkbox" name="autopay" ${b.autopay ? 'checked' : ''}><span class="toggle-ui"></span><span class="toggle-text"><b>Paid automatically</b><small>Direct debit or card. It gets logged for you on the due date.</small></span></label>
+      <label class="field"><span>Category</span><select name="category" class="input">${cats.map((c) => `<option value="${c.id}" ${c.id === b.category ? 'selected' : ''}>${c.icon} ${esc(c.name)}</option>`).join('')}</select></label>
+      <details class="more-cats" ${b.endDate || b.notes ? 'open' : ''}><summary>End date and notes</summary>
+        <label class="field"><span>Last payment on (optional)</span><input type="date" name="endDate" class="input" value="${b.endDate || ''}"></label>
+        <input name="notes" class="input" placeholder="Notes, account number hint, etc." value="${esc(b.notes || '')}" maxlength="200">
+      </details>
+      <p class="form-error" role="alert"></p>
+      <div class="sheet-foot">
+        ${existing ? '<button type="button" class="btn btn-quiet danger-text" data-delete>Delete</button>' : ''}
+        <button class="btn btn-primary btn-wide">${existing ? 'Save changes' : 'Add bill'}</button>
+      </div>
+    </form>`, {
+    tall: true,
+    onMount(sheet) {
+      const form = sheet.querySelector('form');
+      sheet.querySelector('[data-delete]')?.addEventListener('click', async () => {
+        if (await confirmSheet({ title: `Delete ${existing.name}?`, body: 'Past payments stay in your activity.' })) {
+          store.deleteBill(existing.id);
+          closeSheet(); closeSheet();
+          toast('Bill deleted');
+        }
+      });
+      form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const err = sheet.querySelector('.form-error');
+        const amount = parseAmount(form.amount.value);
+        const name = form.name.value.trim();
+        if (!name) { err.textContent = 'Give the bill a name.'; form.name.focus(); return; }
+        if (!(amount > 0)) { err.textContent = 'Enter an amount above zero.'; form.amount.focus(); return; }
+        if (!form.nextDue.value) { err.textContent = 'Pick the next due date.'; return; }
+        store.saveBill({
+          ...(existing ? { id: existing.id } : {}),
+          name, amount, currency: form.currency.value, category: form.category.value,
+          frequency: form.frequency.value, nextDue: form.nextDue.value,
+          remindDays: Number(form.querySelector('[name="remindDays"]:checked')?.value ?? 2),
+          autopay: form.autopay.checked, endDate: form.endDate.value || null, notes: form.notes.value.trim(),
+          active: true,
+        });
+        haptic();
+        closeSheet();
+        toast(existing ? 'Changes saved' : `${name} added`);
+      });
+    },
+  });
+}
+
+// Pay with a different amount or date than the default one-tap action.
+export function payBillSheet(bill) {
+  const s = S();
+  openSheet(`<form class="sheet-body">
+      <header class="sheet-head"><h2 class="sheet-title">Pay ${esc(bill.name)}</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+      <p class="muted">Due ${shortDate(bill.nextDue)}</p>
+      <div class="amount-field">
+        <input name="amount" type="text" inputmode="decimal" value="${bill.amount}" aria-label="Amount paid">
+        <span class="cur-fixed">${bill.currency}</span>
+      </div>
+      <div class="field-label">Paid on</div>
+      ${dateChips('date', today())}
+      <div class="sheet-foot"><button class="btn btn-primary btn-wide">Mark as paid</button></div>
+    </form>`, {
+    onMount(sheet) {
+      wireDateChips(sheet, 'date');
+      sheet.querySelector('form').addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const amount = parseAmount(ev.target.amount.value);
+        if (!(amount > 0)) return;
+        let baseAmount = amount;
+        if (bill.currency !== s.settings.currency) {
+          const r = lastRate(bill.currency, s.settings.currency) || await fetchRate(bill.currency, s.settings.currency);
+          baseAmount = r ? amount * r : amount;
+        }
+        store.markBillPaid(bill.id, { paidOn: ev.target.date.value || today(), amount, baseAmount });
+        haptic();
+        closeSheet();
+        toast(`${bill.name} paid`, { action: 'Undo', onAction: () => store.undoLastBillAction(bill.id) });
+      });
+    },
+  });
+}
+
+// ---------- trips
+
+export function tripSheet(existing = null) {
+  const s = S();
+  const t = existing || { name: '', destination: '', startDate: today(), endDate: addDays(today(), 4), budget: '', currency: s.settings.currency, people: ['Me'], countInMonthly: false };
+  openSheet(`<form class="sheet-body" novalidate>
+      <header class="sheet-head"><h2 class="sheet-title">${existing ? 'Edit trip' : 'New trip'}</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+      <input name="name" class="input input-lg" placeholder="Trip name, e.g. Lagos for Christmas" value="${esc(t.name)}" maxlength="60" ${existing ? '' : 'autofocus'}>
+      <input name="destination" class="input" placeholder="Where to? (optional)" value="${esc(t.destination)}" maxlength="60">
+      <div class="grid-2">
+        <label class="field"><span>From</span><input type="date" name="startDate" class="input" value="${t.startDate}"></label>
+        <label class="field"><span>To</span><input type="date" name="endDate" class="input" value="${t.endDate}"></label>
+      </div>
+      <div class="amount-field amount-sm">
+        <input name="budget" type="text" inputmode="decimal" placeholder="Trip budget (optional)" value="${t.budget || ''}" aria-label="Budget">
+        ${currencySelect('currency', t.currency)}
+      </div>
+      <label class="field"><span>Who is sharing costs? Separate with commas.</span><input name="people" class="input" value="${esc((t.people || ['Me']).join(', '))}" placeholder="Me, Ada, Tunde"></label>
+      <label class="toggle"><input type="checkbox" name="countInMonthly" ${t.countInMonthly ? 'checked' : ''}><span class="toggle-ui"></span><span class="toggle-text"><b>Count in my monthly budget</b><small>New trip expenses also show in the monthly total. You can change it per expense.</small></span></label>
+      <p class="form-error" role="alert"></p>
+      <div class="sheet-foot">
+        ${existing ? '<button type="button" class="btn btn-quiet danger-text" data-delete>Delete</button>' : ''}
+        <button class="btn btn-primary btn-wide">${existing ? 'Save changes' : 'Create trip'}</button>
+      </div>
+    </form>`, {
+    tall: true,
+    onMount(sheet) {
+      const form = sheet.querySelector('form');
+      sheet.querySelector('[data-delete]')?.addEventListener('click', async () => {
+        if (await confirmSheet({ title: `Delete ${existing.name}?`, body: 'This also deletes all expenses logged on this trip.' })) {
+          store.deleteTrip(existing.id);
+          closeSheet();
+          location.hash = '#trips';
+          toast('Trip deleted');
+        }
+      });
+      form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const err = sheet.querySelector('.form-error');
+        const name = form.name.value.trim();
+        if (!name) { err.textContent = 'Give the trip a name.'; return; }
+        if (form.endDate.value < form.startDate.value) { err.textContent = 'The end date is before the start date.'; return; }
+        const people = form.people.value.split(',').map((p) => p.trim()).filter(Boolean);
+        if (!people.length) people.push('Me');
+        const data = {
+          ...(existing ? { id: existing.id } : {}),
+          name, destination: form.destination.value.trim(), startDate: form.startDate.value, endDate: form.endDate.value,
+          budget: parseAmount(form.budget.value) || 0, currency: form.currency.value, people, countInMonthly: form.countInMonthly.checked,
+        };
+        store.saveTrip(data);
+        closeSheet();
+        toast(existing ? 'Changes saved' : `${name} created`);
+      });
+    },
+  });
+}
+
+export function tripExpenseSheet(existing, trip, { amount: prefill } = {}) {
+  const s = S();
+  const e = existing || { amount: prefill || '', currency: trip.currency, category: '', note: '', date: today() < trip.startDate ? trip.startDate : (today() > trip.endDate ? trip.endDate : today()), payer: 'Me', split: true, countInMonthly: !!trip.countInMonthly };
+  const people = trip.people?.length ? trip.people : ['Me'];
+  const needsBase = () => true;
+  openSheet(`<form class="sheet-body" novalidate>
+      <header class="sheet-head">
+        <h2 class="sheet-title">${existing ? 'Edit trip expense' : esc(trip.name)}</h2>
+        <button type="button" class="icon-btn" data-close aria-label="Close">✕</button>
+      </header>
+      <div class="amount-field">
+        <input name="amount" type="text" inputmode="decimal" placeholder="0" value="${e.amount || ''}" autocomplete="off" ${existing ? '' : 'autofocus'} aria-label="Amount">
+        ${currencySelect('currency', e.currency)}
+      </div>
+      ${convertBox()}
+      <div class="field-label">Category</div>
+      ${categoryGrid(TRIP_CATEGORIES, e.category)}
+      ${people.length > 1 || existing ? `<div class="field-label">Paid by</div>
+      <div class="chip-row">${people.map((p) => chip('payer', p, esc(p), p === e.payer)).join('')}</div>
+      <label class="toggle"><input type="checkbox" name="split" ${e.split !== false ? 'checked' : ''}><span class="toggle-ui"></span><span class="toggle-text"><b>Split equally</b><small>Shared by ${people.length} people</small></span></label>` : '<input type="hidden" name="payer" value="Me">'}
+      <input name="note" class="input" placeholder="Note or place (optional)" value="${esc(e.note)}" maxlength="120">
+      ${dateChips('date', e.date)}
+      <label class="toggle"><input type="checkbox" name="countInMonthly" ${e.countInMonthly ? 'checked' : ''}><span class="toggle-ui"></span><span class="toggle-text"><b>Also count in monthly budget</b><small>Shows as Travel in ${esc(s.settings.currency)} on your monthly total</small></span></label>
+      <p class="form-error" role="alert"></p>
+      <div class="sheet-foot">
+        ${existing ? '<button type="button" class="btn btn-quiet danger-text" data-delete>Delete</button>' : ''}
+        <button class="btn btn-primary btn-wide">${existing ? 'Save changes' : 'Add to trip'}</button>
+      </div>
+    </form>`, {
+    tall: true,
+    onMount(sheet) {
+      const form = sheet.querySelector('form');
+      wireDateChips(sheet, 'date');
+      // Convert into the trip currency (for trip totals).
+      const conv = wireConversion(sheet, { target: trip.currency });
+      if (existing && existing.currency !== trip.currency && existing.tripAmount) {
+        sheet.querySelector('.convert input').value = (existing.tripAmount / existing.amount).toFixed(4);
+      }
+      sheet.querySelector('[data-delete]')?.addEventListener('click', async () => {
+        if (await confirmSheet({ title: 'Delete this trip expense?' })) {
+          const copy = { ...existing };
+          store.deleteTripExpense(existing.id);
+          closeSheet();
+          toast('Expense deleted', { action: 'Undo', onAction: () => store.update((st) => { st.tripExpenses.push(copy); }) });
+        }
+      });
+      form.addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const err = sheet.querySelector('.form-error');
+        const amount = parseAmount(form.amount.value);
+        const category = form.querySelector('input[name="category"]:checked')?.value;
+        if (!(amount > 0)) { err.textContent = 'Enter an amount above zero.'; return; }
+        if (!category) { err.textContent = 'Pick a category.'; return; }
+        const currency = form.currency.value;
+        const rate = conv.rate();
+        if (currency !== trip.currency && !(rate > 0)) { err.textContent = `Enter the ${currency} to ${trip.currency} rate.`; return; }
+        if (currency !== trip.currency) rememberRate(currency, trip.currency, rate);
+        const tripAmount = round2(amount * rate);
+        // Amount in the main currency, for the monthly budget.
+        let baseAmount = amount;
+        const main = s.settings.currency;
+        if (currency !== main) {
+          if (trip.currency === main) baseAmount = tripAmount;
+          else {
+            const r = lastRate(currency, main) || (needsBase() ? await fetchRate(currency, main) : null);
+            baseAmount = r ? amount * r : tripAmount;
+          }
+        }
+        const payer = form.querySelector('[name="payer"]:checked')?.value || form.querySelector('[name="payer"]')?.value || 'Me';
+        store.saveTripExpense({
+          ...(existing || {}), tripId: trip.id, amount, currency, tripAmount, baseAmount: round2(baseAmount), category,
+          note: form.note.value.trim(), date: form.date.value || today(), payer, split: form.split ? form.split.checked : true,
+          countInMonthly: form.countInMonthly.checked,
+        });
+        haptic();
+        closeSheet();
+        toast(existing ? 'Changes saved' : `Added ${fmt(amount, currency)} to ${trip.name}`);
+      });
+    },
+  });
+}

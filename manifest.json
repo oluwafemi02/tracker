@@ -1,146 +1,23 @@
 {
-  "name": "Expense Tracker",
-  "short_name": "ExpenseTracker",
-  "description": "Track, manage, and optimize your expenses with smart insights and analytics",
-  "version": "0.3.11",
-  "start_url": "/tracker/",
-  "display": "standalone",
-  "background_color": "#f8fafc",
-  "theme_color": "#667eea",
-  "orientation": "portrait-primary",
-  "scope": "/tracker/",
   "id": "com.expensetracker.pwa",
-  "categories": [
-    "finance",
-    "productivity",
-    "utilities"
-  ],
-  "lang": "en",
-  "dir": "ltr",
+  "name": "Tracker",
+  "short_name": "Tracker",
+  "description": "Personal expenses, bills with reminders, and trips.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#eef2f0",
+  "theme_color": "#1e6b57",
+  "lang": "en-GB",
+  "categories": ["finance", "productivity"],
   "icons": [
-    {
-      "src": "icons/icon-72x72.svg",
-      "sizes": "72x72",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-96x96.svg",
-      "sizes": "96x96",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-128x128.svg",
-      "sizes": "128x128",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-144x144.svg",
-      "sizes": "144x144",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-152x152.svg",
-      "sizes": "152x152",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-192x192.svg",
-      "sizes": "192x192",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "icons/icon-384x384.svg",
-      "sizes": "384x384",
-      "type": "image/svg+xml",
-      "purpose": "any"
-    },
-    {
-      "src": "icons/icon-512x512.svg",
-      "sizes": "512x512",
-      "type": "image/svg+xml",
-      "purpose": "any maskable"
-    }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    {
-      "name": "Add Expense",
-      "short_name": "Add",
-      "description": "Quickly add a new expense",
-      "url": "/tracker/?action=add",
-      "icons": [
-        {
-          "src": "icons/shortcut-add.svg",
-          "sizes": "96x96",
-          "type": "image/svg+xml"
-        }
-      ]
-    },
-    {
-      "name": "Dashboard",
-      "short_name": "Stats",
-      "description": "View spending analytics",
-      "url": "/tracker/?tab=dashboard",
-      "icons": [
-        {
-          "src": "icons/shortcut-dashboard.svg",
-          "sizes": "96x96",
-          "type": "image/svg+xml"
-        }
-      ]
-    },
-    {
-      "name": "Budget Settings",
-      "short_name": "Budget",
-      "description": "Manage your budget",
-      "url": "/tracker/?tab=settings",
-      "icons": [
-        {
-          "src": "icons/shortcut-settings.svg",
-          "sizes": "96x96",
-          "type": "image/svg+xml"
-        }
-      ]
-    },
-    {
-      "name": "Recurring Expenses",
-      "short_name": "Recurring",
-      "description": "Manage recurring payments",
-      "url": "/tracker/?action=recurring",
-      "icons": [
-        {
-          "src": "icons/shortcut-recurring.svg",
-          "sizes": "96x96",
-          "type": "image/svg+xml"
-        }
-      ]
-    }
-  ],
-  "related_applications": [],
-  "prefer_related_applications": false,
-  "share_target": {
-    "action": "/tracker/",
-    "method": "POST",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    },
-    "enctype": "multipart/form-data"
-  },
-  "display_override": [
-    "window-controls-overlay",
-    "standalone"
-  ],
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "launch_handler": {
-    "client_mode": "focus-existing"
-  }
+    { "name": "Add expense", "url": "./?add=1", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Bills", "url": "./?tab=bills", "icons": [{ "src": "icons/icon-192.png", "sizes": "192x192" }] }
+  ]
 }

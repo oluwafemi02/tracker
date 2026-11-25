@@ -1,5 +1,1 @@
-{
-  "version": "0.3.11",
-  "releaseDate": "2026-02-14",
-  "description": "Fix missing helper functions, align PWA share_target settings, and stabilize runtime initialization."
-}
+{ "version": "1.0.0", "releaseDate": "2026-11-25", "description": "Rebuilt app: bills with reminders that work on iPhone, calendar export, optional push server, new design." }

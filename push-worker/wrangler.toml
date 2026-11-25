@@ -1,0 +1,21 @@
+name = "tracker-push"
+main = "src/index.js"
+compatibility_date = "2026-11-01"
+
+# Check for due reminders every 15 minutes.
+[triggers]
+crons = ["*/15 * * * *"]
+
+# Create with: npx wrangler kv namespace create DEVICES
+# then paste the id it prints below.
+[[kv_namespaces]]
+binding = "DEVICES"
+id = "PASTE_YOUR_KV_NAMESPACE_ID_HERE"
+
+[vars]
+# Your contact, required by Apple's push service. Use your own email.
+VAPID_SUBJECT = "mailto:you@example.com"
+# Only accept requests from your app. Change if you host it elsewhere.
+ALLOWED_ORIGIN = "https://oluwafemi02.github.io"
+MAX_DEVICES = "5"
+# VAPID_PUBLIC_KEY and VAPID_PRIVATE_JWK are set as secrets, see README.md.

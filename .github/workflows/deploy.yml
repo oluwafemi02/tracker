@@ -52,8 +52,8 @@ jobs:
       - name: Update service worker cache version
         run: |
           TIMESTAMP=$(date +%s)
-          sed -i "s/const CACHE_NAME = .*/const CACHE_NAME = 'expense-tracker-v2-$TIMESTAMP';/" sw.js
-          echo "✅ Updated cache version to: expense-tracker-v2-$TIMESTAMP"
+          sed -i "s/const CACHE_NAME = .*/const CACHE_NAME = 'tracker-$TIMESTAMP';/" sw.js
+          echo "✅ Updated cache version to: tracker-$TIMESTAMP"
           
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

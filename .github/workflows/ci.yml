@@ -10,10 +10,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
-      - run: npm ci --ignore-scripts || npm i --ignore-scripts
-      - run: npm run check:versions
-      - run: npm run check:manifest
-      - run: npm run check:duplicates
-      - run: npm run check:smoke
-      - run: npm run lint
+          node-version: '22'
+      - name: App checks (syntax, unit tests, offline file list)
+        run: npm run check
+      - name: Push server tests
+        working-directory: push-worker
+        run: |
+          npm install --no-audit --no-fund
+          npm test

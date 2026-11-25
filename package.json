@@ -1,21 +1,14 @@
 {
-  "name": "expense-tracker-pwa",
-  "version": "0.3.11",
-  "description": "A Progressive Web App for tracking personal expenses",
-  "author": "ExpenseTracker Team",
+  "name": "tracker",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal expense tracker PWA with bill reminders and trips",
+  "type": "module",
   "license": "MIT",
-  "keywords": [
-    "expense-tracker",
-    "pwa",
-    "progressive-web-app",
-    "budget",
-    "finance"
-  ],
   "scripts": {
-    "check:duplicates": "node scripts/check-duplicate-functions.js",
-    "check:versions": "node scripts/sync-version.js",
-    "check:manifest": "node scripts/validate-manifest.js",
-    "check:smoke": "node scripts/smoke-test.js",
-    "lint": "node --check *.js && node --check scripts/*.js && node --check js/*.js"
+    "test": "node --test test/*.test.js",
+    "lint": "for f in js/*.js sw.js push-worker/src/*.js; do node --check \"$f\" || exit 1; done",
+    "check": "npm run lint && npm test && node scripts/check-shell.js",
+    "serve": "python3 -m http.server 8080"
   }
 }
