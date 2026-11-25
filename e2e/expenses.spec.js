@@ -105,6 +105,8 @@ test.describe('Expenses', () => {
 
   test('asks for a rate when none can be looked up', async ({ page }) => {
     await boot(page, {});
+    const lookups = [];
+    page.on('request', (r) => { if (/frankfurter/.test(r.url())) lookups.push(r.url()); });
     await page.locator('.fab').click();
     const s = sheet(page);
     await s.locator('input[name="amount"]').fill('10000');
@@ -115,6 +117,7 @@ test.describe('Expenses', () => {
     await s.locator('.convert input').fill('0.00058');
     await s.getByRole('button', { name: 'Add expense' }).click();
     expect((await getState(page)).expenses[0].baseAmount).toBe(5.8);
+    expect(lookups, 'no lookup for a currency the rate source does not cover').toEqual([]);
     // The rate is remembered for next time.
     await page.locator('.fab').click();
     await sheet(page).locator('select[name="currency"]').selectOption('NGN');

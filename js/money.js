@@ -57,10 +57,14 @@ export function rememberRate(from, to, rate) {
   localStorage.setItem(RATE_KEY, JSON.stringify(all));
 }
 
+// Currencies the ECB reference rates cover. Others (NGN, GHS, KES, ...) need a rate typed in.
+export const ECB = new Set(['EUR', 'USD', 'JPY', 'BGN', 'CZK', 'DKK', 'GBP', 'HUF', 'PLN', 'RON', 'SEK', 'CHF', 'ISK', 'NOK', 'TRY', 'AUD', 'BRL', 'CAD', 'CNY', 'HKD', 'IDR', 'ILS', 'INR', 'KRW', 'MXN', 'MYR', 'NZD', 'PHP', 'SGD', 'THB', 'ZAR']);
+
 // Fetch a live ECB rate. Falls back to the last rate used, then null.
 export async function fetchRate(from, to) {
   if (from === to) return 1;
   const cached = readRates()[`${from}>${to}`];
+  if (!ECB.has(from) || !ECB.has(to)) return cached ? cached.rate : null;
   if (cached && Date.now() - cached.at < 6 * 3600e3) return cached.rate;
   const urls = [
     `https://api.frankfurter.dev/v1/latest?base=${from}&symbols=${to}`,
