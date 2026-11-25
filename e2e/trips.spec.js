@@ -113,7 +113,8 @@ test.describe('Trips', () => {
     await page.getByRole('button', { name: 'Mark trip as finished' }).click();
     await expectToast(page, 'Trip marked as finished');
     await page.getByRole('button', { name: 'Reopen trip' }).click();
-    expect((await getState(page)).trips[0].closed).toBe(false);
+    await expectToast(page, 'Trip reopened');
+    await expect.poll(async () => (await getState(page)).trips[0].closed).toBe(false);
 
     await page.getByRole('button', { name: 'Edit' }).click();
     await sheet(page).getByRole('button', { name: 'Delete' }).click();
