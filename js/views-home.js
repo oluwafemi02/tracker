@@ -95,6 +95,15 @@ function expenseRow(e) {
   </li>`;
 }
 
+function transferNudges() {
+  const s = S();
+  if (!s.settings.transferReminder?.enabled) return '';
+  return store.upcomingTransfers().filter((x) => !s.settings.transfersDone?.[`${x.account.id}:${x.month}`]).map((x) => `<div class="nudge transfer-nudge">
+      <span class="nudge-text"><b>Move ${fmt(x.amount, x.account.currency)} to ${esc(x.account.name)}</b> by ${shortDate(x.by)} for this month's bills.</span>
+      <button class="btn btn-quiet btn-sm" data-action="transfer-done" data-id="${x.account.id}" data-month="${x.month}">Done</button>
+    </div>`).join('');
+}
+
 function reminderNudge() {
   const s = S();
   if (!s.bills.some((b) => b.active)) return '';
@@ -144,6 +153,7 @@ export function renderHome() {
       ${runway(sum)}
     </section>
     ${store.reviewCount() ? `<button class="nudge review-nudge" data-action="review-payments"><b>${store.reviewCount()} Apple Pay payment${store.reviewCount() === 1 ? '' : 's'} to check.</b> Pick a category once per shop.</button>` : ''}
+    ${transferNudges()}
     ${reminderNudge()}
     ${attention.length ? `<section class="block"><h2 class="block-title attention">Needs paying</h2><ul class="list">${attention.map((b) => billRow(b)).join('')}</ul></section>` : ''}
     <section class="block">

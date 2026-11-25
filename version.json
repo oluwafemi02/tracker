@@ -1,5 +1,5 @@
 {
-  "version": "1.3.0",
+  "version": "1.4.0",
   "releaseDate": "2026-11-25",
-  "description": "Bills: one time or repeating, with end options. Version shown in the app."
+  "description": "Accounts: see how much each bank account needs for its bills each month, with transfer reminders."
 }

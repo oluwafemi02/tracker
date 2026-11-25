@@ -111,6 +111,7 @@ export function expenseSheet(existing = null, { tripId } = {}) {
       ${rest.length ? `<details class="more-cats"><summary>More categories</summary>${categoryGrid(rest, e.category)}</details>` : ''}
       <button type="button" class="link-btn" data-new-cat>+ New category</button>
       <input name="note" class="input" placeholder="Note (optional)" value="${esc(e.note)}" maxlength="120">
+      ${s.accounts.length ? `<div class="field-label">Paid with</div><div class="chip-row">${chip('accountId', '', 'Not set', !(existing ? e.accountId : s.settings.lastExpenseAccountId))}${s.accounts.map((a) => chip('accountId', a.id, esc(a.name), a.id === (existing ? e.accountId : s.settings.lastExpenseAccountId))).join('')}</div>` : ''}
       ${dateChips('date', e.date)}
       <p class="form-error" role="alert"></p>
       <div class="sheet-foot">
@@ -157,7 +158,9 @@ export function expenseSheet(existing = null, { tripId } = {}) {
           ...(existing || {}),
           amount, currency, baseAmount: round2(amount * rate), category,
           note: form.note.value.trim(), date: form.date.value || today(),
+          ...(form.querySelector('[name="accountId"]') ? { accountId: form.querySelector('[name="accountId"]:checked')?.value || null } : {}),
         });
+        if (!existing && form.querySelector('[name="accountId"]')) store.update((st) => { st.settings.lastExpenseAccountId = form.querySelector('[name="accountId"]:checked')?.value || null; }, { silent: true });
         haptic();
         closeSheet();
         toast(existing ? 'Changes saved' : `Added ${fmt(amount, currency)}`);
@@ -237,7 +240,10 @@ export function billSheet(existing = null) {
       <div class="field-label">Remind me</div>
       <div class="chip-row">${REMIND_OPTIONS.map(([v, l]) => chip('remindDays', v, l, Number(b.remindDays) === v)).join('')}</div>
       <label class="toggle"><input type="checkbox" name="autopay" ${b.autopay ? 'checked' : ''}><span class="toggle-ui"></span><span class="toggle-text"><b>Paid automatically</b><small>Direct debit or card. It gets logged for you on the due date.</small></span></label>
-      <label class="field"><span>Category</span><select name="category" class="input">${cats.map((c) => `<option value="${c.id}" ${c.id === b.category ? 'selected' : ''}>${c.icon} ${esc(c.name)}</option>`).join('')}</select></label>
+      <div class="grid-2">
+        <label class="field"><span>Category</span><select name="category" class="input">${cats.map((c) => `<option value="${c.id}" ${c.id === b.category ? 'selected' : ''}>${c.icon} ${esc(c.name)}</option>`).join('')}</select></label>
+        ${accountSelect('accountId', existing ? b.accountId : (s.settings.lastBillAccountId || ''))}
+      </div>
       <details class="more-cats" ${b.notes ? 'open' : ''}><summary>Notes</summary>
         <input name="notes" class="input" placeholder="Account number hint, reference, etc." value="${esc(b.notes || '')}" maxlength="200">
       </details>
@@ -278,6 +284,7 @@ export function billSheet(existing = null) {
         sheet.querySelector('.schedule-summary').textContent = sc.error ? '' : describeSchedule({ ...sc, anchorDay: Number(sc.nextDue.slice(8)) });
       };
       form.addEventListener('change', refresh);
+      wireAccountSelect(sheet, 'accountId');
       form.addEventListener('input', (e) => { if (['endCount', 'nextDue', 'endDate'].includes(e.target.name)) refresh(); });
       refresh();
       sheet.querySelector('[data-delete]')?.addEventListener('click', async () => {
@@ -303,8 +310,10 @@ export function billSheet(existing = null) {
           frequency: sc.frequency, nextDue: form.nextDue.value, endDate: sc.endDate, endMode: sc.endMode,
           remindDays: Number(form.querySelector('[name="remindDays"]:checked')?.value ?? 2),
           autopay: form.autopay.checked, notes: form.notes.value.trim(),
+          accountId: form.accountId.value && form.accountId.value !== '__new' ? form.accountId.value : null,
           active: true,
         });
+        if (form.accountId.value && form.accountId.value !== '__new') store.update((st) => { st.settings.lastBillAccountId = form.accountId.value; }, { silent: true });
         haptic();
         closeSheet();
         toast(existing ? 'Changes saved' : `${name} added`);
@@ -530,6 +539,104 @@ export function reviewSheet() {
         closeSheet();
         const left = store.reviewCount();
         toast(`Saved${also ? `, plus ${also} more from the same shop${also === 1 ? '' : 's'}` : ''}${left ? `. ${left} left to check` : ''}`);
+      });
+    },
+  });
+}
+
+// ---------- bank accounts
+
+export function accountSheet(existing = null, onDone) {
+  const s = S();
+  const a = existing || { name: '', currency: s.settings.currency };
+  openSheet(`<form class="sheet-body" novalidate>
+      <header class="sheet-head"><h2 class="sheet-title">${existing ? 'Edit account' : 'New account'}</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+      <div class="split">
+        <input name="name" class="input" placeholder="Bank or card, e.g. Swedbank" value="${esc(a.name)}" maxlength="40" ${existing ? '' : 'autofocus'}>
+        ${currencySelect('currency', a.currency)}
+      </div>
+      <p class="form-error" role="alert"></p>
+      <div class="sheet-foot">
+        ${existing ? '<button type="button" class="btn btn-quiet danger-text" data-delete>Delete</button>' : ''}
+        <button class="btn btn-primary btn-wide">${existing ? 'Save changes' : 'Add account'}</button>
+      </div>
+    </form>`, {
+    onMount(sheet) {
+      const form = sheet.querySelector('form');
+      sheet.querySelector('[data-delete]')?.addEventListener('click', async () => {
+        const used = S().bills.filter((b) => b.accountId === existing.id).length;
+        if (await confirmSheet({ title: `Delete ${existing.name}?`, body: used ? `${used} bill${used === 1 ? '' : 's'} will have no account until you pick another.` : 'No bills use it.' })) {
+          store.deleteAccount(existing.id);
+          closeSheet();
+          toast('Account deleted');
+        }
+      });
+      form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const name = form.name.value.trim();
+        if (!name) { sheet.querySelector('.form-error').textContent = 'Give the account a name.'; return; }
+        if (S().accounts.some((x) => x.name.toLowerCase() === name.toLowerCase() && x.id !== existing?.id)) { sheet.querySelector('.form-error').textContent = 'You already have an account with that name.'; return; }
+        const id = store.saveAccount({ ...(existing ? { id: existing.id } : {}), name, currency: form.currency.value });
+        closeSheet();
+        toast(existing ? 'Changes saved' : `${name} added`);
+        onDone?.(id);
+      });
+    },
+  });
+}
+
+function accountSelect(name, value, { label = 'Paid from' } = {}) {
+  const accs = S().accounts;
+  return `<label class="field"><span>${label}</span><select name="${name}" class="input">
+      <option value="">${accs.length ? 'Not set' : 'No accounts yet'}</option>
+      ${accs.map((a) => `<option value="${a.id}" ${a.id === value ? 'selected' : ''}>${esc(a.name)}${a.currency !== S().settings.currency ? ` (${a.currency})` : ''}</option>`).join('')}
+      <option value="__new">Add an account</option>
+    </select></label>`;
+}
+
+function wireAccountSelect(sheet, name) {
+  const sel = sheet.querySelector(`select[name="${name}"]`);
+  let prev = sel.value;
+  sel.addEventListener('change', () => {
+    if (sel.value !== '__new') { prev = sel.value; return; }
+    sel.value = prev;
+    accountSheet(null, (id) => {
+      const a = store.account(id);
+      sel.insertAdjacentHTML('beforeend', '');
+      const opt = document.createElement('option');
+      opt.value = id; opt.textContent = a.name;
+      sel.insertBefore(opt, sel.querySelector('option[value="__new"]'));
+      sel.value = id; prev = id;
+      sel.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  });
+}
+
+// Pick the account for each bill that has none.
+export function assignAccountsSheet() {
+  const bills = S().bills.filter((b) => b.active && b.nextDue && !b.accountId).sort((a, b) => a.name.localeCompare(b.name));
+  if (!bills.length) return;
+  openSheet(`<form class="sheet-body">
+      <header class="sheet-head"><h2 class="sheet-title">Which account pays?</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+      ${S().accounts.length ? '' : '<p class="muted small">Add your accounts first.</p><button type="button" class="btn btn-quiet btn-wide" data-add-account>Add an account</button>'}
+      <ul class="review-list">${bills.map((b) => `<li>
+          <span class="tx-main"><span class="tx-title">${esc(b.name)}</span><span class="tx-sub">${esc(store.category(b.category).name)}</span></span>
+          <span class="review-amt">${fmt(b.amount, b.currency)}</span>
+          ${accountSelect(b.id, '', { label: '' })}
+        </li>`).join('')}</ul>
+      <div class="sheet-foot"><button class="btn btn-primary btn-wide">Save</button></div>
+    </form>`, {
+    tall: true,
+    onMount(sheet) {
+      bills.forEach((b) => wireAccountSelect(sheet, b.id));
+      sheet.querySelector('[data-add-account]')?.addEventListener('click', () => accountSheet(null, () => { closeSheet(); setTimeout(assignAccountsSheet, 300); }));
+      sheet.querySelector('form').addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const pairs = bills.map((b) => ({ billId: b.id, accountId: ev.target.querySelector(`select[name="${b.id}"]`).value })).filter((p) => p.accountId && p.accountId !== '__new');
+        if (!pairs.length) { toast('Pick an account for at least one bill'); return; }
+        store.assignAccounts(pairs);
+        closeSheet();
+        toast(`Saved ${pairs.length} bill${pairs.length === 1 ? '' : 's'}`);
       });
     },
   });

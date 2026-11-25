@@ -9,7 +9,8 @@
 import { addDays, occurrencesBetween, parseISO, today, shortDate, FREQUENCIES, pad } from './dates.js';
 import { fmt } from './money.js';
 import { buildICS } from './ics.js';
-import { getState, attentionCount, billStatus, update } from './store.js';
+import { getState, attentionCount, billStatus, update, accountPlan, category } from './store.js';
+import { monthKey, shiftMonth } from './dates.js';
 
 export const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 export const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -60,7 +61,38 @@ export function reminderSchedule(horizonDays = 100) {
       if (!bill.autopay) push('late', addDays(due, 1), `${bill.name} is still unpaid`, `${amt ? amt + ' ' : ''}was due yesterday. Tap to mark it paid or skip it.`);
     }
   }
+  items.push(...transferSchedule());
   return items.filter((i) => new Date(i.fireAt) > new Date(Date.now() - 6 * 3600e3)).sort((a, b) => (a.fireAt < b.fireAt ? -1 : 1));
+}
+
+// "Move €1,524 to Swedbank by 7 Dec": N days before each account's first payment of the month.
+export function transferSchedule(months = 4) {
+  const s = getState();
+  const tr = s.settings.transferReminder || {};
+  if (!tr.enabled || !s.accounts.length) return [];
+  const lead = Number(tr.daysBefore ?? 2);
+  const t = today();
+  const items = [];
+  let key = monthKey(t);
+  for (let i = 0; i < months; i++, key = shiftMonth(key, 1)) {
+    for (const g of accountPlan(key, t).accounts) {
+      if (!g.firstDue || g.firstDue < t || g.total <= 0) continue;
+      const done = s.settings.transfersDone?.[`${g.account.id}:${key}`];
+      if (done) continue;
+      const names = g.byCat.slice(0, 3).map((c) => category(c.category).name);
+      const count = g.byCat.reduce((n, c) => n + c.payments.length, 0);
+      const amount = s.settings.hideAmountsInPush ? 'money' : fmt(g.total, g.currency);
+      items.push({
+        id: `transfer:${g.account.id}:${key}`,
+        fireAt: localDateTime(addDays(g.firstDue, -lead), s.settings.remindTime).toISOString(),
+        title: `Move ${amount} to ${g.account.name} by ${shortDate(g.firstDue)}`,
+        body: `${count} payment${count === 1 ? '' : 's'} this month: ${names.join(', ')}${g.byCat.length > 3 ? ' and more' : ''}.`,
+        url: './?tab=bills&view=accounts',
+        tag: `transfer:${g.account.id}:${key}`,
+      });
+    }
+  }
+  return items;
 }
 
 // ---------- badge + local notifications

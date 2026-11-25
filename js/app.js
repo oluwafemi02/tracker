@@ -4,10 +4,10 @@ import * as store from './store.js';
 import { bindActions, on, toast, closeAllSheets, $, haptic } from './ui.js';
 import { today } from './dates.js';
 import { renderHome, renderActivity, setActivityMonth, setActivityFilter } from './views-home.js';
-import { renderBills, billDetail, payNow } from './views-bills.js';
+import { renderBills, billDetail, payNow, setBillsView, setAccountMonth } from './views-bills.js';
 import { renderTrips, renderTrip } from './views-trips.js';
 import { renderSettings, mountSettings, backup, csv, reimport, erase, deleteCategory, recoverTrips } from './views-settings.js';
-import { expenseSheet, billSheet, tripSheet, tripExpenseSheet, reviewSheet } from './forms.js';
+import { expenseSheet, billSheet, tripSheet, tripExpenseSheet, reviewSheet, accountSheet, assignAccountsSheet } from './forms.js';
 import * as rem from './reminders.js';
 import * as push from './push.js';
 import { VERSION } from './version.js';
@@ -129,6 +129,14 @@ on('push-sync', async () => {
 });
 on('push-disconnect', async () => { await push.disconnect(); toast('Push server disconnected'); });
 on('review-payments', () => reviewSheet());
+on('new-account', () => accountSheet());
+on('edit-account', ({ id }) => accountSheet(store.account(id)));
+on('assign-accounts', () => assignAccountsSheet());
+on('account-month', ({ key }) => { setAccountMonth(key); render({ keepScroll: true }); });
+on('transfer-done', ({ id, month }) => {
+  store.update((s) => { s.settings.transfersDone = { ...(s.settings.transfersDone || {}), [`${id}:${month}`]: Date.now() }; });
+  toast('Marked as moved');
+});
 on('applepay-setup', async (_, el) => {
   el.disabled = true;
   try { await push.setupInbox(); toast('Apple Pay logging is ready. Follow the steps to add the Shortcut.'); }
@@ -167,6 +175,10 @@ on('recover-trips', () => recoverTrips());
 on('reimport', () => reimport());
 on('erase', () => erase());
 on('delete-category', ({ id }) => deleteCategory(id));
+
+view.addEventListener('change', (e) => {
+  if (e.target.matches('[data-bills-view]')) { setBillsView(e.target.value); render({ keepScroll: true }); }
+});
 
 view.addEventListener('input', (e) => {
   if (e.target.dataset.input === 'activity-search') {
@@ -208,6 +220,7 @@ function handleDeepLink() {
   const bill = params.get('bill');
   const tab = params.get('tab');
   const add = params.get('add');
+  if (params.get('view') === 'accounts') setBillsView('accounts');
   if (bill || tab || add) history.replaceState(null, '', location.pathname + (bill ? '#bills' : tab ? `#${tab}` : location.hash));
   route = parseRoute();
   render();

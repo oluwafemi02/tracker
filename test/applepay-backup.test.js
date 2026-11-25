@@ -124,3 +124,66 @@ test('backup fingerprint ignores phone-only settings', () => {
   assert.equal(dataHash({ ...s, settings: { currency: 'EUR', push: { lastSync: 'b' } } }), h);
   assert.notEqual(dataHash({ ...s, expenses: [{ id: 2 }] }), h);
 });
+
+test('accounts: monthly plan per account, have-by dates, transfers, card matching', async () => {
+  resetStorage();
+  const store = await import('../js/store.js?v=accounts');
+  store.load();
+  const swed = store.saveAccount({ name: 'Swedbank', currency: 'EUR' });
+  const seb = store.saveAccount({ name: 'SEB', currency: 'EUR' });
+  const bill = (name, amount, nextDue, category, accountId, extra = {}) => store.saveBill({ name, amount, currency: 'EUR', category, frequency: 'monthly', nextDue, remindDays: 2, accountId, ...extra });
+  bill('Mortgage', 1160, '2026-12-10', 'mortgage', swed);
+  bill('Car insurance', 82, '2026-12-07', 'insurance', swed);
+  bill('House insurance', 17, '2026-12-20', 'insurance', swed);
+  bill('Health insurance', 101, '2026-12-07', 'insurance', swed);
+  bill('Casco', 150, '2026-12-12', 'insurance', seb);
+  bill('Netflix', 12.99, '2026-12-16', 'subscriptions', null);
+  bill('Gym', 30, '2026-11-20', 'other', seb); // overdue in November
+
+  const dec = store.accountPlan('2026-12', '2026-11-25');
+  const s = dec.accounts.find((g) => g.account.name === 'Swedbank');
+  assert.equal(s.total, 1360);
+  assert.equal(s.firstDue, '2026-12-07');
+  assert.deepEqual(s.byCat.map((c) => [c.category, c.total, c.payments.length]), [['mortgage', 1160, 1], ['insurance', 200, 3]]);
+  assert.deepEqual(s.haveBy, [{ date: '2026-12-07', amount: 183 }, { date: '2026-12-10', amount: 1343 }, { date: '2026-12-20', amount: 1360 }]);
+  const sebDec = dec.accounts.find((g) => g.account.name === 'SEB');
+  assert.equal(sebDec.total, 180, 'Casco and the December gym payment');
+  assert.equal(dec.unassigned.total, 12.99);
+  assert.deepEqual(dec.unassignedBills.map((b) => b.name), ['Netflix']);
+  assert.equal(dec.total, 1552.99);
+
+  // November (current): the overdue gym payment is needed now.
+  const nov = store.accountPlan('2026-11', '2026-11-25');
+  const sebNov = nov.accounts.find((g) => g.account.name === 'SEB');
+  assert.equal(sebNov.total, 30);
+  assert.deepEqual(sebNov.haveBy, [{ date: '2026-11-25', amount: 30 }]);
+
+  // Transfers: 2 days before Swedbank's first December bill.
+  assert.deepEqual(store.upcomingTransfers('2026-12-05').map((x) => [x.account.name, x.amount, x.by]), [['Swedbank', 1360, '2026-12-07'], ['SEB', 210, '2026-12-05']], 'SEB still has the unpaid November gym payment, needed now');
+  assert.deepEqual(store.upcomingTransfers('2026-12-01').map((x) => x.account.name), ['SEB'], 'Swedbank is 6 days away; SEB has the late payment');
+
+  // Card names to accounts.
+  assert.equal(store.accountForCard('Swedbank Debit Mastercard'), swed);
+  assert.equal(store.accountForCard('SEB'), seb);
+  assert.equal(store.accountForCard('Revolut'), null);
+
+  // Deleting an account clears it from bills.
+  store.deleteAccount(seb);
+  assert.equal(store.getState().bills.find((b) => b.name === 'Casco').accountId, null);
+});
+
+test('transfer reminders go into the push schedule', async () => {
+  resetStorage();
+  const store = await import('../js/store.js');
+  const rem = await import('../js/reminders.js');
+  store.load();
+  const swed = store.saveAccount({ name: 'Swedbank', currency: 'EUR' });
+  const d = (n) => { const x = new Date(); x.setDate(x.getDate() + n); return `${x.getFullYear()}-${String(x.getMonth() + 1).padStart(2, '0')}-${String(x.getDate()).padStart(2, '0')}`; };
+  store.saveBill({ name: 'Mortgage', amount: 1160, currency: 'EUR', category: 'mortgage', frequency: 'monthly', nextDue: d(10), remindDays: 2, accountId: swed });
+  const items = rem.transferSchedule();
+  assert.ok(items.length >= 3);
+  assert.match(items[0].title, /^Move €1,160\.00 to Swedbank by /);
+  assert.match(items[0].id, /^transfer:/);
+  store.update((s) => { s.settings.transferReminder.enabled = false; });
+  assert.equal(rem.transferSchedule().length, 0);
+});

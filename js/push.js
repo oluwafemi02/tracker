@@ -2,7 +2,7 @@
 // The phone keeps all data. It sends the server only the reminder schedule
 // (bill name, amount unless hidden, and when to alert) plus a calendar list of bills.
 
-import { getState, update, attentionCount, uid } from './store.js';
+import { getState, update, attentionCount, uid, accountForCard } from './store.js';
 import { inboxToExpenses } from './applepay.js';
 import { lastRate, fetchRate, ECB } from './money.js';
 import { encryptJSON, decryptJSON, backupPayload, dataHash, deriveKeys, restoredState } from './backup.js';
@@ -145,7 +145,7 @@ export function fetchInbox() {
       const curs = new Set(items.map((i) => (String(i.amount).match(/\b[A-Z]{3}\b/) || [])[0]).filter(Boolean));
       for (const c of curs) if (c !== main && ECB.has(c) && !lastRate(c, main)) await fetchRate(c, main);
       const res = inboxToExpenses(items, {
-        main, rules: getState().merchantRules, existing: getState().expenses, uid, rate: (c) => lastRate(c, main),
+        main, rules: getState().merchantRules, existing: getState().expenses, uid, rate: (c) => lastRate(c, main), accountFor: (c) => accountForCard(c),
       });
       update((st) => {
         st.expenses.push(...res.expenses);

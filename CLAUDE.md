@@ -45,6 +45,9 @@ No build step, no framework, no runtime dependencies (Playwright is a dev depend
 - `trips[]`: {id, name, destination, startDate, endDate, budget, currency, people[], countInMonthly, closed}
 - `tripExpenses[]`: {id, tripId, amount, currency, tripAmount (trip currency), baseAmount (main currency), category (t-*), note, date, payer, split, countInMonthly}
 - `categories[]`: {id, name, icon, kind, custom?, aliases?}
+- `accounts[]`: {id, name, currency}. Bills and expenses carry `accountId`. `settings.transferReminder {enabled, daysBefore}`, `settings.transfersDone {'<accountId>:<YYYY-MM>': ts}`, `settings.cardAccounts {walletCardName: accountId}`
+
+`store.accountPlan(month)` = per account: bill payments still due (current month, overdue included) or all of that month, by category, with cumulative "have by" dates, paid so far, and 3-month average everyday spending. `reminders.transferSchedule()` adds "Move X to Account by date" push items N days before each account's first payment of the month.
 
 Month "spent" = expenses in the month + trip expenses with `countInMonthly`.
 "Left to spend" = budget - spent - bill occurrences still due this month (including overdue).

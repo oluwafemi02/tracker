@@ -1,6 +1,6 @@
 // App state: one JSON document in localStorage, with change subscribers.
 
-import { today, addDays, nextOccurrence, occurrencesBetween, monthBounds, monthKey, diffDays, daysInMonth, parseISO } from './dates.js';
+import { today, addDays, nextOccurrence, occurrencesBetween, monthBounds, monthKey, diffDays, daysInMonth, parseISO, shiftMonth } from './dates.js';
 import { SPEND_CATEGORIES, TRIP_CATEGORIES } from './categories.js';
 import { round2 } from './money.js';
 import { migrateLegacy, hasLegacyData } from './migrate.js';
@@ -23,6 +23,11 @@ const DEFAULT_STATE = () => ({
     lastBackupAt: null,
     lastSeenVersion: null,
     applePay: { enabled: false, token: '', lastFetch: null, lastError: null },
+    transferReminder: { enabled: true, daysBefore: 2 },
+    lastBillAccountId: null,
+    cardAccounts: {},
+    transfersDone: {},
+    lastExpenseAccountId: null,
     cloudBackup: { enabled: false, keyRaw: '', backupId: '', lastAt: null, lastHash: null, lastError: null },
   },
   categories: SPEND_CATEGORIES.map((c) => ({ ...c, kind: 'spend' })),
@@ -31,6 +36,7 @@ const DEFAULT_STATE = () => ({
   trips: [],
   tripExpenses: [],
   merchantRules: {},
+  accounts: [],
   notified: {},
 });
 
@@ -127,6 +133,7 @@ export function saveExpense(data) {
       learn(s.merchantRules, data.note, data.category);
       data = { ...data, needsReview: false };
     }
+    if (data.card && data.accountId) s.settings.cardAccounts[String(data.card).trim().toLowerCase()] = data.accountId;
     const base = data.currency === s.settings.currency ? data.amount : data.baseAmount;
     const rec = { ...data, amount: round2(data.amount), baseAmount: round2(base ?? data.amount) };
     const i = s.expenses.findIndex((e) => e.id === rec.id);
@@ -435,4 +442,150 @@ export function reviewPayments(choices) {
     }
   });
   return alsoApplied;
+}
+
+// ---------- bank accounts
+
+export const account = (id) => state.accounts.find((a) => a.id === id) || null;
+
+export function saveAccount(data) {
+  let id = data.id;
+  update((s) => {
+    const i = s.accounts.findIndex((a) => a.id === data.id);
+    if (i >= 0) s.accounts[i] = { ...s.accounts[i], ...data };
+    else { id = uid('a'); s.accounts.push({ id, name: data.name, currency: data.currency || s.settings.currency, createdAt: new Date().toISOString() }); }
+  });
+  return id;
+}
+
+export function deleteAccount(id) {
+  update((s) => {
+    s.accounts = s.accounts.filter((a) => a.id !== id);
+    for (const b of s.bills) if (b.accountId === id) b.accountId = null;
+    for (const e of s.expenses) if (e.accountId === id) e.accountId = null;
+    for (const [k, v] of Object.entries(s.settings.cardAccounts || {})) if (v === id) delete s.settings.cardAccounts[k];
+    if (s.settings.lastBillAccountId === id) s.settings.lastBillAccountId = null;
+  });
+}
+
+export function assignAccounts(pairs) {
+  update((s) => {
+    for (const { billId, accountId } of pairs) {
+      const b = s.bills.find((x) => x.id === billId);
+      if (b) b.accountId = accountId || null;
+    }
+  });
+}
+
+// Wallet card name ("Revolut", "Swedbank Debit Mastercard") to an account.
+export function accountForCard(card, accounts = state.accounts, remembered = state.settings.cardAccounts || {}) {
+  const c = String(card || '').trim().toLowerCase();
+  if (!c) return null;
+  if (remembered[c] && accounts.some((a) => a.id === remembered[c])) return remembered[c];
+  const hit = accounts.find((a) => {
+    const n = a.name.trim().toLowerCase();
+    return n && (c.includes(n) || n.includes(c) || c.split(/\s+/)[0] === n.split(/\s+/)[0]);
+  });
+  return hit ? hit.id : null;
+}
+
+export function convert(amount, from, to) {
+  if (from === to) return { amount, exact: true };
+  try {
+    const rates = JSON.parse(localStorage.getItem('ledger.rates')) || {};
+    const r = rates[`${from}>${to}`];
+    return r ? { amount: amount * r.rate, exact: true } : { amount, exact: false };
+  } catch { return { amount, exact: false }; }
+}
+
+// Bill payments in a month, as { bill, due, amount (bill currency) }.
+// For the current month: what is still to pay, overdue included. Later months: all of it.
+function monthPayments(key, t) {
+  const { start, end } = monthBounds(key);
+  const isCurrent = t >= start && t < end;
+  const out = [];
+  for (const b of state.bills) {
+    if (!b.active || !b.nextDue) continue;
+    const from = isCurrent ? '0000-01-01' : start;
+    for (const due of occurrencesBetween(b.nextDue, b.frequency, from, end, b.anchorDay, b.endDate)) out.push({ bill: b, due, amount: b.amount });
+  }
+  return out.sort((a, b) => (a.due < b.due ? -1 : 1));
+}
+
+// How much each account needs in a month, by category, with "have by" dates.
+export function accountPlan(key = monthKey(today()), t = today()) {
+  const { start, end } = monthBounds(key);
+  const payments = monthPayments(key, t);
+  const isCurrent = t >= start && t < end;
+  const groups = new Map();
+  const groupFor = (acc) => {
+    const k = acc ? acc.id : '';
+    if (!groups.has(k)) groups.set(k, { account: acc, currency: acc ? acc.currency : state.settings.currency, payments: [], total: 0, approx: false });
+    return groups.get(k);
+  };
+  for (const a of state.accounts) groupFor(a);
+  for (const p of payments) {
+    const g = groupFor(account(p.bill.accountId));
+    const c = convert(p.amount, p.bill.currency, g.currency);
+    g.payments.push({ ...p, inAccount: round2(c.amount) });
+    g.total += c.amount;
+    if (!c.exact) g.approx = true;
+  }
+  const threeMonthsAgo = `${shiftMonth(key, -3)}-01`;
+  const result = [...groups.values()].map((g) => {
+    const byCat = new Map();
+    for (const p of g.payments) {
+      if (!byCat.has(p.bill.category)) byCat.set(p.bill.category, { category: p.bill.category, total: 0, payments: [] });
+      const c = byCat.get(p.bill.category);
+      c.total += p.inAccount;
+      c.payments.push(p);
+    }
+    let running = 0;
+    const haveBy = [];
+    for (const p of g.payments) {
+      running += p.inAccount;
+      const last = haveBy[haveBy.length - 1];
+      const date = p.due < t ? t : p.due; // overdue money is needed now
+      if (last && last.date === date) last.amount = round2(running);
+      else haveBy.push({ date, amount: round2(running) });
+    }
+    // Paid from this account already this month (current month only).
+    const paid = !isCurrent ? 0 : state.expenses
+      .filter((e) => e.billId && e.date >= start && e.date < end && (state.bills.find((b) => b.id === e.billId)?.accountId || null) === (g.account?.id || null))
+      .reduce((s, e) => s + convert(e.amount, e.currency, g.currency).amount, 0);
+    // Everyday spending from this account: average of the 3 months before this one.
+    const everyday = !g.account ? 0 : state.expenses
+      .filter((e) => !e.billId && e.accountId === g.account.id && e.date >= threeMonthsAgo && e.date < start)
+      .reduce((s, e) => s + convert(e.amount, e.currency, g.currency).amount, 0) / 3;
+    return {
+      ...g,
+      total: round2(g.total),
+      byCat: [...byCat.values()].map((c) => ({ ...c, total: round2(c.total) })).sort((a, b) => b.total - a.total),
+      haveBy,
+      firstDue: g.payments[0]?.due || null,
+      paid: round2(paid),
+      everyday: round2(everyday),
+    };
+  });
+  const accounts = result.filter((r) => r.account).sort((a, b) => b.total - a.total || a.account.name.localeCompare(b.account.name));
+  const unassigned = result.find((r) => !r.account) || { payments: [], total: 0, byCat: [], haveBy: [] };
+  return {
+    key, isCurrent, accounts, unassigned,
+    total: round2(result.reduce((s, r) => s + convert(r.total, r.currency, state.settings.currency).amount, 0)),
+    unassignedBills: state.bills.filter((b) => b.active && b.nextDue && !b.accountId),
+  };
+}
+
+// Transfers to make soon: an account's first payment of the month is within `days`.
+export function upcomingTransfers(t = today(), days = state.settings.transferReminder?.daysBefore ?? 2) {
+  const out = [];
+  for (const k of [monthKey(t), shiftMonth(monthKey(t), 1)]) {
+    for (const g of accountPlan(k, t).accounts) {
+      if (!g.firstDue || g.total <= 0) continue;
+      const by = g.firstDue < t ? t : g.firstDue;
+      const lead = diffDays(t, by);
+      if (lead >= 0 && lead <= days) out.push({ account: g.account, amount: g.total, by, month: k, categories: g.byCat.map((c) => c.category) });
+    }
+  }
+  return out;
 }

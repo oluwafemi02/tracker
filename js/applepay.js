@@ -79,7 +79,7 @@ export function tidyMerchant(name) {
  * rate(from) returns the rate to the main currency, or null.
  * Returns { expenses, done (inbox ids to remove), refunds, duplicates }.
  */
-export function inboxToExpenses(items, { main, rules, existing = [], rate = () => null, uid }) {
+export function inboxToExpenses(items, { main, rules, existing = [], rate = () => null, uid, accountFor = () => null }) {
   const out = [];
   const done = [];
   let refunds = 0, duplicates = 0;
@@ -111,6 +111,7 @@ export function inboxToExpenses(items, { main, rules, existing = [], rate = () =
       source: 'applepay',
       inboxId: item.id,
       card: item.card || '',
+      accountId: accountFor(item.card) || null,
       needsReview: !category || !r,
       createdAt: at.toISOString(),
     });

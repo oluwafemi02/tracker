@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.4.0 (2026-11-25)
+- Accounts: add the bank accounts and cards your bills are paid from, in any currency.
+- Every bill has a "Paid from" account; a sheet assigns accounts to existing bills in one go.
+- Bills, By account: how much each account needs per month, by category, with "Have by" dates, what is already paid, and usual everyday spending as a note.
+- Transfer reminder: a push and a Home card before each account's first bill of the month ("Move €1,524 to Swedbank by 7 Dec"), 2 days before by default.
+- Apple Pay payments are matched to accounts by card name; expenses can be marked "Paid with".
+
 ## 1.3.0 (2026-11-25)
 - Bills ask first whether they repeat or are paid once.
 - Repeating bills end never, on a date, or after a number of payments, with a live summary ("12 payments left, last on 10 Oct 2027").

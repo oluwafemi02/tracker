@@ -139,6 +139,14 @@ export function renderSettings(section) {
   return `<header class="top top-detail"><button class="back" data-action="tab" data-tab="home">Home</button><h1 class="top-title small">Settings</h1><span></span></header>
     ${remindersSection()}
     ${applePaySection()}
+    <section class="set-block" id="set-accounts">
+      <h2 class="set-title">Accounts</h2>
+      <p class="muted small">The bank accounts and cards your bills are paid from. Bills, By account then shows how much each one needs every month.</p>
+      ${s.accounts.length ? `<ul class="plain-list">${s.accounts.map((a) => `<li><span>${esc(a.name)} <span class="muted small">${a.currency}</span></span><button class="link-btn" data-action="edit-account" data-id="${a.id}">Edit</button></li>`).join('')}</ul>` : ''}
+      <button class="btn btn-quiet btn-wide" data-action="new-account">Add an account</button>
+      <label class="toggle"><input type="checkbox" data-setting="transferReminder.enabled" ${s.settings.transferReminder?.enabled ? 'checked' : ''}><span class="toggle-ui"></span><span class="toggle-text"><b>Remind me to move money</b><small>A notification before each account's first bill of the month, with the amount it needs</small></span></label>
+      <label class="field"><span>How many days before</span><select class="input" data-setting="transferReminder.daysBefore">${[1, 2, 3, 5, 7].map((d) => `<option value="${d}" ${Number(s.settings.transferReminder?.daysBefore ?? 2) === d ? 'selected' : ''}>${d} day${d === 1 ? '' : 's'} before</option>`).join('')}</select></label>
+    </section>
     <section class="set-block" id="set-budget">
       <h2 class="set-title">Budget</h2>
       <div class="grid-2">
@@ -200,8 +208,12 @@ export function mountSettings(root, section) {
     const key = el.dataset.setting;
     let v = el.type === 'checkbox' ? el.checked : el.value;
     if (key === 'monthlyBudget') v = parseAmount(v) || 0;
-    if (key === 'remindDays') v = Number(v);
-    store.update((st) => { st.settings[key] = v; });
+    if (key === 'remindDays' || key.endsWith('daysBefore')) v = Number(v);
+    store.update((st) => {
+      const [a, b] = key.split('.');
+      if (b) st.settings[a] = { ...(st.settings[a] || {}), [b]: v };
+      else st.settings[key] = v;
+    });
     if (key === 'theme') document.documentElement.dataset.theme = v;
     toast('Saved');
   }));
