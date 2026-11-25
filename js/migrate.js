@@ -112,6 +112,9 @@ export function migrateLegacy(get, { today = todayISO(), defaultRemindDays = 2 }
   const legacyTravel = firstArray(get, ['travelExpenses', 'tripExpenses', 'travel_expenses_backup']);
   const trips = [];
   const tripById = new Map();
+  // Early versions of the old app stored trips and trip expenses without a currency and
+  // always showed them in euros. Use the trip's own currency, else its expenses', else EUR.
+  const tripCurrency = (t) => t.currency || legacyTravel.find((e) => String(e.tripId) === String(t.id) && e.currency)?.currency || 'EUR';
   for (const t of legacyTrips) {
     if (!t || t.id == null) continue;
     const id = 't' + String(t.id).replace(/\W/g, '');
@@ -123,7 +126,7 @@ export function migrateLegacy(get, { today = todayISO(), defaultRemindDays = 2 }
       startDate: normalizeISO(t.startDate) || today,
       endDate: normalizeISO(t.endDate) || normalizeISO(t.startDate) || today,
       budget: round2(t.budget || 0),
-      currency: t.currency || currency,
+      currency: tripCurrency(t),
       people: ['Me'],
       countInMonthly: false,
       closed: t.status === 'completed',

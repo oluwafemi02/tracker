@@ -61,7 +61,7 @@ export function renderTrip(id) {
       <p class="top-sub">${trip.destination ? esc(trip.destination) + ', ' : ''}${dateRange(trip)}</p>
       <div class="hero-figure ${left < 0 ? 'over' : ''}">
         <p class="hero-amount">${fmt(ts.total, c)}</p>
-        <p class="hero-caption">${trip.budget ? (left >= 0 ? `spent, ${fmt(left, c)} left${remainingDays ? `, about ${fmt(left / remainingDays, c)} a day` : ''}` : `spent, ${fmt(-left, c)} over budget`) : 'spent so far'}</p>
+        <p class="hero-caption">${trip.budget ? (left >= 0 ? `spent, ${fmt(left, c)} left${remainingDays ? `, about ${fmt(left / remainingDays, c)} a day` : ''}` : `spent, ${fmt(-left, c)} over budget`) : (st === 'past' ? 'spent in total' : 'spent so far')}</p>
       </div>
       ${trip.budget ? `<span class="bar bar-lg ${left < 0 ? 'over' : ''}"><span style="width:${Math.min(100, (ts.total / trip.budget) * 100)}%"></span></span>` : ''}
       <dl class="hero-stats">

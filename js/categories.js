@@ -30,7 +30,7 @@ export const TRIP_CATEGORIES = [
   { id: 't-transport', name: 'Transport', icon: '🚆', match: ['transportation', 'transport', 'train', 'bus', 'metro'] },
   { id: 't-taxi', name: 'Taxi & rides', icon: '🚕', match: ['taxi', 'uber', 'bolt', 'rideshare'] },
   { id: 't-fuel', name: 'Fuel', icon: '⛽', match: ['fuel', 'gas', 'petrol'] },
-  { id: 't-activities', name: 'Activities', icon: '🎟️', match: ['event', 'activit', 'ticket', 'tour', 'museum'] },
+  { id: 't-activities', name: 'Activities', icon: '🎟️', match: ['event', 'activit', 'ticket', 'tour', 'museum', 'attraction', 'park', 'cruise'] },
   { id: 't-shopping', name: 'Shopping', icon: '🛍️', match: ['shopping', 'souvenir', 'supplies', 'equipment'] },
   { id: 't-health', name: 'Health', icon: '💊', match: ['medical', 'health', 'pharmacy'] },
   { id: 't-phone', name: 'Phone & data', icon: '📱', match: ['communication', 'phone', 'sim', 'data'] },

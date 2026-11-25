@@ -107,3 +107,25 @@ test('rejects files that hold no trips', () => {
   assert.throws(() => parseRecoveryFile('x.json', '{"hello":1}', 'EUR'), /No trips found/);
   assert.throws(() => parseRecoveryFile('x.txt', 'nonsense', 'EUR'), /not a backup or a trip export/);
 });
+
+test('early old-app trips with no currency come back in euros, whatever the main currency', () => {
+  // Shape of the old app's August 2025 backups: no currency on the trip or its expenses.
+  const backup = JSON.stringify({
+    expenses: [{ id: 1, amount: 100, category: 'Mortgage', date: '2025-07-10', currency: 'GBP' }],
+    trips: [{ id: 42, name: 'Summer road trip', destination: 'Poland', startDate: '2025-07-28', endDate: '2025-08-08', budget: 0, status: 'completed' }],
+    travelExpenses: [
+      { id: 7, tripId: 42, amount: 113, category: '⛽ Fuel', date: '2025-07-27', location: 'Vilnius', description: '' },
+      { id: 8, tripId: 42, amount: 320, category: '🎫 Attractions', date: '2025-07-27', location: 'Poland', description: 'Theme park' },
+      { id: 9, tripId: 42, amount: 62, category: '⛽ Fuel', date: '2025-08-07', payer: 'Me', deductFromMainBudget: true },
+    ],
+    currentTrip: null,
+    version: '1.0',
+  });
+  const bundle = parseRecoveryFile('expense-tracker-backup-2025-08-26.json', backup, 'GBP');
+  const state = { ...baseState(), settings: { currency: 'GBP' } };
+  const [g] = planRecovery(state, [bundle]);
+  assert.equal(g.trip.currency, 'EUR');
+  assert.deepEqual(g.tripExpenses.map((e) => [e.currency, e.category, e.countInMonthly]), [['EUR', 't-fuel', false], ['EUR', 't-activities', false], ['EUR', 't-fuel', true]]);
+  applyRecovery(state, [g]);
+  assert.equal(state.trips[0].startDate, '2025-07-27', 'start moves back to the first expense');
+});
