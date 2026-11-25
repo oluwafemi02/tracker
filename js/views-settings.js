@@ -115,7 +115,12 @@ export function mountSettings(root, section) {
     if (!file) return;
     try {
       let data = JSON.parse(await file.text());
-      if (data && !data.settings && (Array.isArray(data.expenses) || Array.isArray(data.trips))) data = fromOldBackup(data);
+      if (data && !data.settings && !Array.isArray(data.expenses) && (Array.isArray(data.trips) || Array.isArray(data.travelExpenses))) {
+        toast('This file only has trips. Use Find lost trips to add them.', { tone: 'warn' });
+        e.target.value = '';
+        return;
+      }
+      if (data && !data.settings && Array.isArray(data.expenses)) data = fromOldBackup(data);
       if (!data || !Array.isArray(data.expenses) || !data.settings) throw new Error('bad');
       if (await confirmSheet({ title: 'Replace all data with this backup?', body: `${data.expenses.length} expenses, ${data.bills?.length || 0} bills, ${data.trips?.length || 0} trips. Your current data will be replaced.`, confirm: 'Restore' })) {
         store.replaceAll(data);

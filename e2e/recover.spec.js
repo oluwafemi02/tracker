@@ -91,6 +91,20 @@ test.describe('Find lost trips', () => {
     await expectToast(page, 'No trips found in that file.');
   });
 
+  test('Restore refuses a trips-only file and points to Find lost trips', async ({ page }) => {
+    await boot(page, { state: state({ expenses: [{ amount: 1, category: 'other', date: '2026-11-01' }] }) });
+    await page.goto('./#settings/data');
+    const tripOnly = { trips: [lostTrip], travelExpenses: lostTx, currentTrip: null, version: '1.0' };
+    await page.locator('input[data-restore]').setInputFiles({ name: 'trip.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(tripOnly)) });
+    await expectToast(page, 'Use Find lost trips');
+    await expect(page.locator('.confirm')).toHaveCount(0);
+    expect((await getState(page)).expenses).toHaveLength(1);
+    // The same file works in Find lost trips.
+    await page.getByRole('button', { name: 'Find lost trips' }).click();
+    await sheet(page).locator('input[data-recover-file]').setInputFiles({ name: 'trip.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(tripOnly)) });
+    await expect(sheet(page).locator('.recover-list li')).toContainText('Lagos Christmas');
+  });
+
   test('Restore accepts a full backup from the old app', async ({ page }) => {
     await boot(page, { state: state({ expenses: [{ amount: 1, category: 'other', date: '2026-11-01' }] }) });
     await page.goto('./#settings/data');
