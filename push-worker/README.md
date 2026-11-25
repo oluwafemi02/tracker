@@ -1,37 +1,44 @@
 # Push server for Tracker
 
 A tiny Cloudflare Worker that sends bill reminders to your iPhone as real push
-notifications, even when the app is closed. Free plan is enough.
+notifications, even when the app is closed. The free plan is enough.
 
 What it stores per phone: the push subscription, the reminder schedule (bill name,
 amount unless you hide it in the app, and when to alert), and a list of active bills
 for the optional calendar feed. Nothing else leaves your phone.
 
-## One-time setup (about 10 minutes)
+## One-time setup (about 5 minutes, no command line)
 
-You need Node.js 20+ and a free Cloudflare account.
+GitHub deploys the server for you (`.github/workflows/push-server.yml`). It creates
+the storage and the signing keys in your Cloudflare account; the private key never
+leaves Cloudflare.
+
+1. **Cloudflare account**: sign up free at https://dash.cloudflare.com/sign-up, then
+   open **Workers & Pages** once so Cloudflare creates your `workers.dev` address.
+2. **Account ID**: on the Workers & Pages page, copy the **Account ID** shown on the right
+   (or from the URL `dash.cloudflare.com/<account id>/...`).
+3. **API token**: profile icon, **My Profile**, **API Tokens**, **Create Token**, use the
+   **Edit Cloudflare Workers** template. Under Account Resources pick your account,
+   under Zone Resources pick **All zones**. Create it and copy the token.
+4. **Give them to GitHub**: in the repo, **Settings**, **Secrets and variables**,
+   **Actions**, **New repository secret**, twice:
+   - `CLOUDFLARE_ACCOUNT_ID` = the account ID
+   - `CLOUDFLARE_API_TOKEN` = the token
+5. **Deploy**: repo **Actions** tab, **Deploy push server**, **Run workflow**. When it
+   finishes, its summary shows the server address, e.g.
+   `https://tracker-push.<you>.workers.dev`.
+
+Later changes to `push-worker/` deploy automatically.
+
+### By hand instead (needs Node.js 20+)
 
 ```bash
-cd push-worker
-npm install
-npx wrangler login
-
-# 1. Storage
-npx wrangler kv namespace create DEVICES
-#    Copy the id it prints into wrangler.toml (kv_namespaces.id)
-
-# 2. Edit wrangler.toml
-#    VAPID_SUBJECT  = "mailto:your-email"   (Apple requires a real contact)
-#    ALLOWED_ORIGIN = where the app is hosted, e.g. https://oluwafemi02.github.io
-
-# 3. Keys for signing pushes
-npm run keys
-npx wrangler secret put VAPID_PUBLIC_KEY     # paste the first value
-npx wrangler secret put VAPID_PRIVATE_JWK    # paste the second value (the JSON)
-
-# 4. Deploy
+cd push-worker && npm install && npx wrangler login
+npx wrangler kv namespace create DEVICES   # put the id in wrangler.toml
+npm run keys                               # then:
+npx wrangler secret put VAPID_PUBLIC_KEY
+npx wrangler secret put VAPID_PRIVATE_JWK
 npm run deploy
-#    Note the URL, e.g. https://tracker-push.<you>.workers.dev
 ```
 
 ## Connect the app

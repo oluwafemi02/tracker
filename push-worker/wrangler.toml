@@ -6,16 +6,15 @@ compatibility_date = "2026-11-01"
 [triggers]
 crons = ["*/15 * * * *"]
 
-# Create with: npx wrangler kv namespace create DEVICES
-# then paste the id it prints below.
+# The deploy workflow fills in the id. By hand: npx wrangler kv namespace create DEVICES
 [[kv_namespaces]]
 binding = "DEVICES"
 id = "PASTE_YOUR_KV_NAMESPACE_ID_HERE"
 
 [vars]
-# Your contact, required by Apple's push service. Use your own email.
-VAPID_SUBJECT = "mailto:you@example.com"
+# Contact for push services (Apple requires a mailto: or https: address).
+VAPID_SUBJECT = "https://oluwafemi02.github.io/tracker/"
 # Only accept requests from your app. Change if you host it elsewhere.
 ALLOWED_ORIGIN = "https://oluwafemi02.github.io"
 MAX_DEVICES = "5"
-# VAPID_PUBLIC_KEY and VAPID_PRIVATE_JWK are set as secrets, see README.md.
+# VAPID_PUBLIC_KEY and VAPID_PRIVATE_JWK are Cloudflare secrets, created on the first deploy.
