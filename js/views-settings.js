@@ -12,6 +12,8 @@ import * as push from './push.js';
 
 const S = () => store.getState();
 export const APP_VERSION = '1.0.0';
+// Femi's push server (deployed by .github/workflows/push-server.yml).
+const DEFAULT_PUSH_URL = 'https://tracker-push.femisteve02.workers.dev';
 
 function remindersSection() {
   const s = S();
@@ -59,7 +61,7 @@ function remindersSection() {
         <div class="row-actions"><button class="btn btn-quiet" data-action="push-test">Send test push</button><button class="btn btn-quiet" data-action="push-sync">Sync now</button></div>
         <label class="toggle"><input type="checkbox" data-setting="hideAmountsInPush" ${s.settings.hideAmountsInPush ? 'checked' : ''}><span class="toggle-ui"></span><span class="toggle-text"><b>Hide amounts in alerts</b><small>Lock-screen alerts show the bill name only</small></span></label>
         <button class="link-btn danger-text" data-action="push-disconnect">Disconnect push server</button>`
-      : `<div class="split"><input class="input" type="url" inputmode="url" placeholder="https://tracker-push.you.workers.dev" value="${esc(p.url)}" data-push-url autocomplete="off"><button class="btn btn-primary" data-action="push-connect" ${perm === 'granted' ? '' : 'disabled'}>Connect</button></div>
+      : `<div class="split"><input class="input" type="url" inputmode="url" placeholder="https://tracker-push.you.workers.dev" value="${esc(p.url || DEFAULT_PUSH_URL)}" data-push-url autocomplete="off"><button class="btn btn-primary" data-action="push-connect" ${perm === 'granted' ? '' : 'disabled'}>Connect</button></div>
         ${perm !== 'granted' ? '<p class="muted small">Turn on notifications first.</p>' : ''}`}
     </div>
   </section>`;

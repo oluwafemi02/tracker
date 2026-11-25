@@ -128,6 +128,7 @@ test.describe('Reminders', () => {
     });
     await boot(page, { state: withBills({ settings: { remindTime: '09:00' } }), standalone: true });
     await page.goto('./#settings/reminders');
+    await expect(page.locator('[data-push-url]')).toHaveValue('https://tracker-push.femisteve02.workers.dev');
     await page.locator('[data-push-url]').fill('https://push.example.dev/');
     await page.getByRole('button', { name: 'Connect' }).click();
     await expectToast(page, 'Push reminders connected');
