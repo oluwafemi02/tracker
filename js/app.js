@@ -115,7 +115,7 @@ on('calendar-export', async () => {
 on('push-connect', async (_, el) => {
   const url = view.querySelector('[data-push-url]')?.value;
   el.disabled = true; el.textContent = 'Connecting';
-  try { await push.connect(url); toast('Push reminders connected'); }
+  try { await push.connect(url); toast('Push reminders connected'); render({ keepScroll: true }); }
   catch (e) { toast(e.message, { tone: 'warn' }); el.disabled = false; el.textContent = 'Connect'; }
 });
 on('push-test', async () => {

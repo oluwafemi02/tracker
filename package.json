@@ -9,6 +9,11 @@
     "test": "node --test test/*.test.js",
     "lint": "for f in js/*.js sw.js push-worker/src/*.js; do node --check \"$f\" || exit 1; done",
     "check": "npm run lint && npm test && node scripts/check-shell.js",
-    "serve": "python3 -m http.server 8080"
+    "serve": "python3 -m http.server 8080",
+    "test:e2e": "playwright test -c e2e",
+    "test:e2e:live": "BASE_URL=https://oluwafemi02.github.io/tracker/ playwright test -c e2e"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.63.0"
   }
 }

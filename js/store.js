@@ -47,6 +47,7 @@ export function load() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { saved = null; }
   state = deepMerge(DEFAULT_STATE(), saved || {});
+  if (saved) persist(); // store the full shape with any new defaults
   let migration = null;
   if (!saved && hasLegacyData((k) => localStorage.getItem(k))) {
     migration = importLegacy();

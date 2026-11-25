@@ -12,7 +12,7 @@ scratch in v1.0.0 (Nov 2026); the old 21,000-line `index.html` is in git history
 
 ## Code map
 
-No build step, no framework, no dependencies. ES modules loaded by `index.html`.
+No build step, no framework, no runtime dependencies (Playwright is a dev dependency for tests only). ES modules loaded by `index.html`.
 
 | File | Role |
 | --- | --- |
@@ -31,6 +31,7 @@ No build step, no framework, no dependencies. ES modules loaded by `index.html`.
 | `sw.js` | Offline cache (network first), push display, notification taps |
 | `push-worker/` | Cloudflare Worker + KV + cron that sends Web Push (RFC 8291/8292 with WebCrypto) |
 | `test/` | `node:test` unit tests incl. a legacy data fixture |
+| `e2e/` | Playwright end-to-end tests (WebKit and Chromium at iPhone size, fixed clock, seeded storage). `helpers.js` has `boot()`, `state()`, `setClock()` |
 
 ## Data model (`ledger.v1`)
 
@@ -56,6 +57,7 @@ Month "spent" = expenses in the month + trip expenses with `countInMonthly`.
 - iOS constraints: no background timers, no `new Notification()` (use `registration.showNotification`), notifications only in the installed app, permission must come from a tap. Inputs need font-size 16px or more to avoid zoom.
 - UI copy: plain English, sentence case, short. Buttons say what they do ("Mark as paid", "Add bill"). No em dashes.
 - Run `npm run check` (and `cd push-worker && npm test` if the worker changed) before committing.
+- UI changes: run `npm run test:e2e` (Playwright, iPhone size). Add or update a spec in `e2e/` for any new behaviour. `npm run test:e2e:live` runs the same suite against the live site.
 
 ## Reminders
 

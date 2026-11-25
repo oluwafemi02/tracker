@@ -167,6 +167,7 @@ export async function erase() {
   if (S().settings.push.enabled) await push.disconnect().catch(() => {});
   localStorage.removeItem(store.STORAGE_KEY);
   localStorage.setItem(store.STORAGE_KEY, JSON.stringify({ settings: { currency: S().settings.currency, migratedAt: new Date().toISOString() } }));
+  history.replaceState(null, '', location.pathname + '#home');
   location.reload();
 }
 

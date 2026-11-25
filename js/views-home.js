@@ -211,12 +211,12 @@ export function renderActivity() {
     if (last && last.date === e.date) last.items.push(e); else groups.push({ date: e.date, items: [e] });
   }
   const budget = S().settings.monthlyBudget;
-  const isFuture = key > monthKey(t);
+  const isLatest = key >= monthKey(t);
   return `<header class="top">
       <div class="month-nav">
         <button class="icon-btn" data-action="activity-month" data-key="${shiftMonth(key, -1)}" aria-label="Previous month">‹</button>
         <h1 class="top-title">${monthName(key)}</h1>
-        <button class="icon-btn" data-action="activity-month" data-key="${shiftMonth(key, 1)}" aria-label="Next month" ${isFuture ? 'disabled' : ''}>›</button>
+        <button class="icon-btn" data-action="activity-month" data-key="${shiftMonth(key, 1)}" aria-label="Next month" ${isLatest ? 'disabled' : ''}>›</button>
       </div>
     </header>
     <section class="hero hero-flat">
