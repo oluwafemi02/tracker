@@ -86,12 +86,13 @@ function applePaySection() {
         <ol class="steps">
           <li>Copy your payment address: <button class="btn btn-quiet btn-sm" data-action="applepay-copy">Copy address</button></li>
           <li>Open the <b>Shortcuts</b> app, tap <b>Automation</b>, then <b>+</b>.</li>
-          <li>Choose <b>Transaction</b>. Leave all cards selected, pick <b>Run Immediately</b>, turn off <b>Notify When Run</b>, tap <b>Next</b>.</li>
+          <li>Choose <b>Wallet</b> (called <b>Transaction</b> on older iOS). Leave your cards selected, pick <b>Run Immediately</b>, turn off <b>Notify When Run</b>, tap <b>Next</b>.</li>
           <li>Tap <b>New Blank Automation</b>, then <b>Add Action</b>, and search for <b>Get Contents of URL</b>.</li>
           <li>Tap <b>URL</b> and paste the address.</li>
           <li>Tap the arrow to show more. Set <b>Method</b> to <b>POST</b> and <b>Request Body</b> to <b>JSON</b>.</li>
-          <li>Add three <b>Text</b> fields: <code>amount</code> = Shortcut Input, then tap it and choose <b>Amount</b>; <code>merchant</code> = Shortcut Input, <b>Merchant</b>; <code>card</code> = Shortcut Input, <b>Card or Pass</b>.</li>
-          <li>Tap <b>Done</b>. Pay with Apple Pay, then open Tracker.</li>
+          <li>Tap <b>Add new field</b>, choose <b>Text</b>. Type <code>amount</code> as the Key. Tap the Text box, swipe the bar above the keyboard and tap <b>Shortcut Input</b>. Then tap the blue Shortcut Input chip and choose <b>Amount</b>.</li>
+          <li>Do the same for <code>merchant</code> (choose <b>Merchant</b>) and <code>card</code> (choose <b>Card or Pass</b>, or <b>Name</b>).</li>
+          <li>Tap the ✓ to save. Pay with Apple Pay, then open Tracker.</li>
         </ol>
         <p class="muted small">Only Apple Pay payments from this iPhone or your Apple Watch are sent, not a plastic card. Refunds are left out.</p>
       </details>
