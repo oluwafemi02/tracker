@@ -6,7 +6,7 @@ import { today } from './dates.js';
 import { renderHome, renderActivity, setActivityMonth, setActivityFilter } from './views-home.js';
 import { renderBills, billDetail, payNow } from './views-bills.js';
 import { renderTrips, renderTrip } from './views-trips.js';
-import { renderSettings, mountSettings, backup, csv, reimport, erase, deleteCategory } from './views-settings.js';
+import { renderSettings, mountSettings, backup, csv, reimport, erase, deleteCategory, recoverTrips } from './views-settings.js';
 import { expenseSheet, billSheet, tripSheet, tripExpenseSheet } from './forms.js';
 import * as rem from './reminders.js';
 import * as push from './push.js';
@@ -129,6 +129,7 @@ on('push-sync', async () => {
 on('push-disconnect', async () => { await push.disconnect(); toast('Push server disconnected'); });
 on('backup', () => backup());
 on('csv', () => csv());
+on('recover-trips', () => recoverTrips());
 on('reimport', () => reimport());
 on('erase', () => erase());
 on('delete-category', ({ id }) => deleteCategory(id));

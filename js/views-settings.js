@@ -4,7 +4,9 @@ import { esc, toast, confirmSheet, parseAmount } from './ui.js';
 import { CURRENCY_CODES, fmt } from './money.js';
 import { today, shortDate } from './dates.js';
 import * as store from './store.js';
-import { hasLegacyData } from './migrate.js';
+import { hasLegacyData, migrateLegacy } from './migrate.js';
+import { localBundles, planRecovery, applyRecovery, parseRecoveryFile } from './recover.js';
+import { openSheet, closeSheet } from './ui.js';
 import * as rem from './reminders.js';
 import * as push from './push.js';
 
@@ -89,6 +91,7 @@ export function renderSettings(section) {
         <button class="btn btn-quiet btn-wide" data-action="backup">Download backup</button>
         <label class="btn btn-quiet btn-wide file-btn">Restore from backup<input type="file" accept="application/json,.json" data-restore hidden></label>
         <button class="btn btn-quiet btn-wide" data-action="csv">Export expenses as CSV</button>
+        <button class="btn btn-quiet btn-wide" data-action="recover-trips">Find lost trips</button>
         ${legacy ? '<button class="btn btn-quiet btn-wide" data-action="reimport">Import again from the old version</button>' : ''}
         <button class="link-btn danger-text" data-action="erase">Erase all data</button>
       </div>
@@ -111,7 +114,8 @@ export function mountSettings(root, section) {
     const file = e.target.files[0];
     if (!file) return;
     try {
-      const data = JSON.parse(await file.text());
+      let data = JSON.parse(await file.text());
+      if (data && !data.settings && (Array.isArray(data.expenses) || Array.isArray(data.trips))) data = fromOldBackup(data);
       if (!data || !Array.isArray(data.expenses) || !data.settings) throw new Error('bad');
       if (await confirmSheet({ title: 'Replace all data with this backup?', body: `${data.expenses.length} expenses, ${data.bills?.length || 0} bills, ${data.trips?.length || 0} trips. Your current data will be replaced.`, confirm: 'Restore' })) {
         store.replaceAll(data);
@@ -119,6 +123,73 @@ export function mountSettings(root, section) {
       }
     } catch { toast('That file is not a Tracker backup.', { tone: 'warn' }); }
     e.target.value = '';
+  });
+}
+
+// A backup file from the old app (expense-tracker-backup-*.json) in this app's format.
+function fromOldBackup(old) {
+  const cur = S().settings;
+  const keys = {
+    familyExpenses: JSON.stringify(old.expenses || []), recurringExpenses: JSON.stringify(old.recurringExpenses || []),
+    trips: JSON.stringify(old.trips || []), travelExpenses: JSON.stringify(old.travelExpenses || []),
+    customCategories: JSON.stringify(old.customCategories || []), monthlyBudget: String(old.monthlyBudget ?? cur.monthlyBudget), mainCurrency: cur.currency,
+  };
+  const res = migrateLegacy((k) => keys[k] ?? null, { defaultRemindDays: cur.remindDays });
+  return { ...S(), settings: { ...cur, monthlyBudget: res.settings.monthlyBudget }, categories: res.categories, expenses: res.expenses, bills: res.bills, trips: res.trips, tripExpenses: res.tripExpenses };
+}
+
+// ---------- find lost trips
+
+export function recoverTrips() {
+  const entries = Object.keys(localStorage).map((k) => [k, localStorage.getItem(k)]);
+  const bundles = localBundles(S(), entries);
+  let groups = [];
+  const listHtml = () => {
+    groups = planRecovery(S(), bundles);
+    if (!groups.length) {
+      return `<div class="callout"><b>No lost trips found on this phone.</b>
+        <p class="small">Your iPhone keeps separate data for the Home Screen app and for Safari. If you ever used the tracker in the other one, open it there and tap Find lost trips again. You can also pick a backup or trip file below.</p></div>`;
+    }
+    return `<ul class="recover-list">${groups.map((g, i) => `<li><label class="toggle">
+        <input type="checkbox" data-pick="${i}" checked><span class="toggle-ui"></span>
+        <span class="toggle-text"><b>${esc(g.trip.name)}</b>
+          <small>${shortDate(g.trip.startDate)} to ${shortDate(g.trip.endDate)}. ${g.tripExpenses.length} expense${g.tripExpenses.length === 1 ? '' : 's'}${g.total ? `, ${fmt(g.total, g.trip.currency)}` : ''}.</small>
+          <small>${g.isNew ? 'Missing trip' : 'Trip you have, missing expenses'}. Found in ${esc(g.sources.join(', '))}.${g.removeExpenseIds.length ? ` Moves ${g.removeExpenseIds.length} copied item${g.removeExpenseIds.length === 1 ? '' : 's'} out of monthly spending onto the trip.` : ''}</small>
+        </span></label></li>`).join('')}</ul>`;
+  };
+  openSheet(`<div class="sheet-body">
+      <header class="sheet-head"><h2 class="sheet-title">Find lost trips</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+      <p class="muted small">Looks through everything the old app saved on this phone, and trip expenses that were copied into your monthly spending. Nothing is deleted.</p>
+      <div class="recover-results"></div>
+      <label class="btn btn-quiet btn-wide file-btn">Look in a file (backup or trip CSV)<input type="file" accept=".json,.csv,application/json,text/csv" data-recover-file hidden></label>
+      <div class="sheet-foot"><button class="btn btn-primary btn-wide" data-recover-add>Add selected trips</button></div>
+    </div>`, {
+    tall: true,
+    onMount(sheet) {
+      const results = sheet.querySelector('.recover-results');
+      const addBtn = sheet.querySelector('[data-recover-add]');
+      const refresh = () => { results.innerHTML = listHtml(); addBtn.hidden = !groups.length; };
+      refresh();
+      sheet.querySelector('[data-recover-file]').addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        try {
+          bundles.push(parseRecoveryFile(file.name, await file.text(), S().settings.currency));
+          refresh();
+          toast(groups.length ? 'File checked' : 'No new trips in that file');
+        } catch (err) { toast(err.message, { tone: 'warn' }); }
+        e.target.value = '';
+      });
+      addBtn.addEventListener('click', () => {
+        const chosen = groups.filter((_, i) => sheet.querySelector(`[data-pick="${i}"]`)?.checked);
+        if (!chosen.length) { toast('Pick at least one trip'); return; }
+        store.update((st) => applyRecovery(st, chosen));
+        closeSheet();
+        const added = chosen.filter((g) => g.isNew).length;
+        const extra = chosen.filter((g) => !g.isNew).reduce((n, g) => n + g.tripExpenses.length, 0);
+        toast([added ? `Added ${added} trip${added === 1 ? '' : 's'}` : '', extra ? `${extra} missing expense${extra === 1 ? '' : 's'} restored` : ''].filter(Boolean).join('. ') || 'Done');
+      });
+    },
   });
 }
 

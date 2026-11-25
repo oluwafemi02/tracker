@@ -19,6 +19,7 @@ No build step, no framework, no runtime dependencies (Playwright is a dev depend
 | `js/app.js` | Entry: hash routing (`#home`, `#activity`, `#bills`, `#trips`, `#trip/<id>`, `#settings/<section>`), action handlers, resume/lifecycle, deep links (`?bill=<id>`, `?tab=`, `?add=1`) |
 | `js/store.js` | State in localStorage key `ledger.v1`, subscribers, all domain logic (bills, autopay, month summary, trips, settle-up) |
 | `js/migrate.js` | Pure import from the old app's keys (`familyExpenses`, `recurringExpenses`, `trips`, `travelExpenses`, ...) |
+| `js/recover.js` | Settings, Find lost trips: scans every stored key, "(Trip: name)" copies in monthly spending, and old backup / trip CSV files; adds only |
 | `js/dates.js` | Local `YYYY-MM-DD` date helpers and recurrence |
 | `js/money.js` | Currency formatting, exchange rates (frankfurter ECB API, cached in `ledger.rates`) |
 | `js/categories.js` | Default spend and trip categories, matching |

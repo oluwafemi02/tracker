@@ -18,6 +18,7 @@ const SHELL = [
   'js/categories.js',
   'js/ics.js',
   'js/migrate.js',
+  'js/recover.js',
   'js/ui.js',
   'js/forms.js',
   'js/reminders.js',

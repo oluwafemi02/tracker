@@ -328,6 +328,10 @@ input[type='date'].input, input[type='time'].input { min-width: 0; max-width: 10
 .plain-list { list-style: none; }
 .plain-list li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
 .file-btn { cursor: pointer; }
+.recover-list { list-style: none; display: grid; gap: 4px; margin: 4px 0 12px; }
+.recover-list .toggle { margin-top: 10px; }
+.recover-results .callout { margin: 8px 0 12px; }
+.recover-results .callout p { margin-top: 6px; }
 .about { text-align: center; margin-top: 22px; }
 
 /* ---------- tab bar */
