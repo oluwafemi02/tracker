@@ -1,0 +1,47 @@
+name: Live site tests
+# Runs the end-to-end suite against https://oluwafemi02.github.io/tracker/ after each deploy.
+on:
+  workflow_run:
+    workflows: ['Deploy to GitHub Pages']
+    types: [completed]
+  workflow_dispatch:
+
+jobs:
+  live:
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-latest
+    env:
+      BASE_URL: https://oluwafemi02.github.io/tracker/
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+      - name: Wait until the live site serves this commit
+        run: |
+          files="index.html css/app.css js/app.js js/store.js js/forms.js js/views-home.js js/reminders.js"
+          for i in $(seq 1 40); do
+            ok=1
+            for f in $files; do
+              live=$(curl -fsSL "${BASE_URL}${f}?nocache=$RANDOM" | sha256sum | cut -c1-16)
+              repo=$(sha256sum "$f" | cut -c1-16)
+              [ "$live" = "$repo" ] || { ok=0; echo "waiting for $f"; break; }
+            done
+            [ $ok = 1 ] && { echo "Live site matches this commit"; exit 0; }
+            sleep 15
+          done
+          echo "Live site did not update within 10 minutes"; exit 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium webkit
+      - name: End-to-end tests against the live site
+        run: npx playwright test -c e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: live-playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7

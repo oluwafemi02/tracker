@@ -40,6 +40,7 @@ test.describe('Reminders', () => {
     await boot(page, { state: withBills() });
     await page.goto('./#settings/reminders');
     await page.getByRole('button', { name: 'Add bills to calendar' }).click();
+    await expectToast(page, 'Calendar file ready');
     await page.evaluate(() => {
       const s = JSON.parse(localStorage.getItem('ledger.v1'));
       s.bills[0].amount = 700;
@@ -53,13 +54,14 @@ test.describe('Reminders', () => {
     await page.goto('./#home');
     await page.locator('.nudge').click();
     await expectToast(page, 'Calendar file ready');
-    await expect(page.locator('.nudge')).not.toContainText('Your bills changed');
+    await expect(page.locator('.nudge', { hasText: 'Your bills changed' })).toHaveCount(0);
   });
 
   test('calendar time follows the reminder time setting', async ({ page }) => {
     await boot(page, { state: withBills({ settings: { remindTime: '07:30' } }) });
     await page.goto('./#settings/reminders');
     await page.getByRole('button', { name: 'Add bills to calendar' }).click();
+    await expectToast(page, 'Calendar file ready');
     const ics = (await page.evaluate(() => window.__shared))[0].text;
     expect(ics).toContain('TRIGGER:-PT2430M'); // 2*1440 - 450
     expect(ics).toContain('TRIGGER:PT450M');

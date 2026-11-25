@@ -42,7 +42,8 @@ test.describe('Links and navigation', () => {
 });
 
 test.describe('Offline and install', () => {
-  test('works offline after the first visit', async ({ page, context }) => {
+  test('works offline after the first visit', async ({ page, context, browserName }) => {
+    test.skip(browserName === 'webkit', 'Playwright WebKit errors on offline reloads; Chromium covers the service worker');
     await boot(page, { state: basic() });
     await page.evaluate(async () => { await navigator.serviceWorker.ready; });
     await page.reload(); // let the service worker take control and fill the cache

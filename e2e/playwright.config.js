@@ -23,7 +23,8 @@ export default defineConfig({
   },
   projects: [
     { name: 'iphone-webkit', use: { ...phone, browserName: 'webkit' } },
-    { name: 'iphone-chromium', use: { ...phone, browserName: 'chromium', ...(process.env.CHROME_PATH ? { launchOptions: { executablePath: process.env.CHROME_PATH, args: ['--no-sandbox'] } } : {}) } },
+    // channel 'chromium' is full Chromium in new headless mode, which supports notification permission.
+    { name: 'iphone-chromium', use: { ...phone, browserName: 'chromium', ...(process.env.CHROME_PATH ? { launchOptions: { executablePath: process.env.CHROME_PATH, args: ['--no-sandbox'] } } : { channel: 'chromium' }) } },
   ],
   webServer: process.env.BASE_URL ? undefined : {
     command: 'node e2e/serve.js',

@@ -33,6 +33,9 @@ export function fmt(amount, cur = 'EUR', opts = {}) {
 
 export const round2 = (n) => Math.round((Number(n) || 0) * 100) / 100;
 
+// Rates keep 5 significant digits: 0.92 -> "0.92", 0.00058 -> "0.00058", 1724.14 -> "1724.1".
+export const rateText = (r) => (r > 0 ? String(Number(Number(r).toPrecision(5))) : '');
+
 // Rates are "1 unit of `from` = rate units of `to`".
 const RATE_KEY = 'ledger.rates';
 

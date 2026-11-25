@@ -91,7 +91,7 @@ test.describe('Expenses', () => {
     await s.locator('input[name="amount"]').fill('50');
     await s.locator('select[name="currency"]').selectOption('USD');
     await expect(s.locator('.convert')).toBeVisible();
-    await expect(s.locator('.convert input')).toHaveValue('0.9200');
+    await expect(s.locator('.convert input')).toHaveValue('0.92');
     await expect(s.locator('.convert-out')).toHaveText('≈ €46.00');
     await s.locator('.chip', { hasText: 'Groceries' }).first().click();
     await s.getByRole('button', { name: 'Add expense' }).click();
@@ -103,20 +103,22 @@ test.describe('Expenses', () => {
     await expect(page.locator('.tx-row').first()).toContainText('$50.00');
   });
 
-  test('manual rate works when the rate lookup fails', async ({ page }) => {
+  test('asks for a rate when none can be looked up', async ({ page }) => {
     await boot(page, {});
-    await page.unroute(/frankfurter/);
-    await page.route(/frankfurter/, (r) => r.abort());
     await page.locator('.fab').click();
     const s = sheet(page);
-    await s.locator('input[name="amount"]').fill('1000');
-    await s.locator('select[name="currency"]').selectOption('SEK');
+    await s.locator('input[name="amount"]').fill('10000');
+    await s.locator('select[name="currency"]').selectOption('NGN');
     await s.locator('.chip', { hasText: 'Dining' }).first().click();
     await s.getByRole('button', { name: 'Add expense' }).click();
-    await expect(s.locator('.form-error')).toHaveText('Enter the SEK to EUR rate.');
-    await s.locator('.convert input').fill('0.087');
+    await expect(s.locator('.form-error')).toHaveText('Enter the NGN to EUR rate.');
+    await s.locator('.convert input').fill('0.00058');
     await s.getByRole('button', { name: 'Add expense' }).click();
-    expect((await getState(page)).expenses[0].baseAmount).toBe(87);
+    expect((await getState(page)).expenses[0].baseAmount).toBe(5.8);
+    // The rate is remembered for next time.
+    await page.locator('.fab').click();
+    await sheet(page).locator('select[name="currency"]').selectOption('NGN');
+    await expect(sheet(page).locator('.convert input')).toHaveValue('0.00058');
   });
 
   test('new category from the expense sheet, then removed in Settings', async ({ page }) => {

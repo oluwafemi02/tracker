@@ -2,7 +2,7 @@
 
 import { esc, openSheet, closeSheet, toast, parseAmount, confirmSheet, haptic } from './ui.js';
 import { today, addDays, FREQUENCIES, shortDate } from './dates.js';
-import { fmt, CURRENCY_CODES, fetchRate, lastRate, rememberRate, round2 } from './money.js';
+import { fmt, CURRENCY_CODES, fetchRate, lastRate, rememberRate, round2, rateText } from './money.js';
 import { TRIP_CATEGORIES, slug } from './categories.js';
 import * as store from './store.js';
 
@@ -62,10 +62,10 @@ function wireConversion(sheet, { amountName = 'amount', curName = 'currency', ta
   const refreshRate = async () => {
     const from = curEl.value, to = tgt();
     if (from === to) { render(); return; }
-    rateEl.value = lastRate(from, to)?.toFixed(4) || '';
+    rateEl.value = rateText(lastRate(from, to));
     render();
     const live = await fetchRate(from, to);
-    if (live && curEl.value === from) { rateEl.value = Number(live).toFixed(4); render(); }
+    if (live && curEl.value === from) { rateEl.value = rateText(live); render(); }
   };
   amountEl.addEventListener('input', render);
   rateEl.addEventListener('input', render);
@@ -123,7 +123,7 @@ export function expenseSheet(existing = null, { tripId } = {}) {
       wireDateChips(sheet, 'date');
       const conv = wireConversion(sheet, { target: s.settings.currency });
       if (existing && existing.currency !== s.settings.currency && existing.baseAmount) {
-        sheet.querySelector('.convert input').value = (existing.baseAmount / existing.amount).toFixed(4);
+        sheet.querySelector('.convert input').value = rateText(existing.baseAmount / existing.amount);
       }
       sheet.querySelector('[data-to-trip]')?.addEventListener('click', () => {
         const amount = form.amount.value;
@@ -388,7 +388,7 @@ export function tripExpenseSheet(existing, trip, { amount: prefill } = {}) {
       // Convert into the trip currency (for trip totals).
       const conv = wireConversion(sheet, { target: trip.currency });
       if (existing && existing.currency !== trip.currency && existing.tripAmount) {
-        sheet.querySelector('.convert input').value = (existing.tripAmount / existing.amount).toFixed(4);
+        sheet.querySelector('.convert input').value = rateText(existing.tripAmount / existing.amount);
       }
       sheet.querySelector('[data-delete]')?.addEventListener('click', async () => {
         if (await confirmSheet({ title: 'Delete this trip expense?' })) {

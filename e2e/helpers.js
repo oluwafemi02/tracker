@@ -33,6 +33,10 @@ export async function boot(page, { state, legacy, now = NOW, path = '', shareCap
   const data = {};
   if (legacy) Object.assign(data, legacy);
   if (state) data['ledger.v1'] = JSON.stringify(state);
+  // Cached exchange rates, fresh as of `now`, so lookups never hit the network.
+  // NGN is left out on purpose: the ECB source has no NGN rate, so the app must ask for one.
+  const rates = { 'USD>EUR': 0.92, 'EUR>USD': 1 / 0.92, 'GBP>EUR': 1.17, 'EUR>GBP': 1 / 1.17, ...(rate || {}) };
+  data['ledger.rates'] = JSON.stringify(Object.fromEntries(Object.entries(rates).map(([k, v]) => [k, { rate: v, at: now.getTime() }])));
   await page.addInitScript(({ data, shareCapture, standalone }) => {
     if (!localStorage.getItem('__e2e')) {
       localStorage.clear();
@@ -56,7 +60,7 @@ export async function boot(page, { state, legacy, now = NOW, path = '', shareCap
     const u = new URL(route.request().url());
     const from = u.searchParams.get('base') || u.searchParams.get('from');
     const to = u.searchParams.get('symbols') || u.searchParams.get('to');
-    const table = { 'USD>EUR': 0.92, 'NGN>EUR': 0.00058, 'GBP>EUR': 1.17, 'EUR>NGN': 1724, ...(rate || {}) };
+    const table = { 'USD>EUR': 0.92, 'GBP>EUR': 1.17, ...(rate || {}) };
     const r = table[`${from}>${to}`];
     return r ? route.fulfill({ json: { base: from, rates: { [to]: r } } }) : route.fulfill({ status: 404, body: '' });
   });

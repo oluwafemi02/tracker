@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { addMonths, nextOccurrence, firstOnOrAfter, occurrencesBetween, diffDays, toISO, relativeDue } from '../js/dates.js';
 import { migrateLegacy, hasLegacyData } from '../js/migrate.js';
 import { buildICS, rrule } from '../js/ics.js';
+import { rateText } from '../js/money.js';
 import { legacy, getter } from './legacy-fixture.js';
 
 test('monthly dates keep their anchor day', () => {
@@ -127,4 +128,11 @@ test('store: bills, autopay, monthly summary, trips', async () => {
   assert.equal(ts.total, 120);
   assert.deepEqual(ts.settle.map((x) => [x.from, x.to, x.amount]), [['Tunde', 'Me', 40], ['Ada', 'Me', 10]]);
   assert.equal(store.monthSummary('2026-11', t).spent, 170, 'trip expense flagged for monthly is counted');
+});
+
+test('exchange rates keep their precision', () => {
+  assert.equal(rateText(0.92), '0.92');
+  assert.equal(rateText(0.00058), '0.00058');
+  assert.equal(rateText(1724.1379), '1724.1');
+  assert.equal(rateText(0), '');
 });

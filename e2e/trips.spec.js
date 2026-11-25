@@ -49,7 +49,7 @@ test.describe('Trips', () => {
     await expect(s.locator('.sheet-title')).toHaveText('Lisbon');
     await s.locator('input[name="amount"]').fill('30');
     await s.locator('select[name="currency"]').selectOption('GBP');
-    await expect(s.locator('.convert input')).toHaveValue('1.1700');
+    await expect(s.locator('.convert input')).toHaveValue('1.17');
     await s.locator('.chip', { hasText: 'Taxi & rides' }).click();
     await s.locator('.chip', { hasText: 'Tunde' }).click();
     await s.locator('label.toggle', { hasText: 'Split equally' }).click();
