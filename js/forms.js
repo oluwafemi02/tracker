@@ -1,7 +1,7 @@
 // Bottom-sheet forms for expenses, bills, trips and trip expenses.
 
 import { esc, openSheet, closeSheet, toast, parseAmount, confirmSheet, haptic } from './ui.js';
-import { today, addDays, FREQUENCIES, shortDate, nthOccurrence, countOccurrences, describeSchedule } from './dates.js';
+import { today, addDays, FREQUENCIES, shortDate, nthOccurrence, countOccurrences, describeSchedule, monthName } from './dates.js';
 import { fmt, CURRENCY_CODES, fetchRate, lastRate, rememberRate, round2, rateText } from './money.js';
 import { TRIP_CATEGORIES, slug } from './categories.js';
 import * as store from './store.js';
@@ -214,9 +214,10 @@ export function billSheet(existing = null) {
       </header>
       <input name="name" class="input input-lg" placeholder="What is it? e.g. Mortgage, Netflix" value="${esc(b.name)}" maxlength="60" ${existing ? '' : 'autofocus'}>
       <div class="amount-field amount-sm">
-        <input name="amount" type="text" inputmode="decimal" placeholder="Amount" value="${b.amount || ''}" autocomplete="off" aria-label="Amount">
+        <input name="amount" type="text" inputmode="decimal" placeholder="${b.variable ? 'Usual amount' : 'Amount'}" value="${b.amount || ''}" autocomplete="off" aria-label="Amount">
         ${currencySelect('currency', b.currency)}
       </div>
+      <label class="toggle"><input type="checkbox" name="variable" ${b.variable ? 'checked' : ''}><span class="toggle-ui"></span><span class="toggle-text"><b>Amount changes each time</b><small>Like electricity or water. Enter the usual amount; you confirm the real one when you pay.</small></span></label>
       <div class="field-label">How is it paid?</div>
       <div class="segmented" role="radiogroup" aria-label="How is it paid">
         <label><input type="radio" name="kind" value="repeat" ${once ? '' : 'checked'}><span>Repeats</span></label>
@@ -284,6 +285,7 @@ export function billSheet(existing = null) {
         sheet.querySelector('.schedule-summary').textContent = sc.error ? '' : describeSchedule({ ...sc, anchorDay: Number(sc.nextDue.slice(8)) });
       };
       form.addEventListener('change', refresh);
+      form.variable.addEventListener('change', () => { form.amount.placeholder = form.variable.checked ? 'Usual amount' : 'Amount'; });
       wireAccountSelect(sheet, 'accountId');
       form.addEventListener('input', (e) => { if (['endCount', 'nextDue', 'endDate'].includes(e.target.name)) refresh(); });
       refresh();
@@ -309,7 +311,7 @@ export function billSheet(existing = null) {
           name, amount, currency: form.currency.value, category: form.category.value,
           frequency: sc.frequency, nextDue: form.nextDue.value, endDate: sc.endDate, endMode: sc.endMode,
           remindDays: Number(form.querySelector('[name="remindDays"]:checked')?.value ?? 2),
-          autopay: form.autopay.checked, notes: form.notes.value.trim(),
+          autopay: form.autopay.checked, notes: form.notes.value.trim(), variable: form.variable.checked,
           accountId: form.accountId.value && form.accountId.value !== '__new' ? form.accountId.value : null,
           active: true,
         });
@@ -327,9 +329,9 @@ export function payBillSheet(bill) {
   const s = S();
   openSheet(`<form class="sheet-body">
       <header class="sheet-head"><h2 class="sheet-title">Pay ${esc(bill.name)}</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
-      <p class="muted">Due ${shortDate(bill.nextDue)}</p>
+      <p class="muted">Due ${shortDate(bill.nextDue)}${bill.variable ? `. Last time ${fmt(store.suggestedAmount(bill), bill.currency)}, usually about ${fmt(store.billAmount(bill), bill.currency)}.` : ''}</p>
       <div class="amount-field">
-        <input name="amount" type="text" inputmode="decimal" value="${bill.amount}" aria-label="Amount paid">
+        <input name="amount" type="text" inputmode="decimal" value="${Number(store.suggestedAmount(bill)).toFixed(2)}" aria-label="Amount paid" ${bill.variable ? 'autofocus' : ''}>
         <span class="cur-fixed">${bill.currency}</span>
       </div>
       <div class="field-label">Paid on</div>
@@ -637,6 +639,90 @@ export function assignAccountsSheet() {
         store.assignAccounts(pairs);
         closeSheet();
         toast(`Saved ${pairs.length} bill${pairs.length === 1 ? '' : 's'}`);
+      });
+    },
+  });
+}
+
+// Confirm the real amount of bill payments that were logged at an estimate.
+export function confirmAmountsSheet() {
+  const items = S().expenses.filter((e) => e.amountEstimated).sort((a, b) => (a.date < b.date ? -1 : 1));
+  if (!items.length) return;
+  openSheet(`<form class="sheet-body" novalidate>
+      <header class="sheet-head"><h2 class="sheet-title">Confirm amounts</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+      <p class="muted small">These were paid automatically and logged at the usual amount. Enter what was actually charged.</p>
+      <ul class="review-list">${items.map((e) => `<li>
+          <span class="tx-main"><span class="tx-title">${esc(e.note)}</span><span class="tx-sub">${shortDate(e.date)}, logged at ${fmt(e.amount, e.currency)}</span></span>
+          <span class="review-amt">${e.currency}</span>
+          <input class="input" name="${e.id}" type="text" inputmode="decimal" value="${Number(e.amount).toFixed(2)}" aria-label="Real amount for ${esc(e.note)}">
+        </li>`).join('')}</ul>
+      <p class="form-error" role="alert"></p>
+      <div class="sheet-foot"><button class="btn btn-primary btn-wide">Save amounts</button></div>
+    </form>`, {
+    tall: true,
+    onMount(sheet) {
+      sheet.querySelector('form').addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const vals = items.map((e) => ({ id: e.id, amount: parseAmount(ev.target[e.id].value) }));
+        if (vals.some((v) => !(v.amount > 0))) { sheet.querySelector('.form-error').textContent = 'Enter an amount above zero for each one.'; return; }
+        vals.forEach((v) => store.confirmPaymentAmount(v.id, v.amount));
+        closeSheet();
+        toast(vals.length === 1 ? 'Amount saved' : `${vals.length} amounts saved`);
+      });
+    },
+  });
+}
+
+// ---------- close the month
+
+export function closeMonthSheet(key) {
+  const s = S();
+  const existing = store.unloggedEntry(key);
+  const total = store.monthSpending(key).total;
+  const logged = round2(total - (existing ? (existing.baseAmount ?? existing.amount) : 0));
+  const budget = s.settings.monthlyBudget || 0;
+  const c = s.settings.currency;
+  const name = monthName(key);
+  openSheet(`<form class="sheet-body" novalidate>
+      <header class="sheet-head"><h2 class="sheet-title">Close ${esc(name)}</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+      <p class="muted">You logged ${fmt(logged, c)} in ${esc(name)}${existing ? `, plus ${fmt(existing.amount, c)} of unlogged spending added before` : ''}. How much did you really spend? Check your bank balance or statement.</p>
+      <div class="amount-field">
+        <input name="real" type="text" inputmode="decimal" value="${total}" aria-label="What you really spent" autofocus>
+        <span class="cur-fixed">${c}</span>
+      </div>
+      ${budget > logged ? `<div class="chip-row"><button type="button" class="chip-btn" data-fill="${budget}">The whole budget, ${fmt(budget, c, { compact: true })}</button></div>` : ''}
+      <p class="schedule-summary" data-diff aria-live="polite"></p>
+      <p class="form-error" role="alert"></p>
+      <div class="sheet-foot">
+        ${existing ? '<button type="button" class="btn btn-quiet danger-text" data-remove>Remove</button>' : ''}
+        <button class="btn btn-primary btn-wide">Save</button>
+      </div>
+    </form>`, {
+    onMount(sheet) {
+      const form = sheet.querySelector('form');
+      const out = sheet.querySelector('[data-diff]');
+      const show = () => {
+        const real = parseAmount(form.real.value);
+        const diff = round2(real - logged);
+        out.textContent = !(real >= 0) ? '' : diff > 0 ? `Adds ${fmt(diff, c)} as unlogged spending` : diff === 0 ? (existing ? 'Removes the unlogged spending' : 'Nothing to add, it already matches') : '';
+      };
+      form.real.addEventListener('input', show);
+      sheet.querySelector('[data-fill]')?.addEventListener('click', (e) => { form.real.value = e.target.dataset.fill; show(); });
+      show();
+      sheet.querySelector('[data-remove]')?.addEventListener('click', () => {
+        store.closeMonth(key, logged);
+        closeSheet();
+        toast('Unlogged spending removed');
+      });
+      form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const real = parseAmount(form.real.value);
+        const err = sheet.querySelector('.form-error');
+        if (!(real >= 0)) { err.textContent = 'Enter what you spent.'; return; }
+        const res = store.closeMonth(key, real);
+        if (res.error) { err.textContent = `That is less than you logged (${fmt(res.logged, c)}). Check the expenses for ${name} instead.`; return; }
+        closeSheet();
+        toast(res.added ? `Added ${fmt(res.added, c)} as unlogged spending` : 'No change needed');
       });
     },
   });

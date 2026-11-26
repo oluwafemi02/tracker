@@ -1,6 +1,6 @@
 {
   "name": "tracker",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "private": true,
   "description": "Personal expense tracker PWA with bill reminders and trips",
   "type": "module",

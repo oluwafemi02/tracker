@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.5.0 (2026-11-26)
+- Bills can be marked "Amount changes each time" (electricity, water). The app uses the average of the last 3 payments as the estimate everywhere, and Paid asks for the real amount, filled in with last time's.
+- Changing bills paid automatically are logged at the estimate and shown on Home to confirm the real amount.
+- Close the month: in Activity, enter what you really spent and the difference is added as one "Unlogged spending" entry. It updates instead of adding a second one, and can be removed.
+
 ## 1.4.0 (2026-11-25)
 - Accounts: add the bank accounts and cards your bills are paid from, in any currency.
 - Every bill has a "Paid from" account; a sheet assigns accounts to existing bills in one go.

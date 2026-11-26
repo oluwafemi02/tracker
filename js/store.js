@@ -1,7 +1,7 @@
 // App state: one JSON document in localStorage, with change subscribers.
 
 import { today, addDays, nextOccurrence, occurrencesBetween, monthBounds, monthKey, diffDays, daysInMonth, parseISO, shiftMonth } from './dates.js';
-import { SPEND_CATEGORIES, TRIP_CATEGORIES } from './categories.js';
+import { SPEND_CATEGORIES, TRIP_CATEGORIES, SYSTEM_CATEGORIES } from './categories.js';
 import { round2 } from './money.js';
 import { migrateLegacy, hasLegacyData } from './migrate.js';
 import { learn, merchantKey } from './applepay.js';
@@ -58,6 +58,7 @@ export function load() {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { saved = null; }
   state = deepMerge(DEFAULT_STATE(), saved || {});
+  for (const c of SYSTEM_CATEGORIES) if (!state.categories.some((x) => x.id === c.id)) state.categories.push({ ...c });
   if (saved) persist(); // store the full shape with any new defaults
   let migration = null;
   if (!saved && hasLegacyData((k) => localStorage.getItem(k))) {
@@ -122,7 +123,7 @@ export function categoriesByUse() {
   const since = addDays(today(), -90);
   const counts = {};
   for (const e of state.expenses) if (e.date >= since) counts[e.category] = (counts[e.category] || 0) + 1;
-  return [...state.categories].sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0));
+  return state.categories.filter((c) => c.kind !== 'system').sort((a, b) => (counts[b.id] || 0) - (counts[a.id] || 0));
 }
 
 // ---------- expenses
@@ -134,6 +135,11 @@ export function saveExpense(data) {
       data = { ...data, needsReview: false };
     }
     if (data.card && data.accountId) s.settings.cardAccounts[String(data.card).trim().toLowerCase()] = data.accountId;
+    if (data.billId && data.id) {
+      const h = s.bills.find((b) => b.id === data.billId)?.history.find((x) => x.expenseId === data.id);
+      if (h) h.amount = round2(data.amount);
+      data = { ...data, amountEstimated: false };
+    }
     const base = data.currency === s.settings.currency ? data.amount : data.baseAmount;
     const rec = { ...data, amount: round2(data.amount), baseAmount: round2(base ?? data.amount) };
     const i = s.expenses.findIndex((e) => e.id === rec.id);
@@ -194,12 +200,27 @@ function advance(bill) {
   else bill.nextDue = n;
 }
 
+// What a bill is expected to cost. For bills whose amount changes, the average of
+// the last 3 payments (or the amount typed in, before any payment).
+export function billAmount(bill) {
+  if (!bill.variable) return bill.amount;
+  const paid = (bill.history || []).filter((h) => !h.skipped && h.amount > 0).slice(-3);
+  return paid.length ? round2(paid.reduce((s, h) => s + h.amount, 0) / paid.length) : bill.amount;
+}
+
+// The amount to suggest when paying: last time's amount for changing bills.
+export function suggestedAmount(bill) {
+  if (!bill.variable) return bill.amount;
+  const last = [...(bill.history || [])].reverse().find((h) => !h.skipped && h.amount > 0);
+  return last ? last.amount : bill.amount;
+}
+
 // Log a payment for the bill's current due date and move it to the next one.
-export function markBillPaid(id, { paidOn, amount, baseAmount } = {}, s0) {
+export function markBillPaid(id, { paidOn, amount, baseAmount, estimated } = {}, s0) {
   const run = (s) => {
     const bill = s.bills.find((b) => b.id === id);
     if (!bill || !bill.nextDue) return null;
-    const amt = round2(amount ?? bill.amount);
+    const amt = round2(amount ?? billAmount(bill));
     const exp = {
       id: uid('e'),
       amount: amt,
@@ -210,6 +231,8 @@ export function markBillPaid(id, { paidOn, amount, baseAmount } = {}, s0) {
       date: paidOn || today(),
       billId: bill.id,
       person: '',
+      ...(bill.accountId ? { accountId: bill.accountId } : {}),
+      ...(estimated ? { amountEstimated: true } : {}),
       createdAt: new Date().toISOString(),
     };
     s.expenses.push(exp);
@@ -252,7 +275,8 @@ export function runAutopay(t = today()) {
     for (const bill of s.bills) {
       let guard = 0;
       while (bill.active && bill.autopay && bill.nextDue && bill.nextDue <= t && guard++ < 60) {
-        markBillPaid(bill.id, { paidOn: bill.nextDue }, s);
+        // Changing amounts are logged at the estimate and flagged so you confirm the real figure.
+        markBillPaid(bill.id, { paidOn: bill.nextDue, estimated: !!bill.variable }, s);
         count++;
       }
     }
@@ -274,7 +298,7 @@ export function attentionCount(t = today()) {
 // Monthly cost of all active bills, normalised to one month.
 export function monthlyCommitment() {
   const perMonth = { weekly: 52 / 12, biweekly: 26 / 12, monthly: 1, quarterly: 1 / 3, semiannual: 1 / 6, yearly: 1 / 12, once: 0 };
-  return round2(state.bills.filter((b) => b.active).reduce((s, b) => s + baseOf(b.amount, b.currency) * (perMonth[b.frequency] ?? 1), 0));
+  return round2(state.bills.filter((b) => b.active).reduce((s, b) => s + baseOf(billAmount(b), b.currency) * (perMonth[b.frequency] ?? 1), 0));
 }
 
 function baseOf(amount, cur) {
@@ -311,7 +335,7 @@ export function monthSummary(key = monthKey(today()), t = today()) {
     for (const b of state.bills) {
       if (!b.active || !b.nextDue) continue;
       for (const d of occurrencesBetween(b.nextDue, b.frequency, '0000-01-01', end, b.anchorDay, b.endDate)) {
-        pending.push({ bill: b, due: d, amount: baseOf(b.amount, b.currency) });
+        pending.push({ bill: b, due: d, amount: baseOf(billAmount(b), b.currency) });
       }
     }
   }
@@ -507,7 +531,7 @@ function monthPayments(key, t) {
   for (const b of state.bills) {
     if (!b.active || !b.nextDue) continue;
     const from = isCurrent ? '0000-01-01' : start;
-    for (const due of occurrencesBetween(b.nextDue, b.frequency, from, end, b.anchorDay, b.endDate)) out.push({ bill: b, due, amount: b.amount });
+    for (const due of occurrencesBetween(b.nextDue, b.frequency, from, end, b.anchorDay, b.endDate)) out.push({ bill: b, due, amount: billAmount(b) });
   }
   return out.sort((a, b) => (a.due < b.due ? -1 : 1));
 }
@@ -588,4 +612,51 @@ export function upcomingTransfers(t = today(), days = state.settings.transferRem
     }
   }
   return out;
+}
+
+// Bill payments logged at an estimate, waiting for the real amount.
+export const estimatedPayments = () => state.expenses.filter((e) => e.amountEstimated);
+
+export function confirmPaymentAmount(expenseId, amount) {
+  update((s) => {
+    const e = s.expenses.find((x) => x.id === expenseId);
+    if (!e) return;
+    const amt = round2(amount);
+    const rate = e.amount ? (e.baseAmount ?? e.amount) / e.amount : 1;
+    e.amount = amt;
+    e.baseAmount = round2(amt * rate);
+    e.amountEstimated = false;
+    const h = s.bills.find((b) => b.id === e.billId)?.history.find((x) => x.expenseId === e.id);
+    if (h) h.amount = amt;
+  });
+}
+
+// ---------- close the month
+
+// The "Unlogged spending" entry for a month, if one was added.
+export function unloggedEntry(key) {
+  return state.expenses.find((e) => e.source === 'close' && e.closeMonth === key) || null;
+}
+
+// Make the month's total match what was really spent, by adding (or updating) one
+// "Unlogged spending" entry for the difference. Returns { added } or { error, logged }.
+export function closeMonth(key, realTotal, t = today()) {
+  const { start, end } = monthBounds(key);
+  const existing = unloggedEntry(key);
+  const logged = round2(monthSpending(key).total - (existing ? (existing.baseAmount ?? existing.amount) : 0));
+  const diff = round2(realTotal - logged);
+  if (diff < 0) return { error: 'less', logged };
+  update((s) => {
+    const cur = s.expenses.find((e) => e.source === 'close' && e.closeMonth === key);
+    if (diff === 0) { if (cur) s.expenses = s.expenses.filter((e) => e !== cur); return; }
+    const date = t >= start && t < end ? t : addDays(end, -1);
+    if (cur) Object.assign(cur, { amount: diff, baseAmount: diff, date, currency: s.settings.currency });
+    else {
+      s.expenses.push({
+        id: uid('e'), amount: diff, currency: s.settings.currency, baseAmount: diff, category: 'unlogged',
+        note: 'Unlogged spending', date, billId: null, person: '', source: 'close', closeMonth: key, createdAt: new Date().toISOString(),
+      });
+    }
+  });
+  return { added: diff, logged };
 }

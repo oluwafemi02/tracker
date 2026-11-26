@@ -27,7 +27,7 @@ export function billRow(bill, { compact } = {}) {
       <span class="bill-name">${esc(bill.name)}</span>
       <span class="bill-when">${status === 'inactive' ? (bill.nextDue ? 'Paused' : 'Finished') : `Due ${relativeDue(bill.nextDue)}`}${scheduleTag(bill)}${bill.autopay ? ' <span class="tag">Autopay</span>' : ''}</span>
     </span>
-    <span class="bill-amt">${fmt(bill.amount, bill.currency)}</span>
+    <span class="bill-amt">${bill.variable ? '≈ ' : ''}${fmt(store.billAmount(bill), bill.currency)}</span>
     ${showPay && !compact ? `<button class="pay-btn" data-action="pay" data-id="${bill.id}" aria-label="Mark ${esc(bill.name)} paid">Paid</button>` : ''}
   </li>`;
 }
@@ -88,9 +88,10 @@ function expenseRow(e) {
   const trip = isTrip ? S().trips.find((t) => t.id === e.tripId) : null;
   const sub = [isTrip ? `${trip?.name || 'Trip'}` : cat.name, e.note && e.note !== cat.name ? e.note : ''].filter(Boolean).join(', ');
   const main = isTrip ? e.baseAmount : (e.baseAmount ?? e.amount);
-  return `<li class="tx-row" data-action="${isTrip ? 'trip-expense' : 'expense'}" data-id="${e.id}">
+  const action = e.source === 'close' ? `close-month" data-key="${e.closeMonth}` : isTrip ? 'trip-expense' : 'expense';
+  return `<li class="tx-row" data-action="${action}" data-id="${e.id}">
     <span class="tx-icon" aria-hidden="true">${isTrip ? '✈️' : cat.icon}</span>
-    <span class="tx-main"><span class="tx-title">${esc(e.note && !isTrip ? e.note : cat.name)}</span><span class="tx-sub">${esc(e.note && !isTrip ? cat.name : sub)}${e.billId ? ' <span class="tag">Bill</span>' : ''}${e.needsReview ? ' <span class="tag tag-check">Check</span>' : ''}</span></span>
+    <span class="tx-main"><span class="tx-title">${esc(e.note && !isTrip ? e.note : cat.name)}</span><span class="tx-sub">${esc(e.note && !isTrip ? cat.name : sub)}${e.billId ? ' <span class="tag">Bill</span>' : ''}${e.needsReview ? ' <span class="tag tag-check">Check</span>' : ''}${e.amountEstimated ? ' <span class="tag tag-check">Estimate</span>' : ''}</span></span>
     <span class="tx-amt">${fmt(main, cur())}${e.currency !== cur() ? `<small>${fmt(e.amount, e.currency)}</small>` : ''}</span>
   </li>`;
 }
@@ -153,6 +154,7 @@ export function renderHome() {
       ${runway(sum)}
     </section>
     ${store.reviewCount() ? `<button class="nudge review-nudge" data-action="review-payments"><b>${store.reviewCount()} Apple Pay payment${store.reviewCount() === 1 ? '' : 's'} to check.</b> Pick a category once per shop.</button>` : ''}
+    ${store.estimatedPayments().length ? `<button class="nudge" data-action="confirm-amounts"><b>${store.estimatedPayments().length === 1 ? `${esc(store.estimatedPayments()[0].note)} was logged at the usual amount.` : `${store.estimatedPayments().length} bills were logged at their usual amount.`}</b> Enter what was actually charged.</button>` : ''}
     ${transferNudges()}
     ${reminderNudge()}
     ${attention.length ? `<section class="block"><h2 class="block-title attention">Needs paying</h2><ul class="list">${attention.map((b) => billRow(b)).join('')}</ul></section>` : ''}
@@ -240,7 +242,8 @@ export function renderActivity() {
     </header>
     <section class="hero hero-flat">
       <div class="hero-figure"><p class="hero-amount">${fmt(sum.total, c)}</p>
-      <p class="hero-caption">${budget ? `${sum.total > budget ? 'over' : 'of'} your ${fmt(budget, c, { compact: true })} budget` : 'spent this month'}</p></div>
+      <p class="hero-caption">${budget ? `${sum.total > budget ? 'over' : 'of'} your ${fmt(budget, c, { compact: true })} budget` : 'spent this month'}</p>
+      <button class="link-btn close-month" data-action="close-month" data-key="${key}">${store.unloggedEntry(key) ? 'Change unlogged spending' : 'Spent more than this? Close the month'}</button></div>
       ${trend(key)}
     </section>
     ${bars(sum)}

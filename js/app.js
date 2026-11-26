@@ -7,7 +7,7 @@ import { renderHome, renderActivity, setActivityMonth, setActivityFilter } from 
 import { renderBills, billDetail, payNow, setBillsView, setAccountMonth } from './views-bills.js';
 import { renderTrips, renderTrip } from './views-trips.js';
 import { renderSettings, mountSettings, backup, csv, reimport, erase, deleteCategory, recoverTrips } from './views-settings.js';
-import { expenseSheet, billSheet, tripSheet, tripExpenseSheet, reviewSheet, accountSheet, assignAccountsSheet } from './forms.js';
+import { expenseSheet, billSheet, tripSheet, tripExpenseSheet, reviewSheet, accountSheet, assignAccountsSheet, confirmAmountsSheet, closeMonthSheet } from './forms.js';
 import * as rem from './reminders.js';
 import * as push from './push.js';
 import { VERSION } from './version.js';
@@ -129,6 +129,8 @@ on('push-sync', async () => {
 });
 on('push-disconnect', async () => { await push.disconnect(); toast('Push server disconnected'); });
 on('review-payments', () => reviewSheet());
+on('confirm-amounts', () => confirmAmountsSheet());
+on('close-month', ({ key }) => closeMonthSheet(key));
 on('new-account', () => accountSheet());
 on('edit-account', ({ id }) => accountSheet(store.account(id)));
 on('assign-accounts', () => assignAccountsSheet());

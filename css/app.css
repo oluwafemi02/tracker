@@ -403,3 +403,6 @@ input[type='date'].input, input[type='time'].input { min-width: 0; max-width: 10
 .transfer-nudge { display: flex; align-items: center; gap: 10px; }
 .transfer-nudge .nudge-text { flex: 1; }
 .transfer-nudge .btn { flex: none; }
+
+.close-month { display: block; padding-left: 0; margin-top: 2px; }
+.chip-btn { border: 1.5px solid var(--line); background: var(--paper); border-radius: 999px; padding: 8px 12px; font-size: 14.5px; margin-top: 10px; }

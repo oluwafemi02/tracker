@@ -149,3 +149,62 @@ test('bill schedules: payments left, last payment, summaries', async () => {
   assert.equal(describeSchedule({ frequency: 'once', nextDue: '2026-12-03' }), 'One time, due 3 Dec');
   assert.equal(describeSchedule({ frequency: 'weekly', nextDue: '2026-11-30', endDate: '2026-12-14' }), 'Every Monday, 3 payments left, last on 14 Dec');
 });
+
+test('variable bills: estimate, suggested amount, autopay marks the estimate', async () => {
+  resetStorage();
+  const store = await import('../js/store.js');
+  store.load();
+  store.saveBill({ name: 'Electricity', amount: 60, currency: 'EUR', category: 'utilities', frequency: 'monthly', nextDue: '2026-09-15', remindDays: 2, variable: true });
+  const id = store.getState().bills[0].id;
+  const bill = () => store.getState().bills[0];
+  assert.equal(store.billAmount(bill()), 60, 'typed amount before any payment');
+  store.markBillPaid(id, { paidOn: '2026-09-15', amount: 72.4 });
+  store.markBillPaid(id, { paidOn: '2026-10-15', amount: 55.1 });
+  assert.equal(store.suggestedAmount(bill()), 55.1, 'last time');
+  assert.equal(store.billAmount(bill()), 63.75, 'average of payments so far');
+  store.markBillPaid(id, { paidOn: '2026-11-15', amount: 80 });
+  store.markBillPaid(id, { paidOn: '2026-12-15', amount: 90 });
+  assert.equal(store.billAmount(bill()), 75.03, 'average of the last 3');
+  // Editing a payment updates the history the estimate uses.
+  const lastExp = store.getState().expenses.at(-1);
+  store.saveExpense({ ...lastExp, amount: 60 });
+  assert.equal(store.billAmount(bill()), 65.03);
+  // Autopay logs the estimate and flags it.
+  store.update((s) => { s.bills[0].autopay = true; });
+  assert.equal(store.runAutopay('2027-01-16'), 1);
+  const auto = store.getState().expenses.at(-1);
+  assert.equal(auto.amount, 65.03);
+  assert.equal(auto.amountEstimated, true);
+  assert.equal(store.estimatedPayments().length, 1);
+  store.confirmPaymentAmount(auto.id, 71.2);
+  assert.equal(store.estimatedPayments().length, 0);
+  assert.equal(bill().history.at(-1).amount, 71.2);
+  // Pending estimate is used in the month summary.
+  store.update((s) => { s.settings.monthlyBudget = 1000; });
+  const feb = store.monthSummary('2027-02', '2027-02-01');
+  assert.equal(feb.committed, store.billAmount(bill()));
+});
+
+test('close the month: adds, updates, removes the unlogged entry', async () => {
+  resetStorage();
+  const store = await import('../js/store.js');
+  store.load();
+  assert.ok(store.getState().categories.some((c) => c.id === 'unlogged'), 'system category added');
+  assert.ok(!store.categoriesByUse().some((c) => c.id === 'unlogged'), 'not offered for new expenses');
+  store.saveExpense({ amount: 400, currency: 'EUR', category: 'groceries', note: '', date: '2026-11-03' });
+  let r = store.closeMonth('2026-11', 2500, '2026-11-26');
+  assert.deepEqual(r, { added: 2100, logged: 400 });
+  const entry = store.unloggedEntry('2026-11');
+  assert.equal(entry.date, '2026-11-26');
+  assert.equal(entry.category, 'unlogged');
+  assert.equal(store.monthSpending('2026-11').total, 2500);
+  r = store.closeMonth('2026-11', 2600, '2026-11-26');
+  assert.equal(r.added, 2200);
+  assert.equal(store.getState().expenses.filter((e) => e.source === 'close').length, 1, 'updated, not duplicated');
+  assert.deepEqual(store.closeMonth('2026-11', 300, '2026-11-26'), { error: 'less', logged: 400 });
+  store.closeMonth('2026-11', 400, '2026-11-26');
+  assert.equal(store.unloggedEntry('2026-11'), null, 'removed when it matches');
+  // A past month gets its last day.
+  store.closeMonth('2026-10', 100, '2026-11-26');
+  assert.equal(store.unloggedEntry('2026-10').date, '2026-10-31');
+});

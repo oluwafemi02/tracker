@@ -9,7 +9,7 @@
 import { addDays, occurrencesBetween, parseISO, today, shortDate, FREQUENCIES, pad } from './dates.js';
 import { fmt } from './money.js';
 import { buildICS } from './ics.js';
-import { getState, attentionCount, billStatus, update, accountPlan, category } from './store.js';
+import { getState, attentionCount, billStatus, update, accountPlan, category, billAmount } from './store.js';
 import { monthKey, shiftMonth } from './dates.js';
 
 export const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
@@ -35,7 +35,7 @@ function localDateTime(iso, hhmm) {
 }
 
 function billLine(bill, hide) {
-  return hide ? bill.name : `${bill.name} ${fmt(bill.amount, bill.currency)}`;
+  return hide ? bill.name : `${bill.name} ${bill.variable ? 'about ' : ''}${fmt(billAmount(bill), bill.currency)}`;
 }
 
 // Everything the push server needs: when to fire and what to say. Nothing else leaves the phone.
@@ -50,7 +50,7 @@ export function reminderSchedule(horizonDays = 100) {
     const lead = Number(bill.remindDays ?? s.settings.remindDays ?? 2);
     const dues = occurrencesBetween(bill.nextDue, bill.frequency, '0000-01-01', until, bill.anchorDay, bill.endDate);
     for (const due of dues) {
-      const amount = hideAmountsInPush ? '' : ` ${fmt(bill.amount, bill.currency)}`;
+      const amount = hideAmountsInPush ? '' : ` ${bill.variable ? 'about ' : ''}${fmt(billAmount(bill), bill.currency)}`;
       const url = `./?bill=${encodeURIComponent(bill.id)}`;
       const push = (kind, date, title, body) => items.push({
         id: `${bill.id}:${due}:${kind}`, fireAt: localDateTime(date, remindTime).toISOString(), title, body, url, tag: `${bill.id}:${due}`,
@@ -168,7 +168,7 @@ export function calendarOutOfDate() {
 export async function exportCalendar() {
   const s = getState();
   // Each event starts at the bill's current due date and repeats from there.
-  const ics = buildICS(s.bills, s.settings, location.origin + location.pathname);
+  const ics = buildICS(s.bills.map((b) => ({ ...b, amount: billAmount(b) })), s.settings, location.origin + location.pathname);
   const file = new File([ics], 'bills.ics', { type: 'text/calendar' });
   let shared = false;
   if (isIOS() && navigator.canShare?.({ files: [file] })) {

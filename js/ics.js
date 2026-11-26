@@ -55,7 +55,7 @@ export function buildICS(bills, settings = {}, appUrl = '') {
       `DTSTAMP:${stamp}`,
       `DTSTART;VALUE=DATE:${icsDate(b.nextDue)}`,
       `DTEND;VALUE=DATE:${icsDate(addDays(b.nextDue, 1))}`,
-      `SUMMARY:${esc(b.amount != null ? `${b.name} ${fmt(b.amount, b.currency)}` : b.name)}`,
+      `SUMMARY:${esc(b.amount != null ? `${b.name} ${b.variable ? '~' : ''}${fmt(b.amount, b.currency)}` : b.name)}`,
       `DESCRIPTION:${esc(`${FREQUENCIES[b.frequency]?.label || ''} bill${b.autopay ? ' (autopay)' : ''}. ${appUrl ? `Mark it paid: ${appUrl}?bill=${b.id}` : 'Open Tracker to mark it paid.'}`)}`,
       'TRANSP:TRANSPARENT');
     const r = rrule(b);

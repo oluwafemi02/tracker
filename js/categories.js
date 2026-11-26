@@ -23,6 +23,11 @@ export const SPEND_CATEGORIES = [
   { id: 'other', name: 'Other', icon: '📝' },
 ];
 
+// Used by the app itself; not offered when adding an expense.
+export const SYSTEM_CATEGORIES = [
+  { id: 'unlogged', name: 'Unlogged spending', icon: '❔', kind: 'system' },
+];
+
 export const TRIP_CATEGORIES = [
   { id: 't-food', name: 'Food & drink', icon: '🍽️', match: ['food', 'dining', 'restaurant', 'drink', 'cafe'] },
   { id: 't-stay', name: 'Stay', icon: '🏨', match: ['accommodation', 'hotel', 'stay', 'airbnb', 'hostel'] },

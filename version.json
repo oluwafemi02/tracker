@@ -1,5 +1,5 @@
 {
-  "version": "1.4.0",
-  "releaseDate": "2026-11-25",
-  "description": "Accounts: see how much each bank account needs for its bills each month, with transfer reminders."
+  "version": "1.5.0",
+  "releaseDate": "2026-11-26",
+  "description": "Bills whose amount changes, and Close the month for spending you did not log."
 }

@@ -113,15 +113,16 @@ export function billDetail(id) {
         <span class="head-actions"><button type="button" class="link-btn" data-edit>Edit</button><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></span>
       </header>
       <div class="bill-hero st-${status}">
-        <p class="hero-amount">${fmt(bill.amount, bill.currency)}</p>
+        <p class="hero-amount">${bill.variable ? '≈ ' : ''}${fmt(store.billAmount(bill), bill.currency)}</p>
+        ${bill.variable ? `<p class="muted small">Amount changes each time${bill.history.some((h) => h.amount) ? `, last ${fmt(store.suggestedAmount(bill), bill.currency)}` : ''}</p>` : ''}
         <p class="hero-caption">${status === 'inactive' ? (bill.nextDue ? 'Paused' : 'Finished, all payments made') : `Next due ${shortDate(bill.nextDue)} (${relativeDue(bill.nextDue)})`}</p>
         ${bill.nextDue ? `<p class="schedule-summary">${describeSchedule(bill)}</p>` : ''}
         ${bill.accountId && store.account(bill.accountId) ? `<p class="muted small">Paid from ${esc(store.account(bill.accountId).name)}</p>` : ''}
         <p class="muted small">Reminder ${bill.remindDays ? `${bill.remindDays} day${bill.remindDays > 1 ? 's' : ''} before and ` : ''}on the day${bill.autopay ? '. Logged automatically on the due date.' : '.'}</p>
       </div>
       ${status !== 'inactive' ? `<div class="action-grid">
-        <button class="btn btn-primary" data-pay>Paid ${fmt(bill.amount, bill.currency)}</button>
-        <button class="btn btn-quiet" data-pay-other>Change amount or date</button>
+        ${bill.variable ? '<button class="btn btn-primary" data-pay-other>Enter amount paid</button>' : `<button class="btn btn-primary" data-pay>Paid ${fmt(bill.amount, bill.currency)}</button>
+        <button class="btn btn-quiet" data-pay-other>Change amount or date</button>`}
         <button class="btn btn-quiet" data-skip>Skip this time</button>
       </div>` : `<div class="action-grid"><button class="btn btn-primary" data-resume>Resume</button></div>`}
       ${bill.notes ? `<p class="note-box">${esc(bill.notes)}</p>` : ''}
@@ -156,6 +157,8 @@ export function billDetail(id) {
 export function payNow(id) {
   const bill = S().bills.find((b) => b.id === id);
   if (!bill) return;
+  // Changing amounts: ask what was paid.
+  if (bill.variable) { payBillSheet(bill); return; }
   const r = bill.currency === S().settings.currency ? 1 : lastRate(bill.currency, S().settings.currency);
   store.markBillPaid(id, { paidOn: today(), baseAmount: r ? bill.amount * r : bill.amount });
   haptic();

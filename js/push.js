@@ -2,7 +2,7 @@
 // The phone keeps all data. It sends the server only the reminder schedule
 // (bill name, amount unless hidden, and when to alert) plus a calendar list of bills.
 
-import { getState, update, attentionCount, uid, accountForCard } from './store.js';
+import { getState, update, attentionCount, uid, accountForCard, billAmount } from './store.js';
 import { inboxToExpenses } from './applepay.js';
 import { lastRate, fetchRate, ECB } from './money.js';
 import { encryptJSON, decryptJSON, backupPayload, dataHash, deriveKeys, restoredState } from './backup.js';
@@ -73,7 +73,7 @@ export async function sync() {
     const reg = await navigator.serviceWorker.ready;
     const sub = await reg.pushManager.getSubscription();
     const bills = s.bills.filter((b) => b.active).map((b) => ({
-      id: b.id, name: b.name, amount: s.settings.hideAmountsInPush ? null : b.amount, currency: b.currency,
+      id: b.id, name: b.name, amount: s.settings.hideAmountsInPush ? null : billAmount(b), variable: !!b.variable, currency: b.currency,
       frequency: b.frequency, anchorDay: b.anchorDay, nextDue: b.nextDue, endDate: b.endDate, remindDays: b.remindDays, autopay: b.autopay,
     }));
     await api('/sync', {
