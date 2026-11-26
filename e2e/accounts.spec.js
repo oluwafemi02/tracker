@@ -76,8 +76,11 @@ test.describe('Accounts', () => {
     await s.locator('input[name="name"]').fill('Life insurance');
     await s.locator('input[name="amount"]').fill('25');
     await s.locator('select[name="accountId"]').selectOption('__new');
-    await sheet(page).locator('input[name="name"]').fill('Revolut');
-    await sheet(page).getByRole('button', { name: 'Add account' }).click();
+    const acct = page.locator('.sheet-wrap.open .sheet', { has: page.locator('.sheet-title', { hasText: 'New account' }) });
+    await expect(acct).toBeVisible();
+    await acct.locator('input[name="name"]').fill('Revolut');
+    await acct.getByRole('button', { name: 'Add account' }).click();
+    await expect(acct).toHaveCount(0);
     await expect(sheet(page).locator('select[name="accountId"]')).toHaveValue(/^a/);
     await sheet(page).getByRole('button', { name: 'Add bill' }).click();
     const st = await getState(page);
