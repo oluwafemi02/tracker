@@ -1,6 +1,6 @@
 // Service worker: offline app shell, push notifications, notification taps.
 // The deploy workflow rewrites CACHE_NAME on every deploy so phones pick up new files.
-const CACHE_NAME = 'tracker-v1.5.0';
+const CACHE_NAME = 'tracker-v1.6.0';
 const STATE_CACHE = 'ledger-state';
 
 const SHELL = [

@@ -44,6 +44,7 @@ function remindersSection() {
       <label class="field"><span>New bills remind me</span><select class="input" data-setting="remindDays">${[[0, 'On the day'], [1, '1 day before'], [2, '2 days before'], [3, '3 days before'], [7, '1 week before']].map(([v, l]) => `<option value="${v}" ${Number(s.settings.remindDays) === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
     </div>
     <button class="link-btn" data-action="apply-remind-all">Use this timing for all existing bills</button>
+    <label class="toggle"><input type="checkbox" data-setting="monthlySummary" ${s.settings.monthlySummary !== false ? 'checked' : ''}><span class="toggle-ui"></span><span class="toggle-text"><b>Monthly summary</b><small>On the 1st: what you spent last month, how it compares with your budget, and the biggest change. Sent by push, and shown on Home for the first week.</small></span></label>
 
     <h3 class="set-sub">When the app is closed</h3>
     <p class="muted small">iPhone web apps cannot run in the background, so the app itself cannot alert you while it is closed. Use one or both of these.</p>
@@ -154,6 +155,12 @@ export function renderSettings(section) {
         <label class="field"><span>Main currency</span><select class="input" data-setting="currency">${CURRENCY_CODES.map((c) => `<option ${c === s.settings.currency ? 'selected' : ''}>${c}</option>`).join('')}</select></label>
       </div>
       <p class="muted small">The budget covers everything: bills and day-to-day spending. Home shows what is left after the bills still to come.</p>
+    </section>
+    <section class="set-block" id="set-limits">
+      <h2 class="set-title">Category limits</h2>
+      ${Object.keys(s.limits || {}).length ? `<ul class="plain-list">${Object.entries(s.limits).map(([id, v]) => `<li><span>${store.category(id).icon} ${esc(store.category(id).name)}</span><span>${fmt(v, s.settings.currency)} a month</span></li>`).join('')}</ul>`
+        : '<p class="muted small">Set a monthly limit for categories like Dining or Shopping. You get an alert at 80% and when you go over.</p>'}
+      <button class="btn btn-quiet btn-wide" data-action="limits">${Object.keys(s.limits || {}).length ? 'Change limits' : 'Set limits'}</button>
     </section>
     <section class="set-block">
       <h2 class="set-title">Appearance</h2>

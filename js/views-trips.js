@@ -1,7 +1,7 @@
 // Trips list and trip detail screens.
 
 import { esc, emptyState } from './ui.js';
-import { shortDate, dayHeading, diffDays, today } from './dates.js';
+import { shortDate, dayHeading, diffDays, today, monthName, monthKey, shiftMonth, ord } from './dates.js';
 import { fmt } from './money.js';
 import * as store from './store.js';
 
@@ -17,11 +17,18 @@ function tripCard(trip) {
   const ts = store.tripSummary(trip);
   const pct = trip.budget ? Math.min(100, (ts.total / trip.budget) * 100) : 0;
   const when = st === 'ongoing' ? `Day ${ts.elapsed} of ${ts.length}` : st === 'upcoming' ? `Starts in ${diffDays(today(), trip.startDate)} days` : dateRange(trip);
+  const sv = st === 'upcoming' ? store.tripSavings(trip) : null;
+  const c = S().settings.currency;
+  // Before the trip, the card shows savings progress instead of spending.
+  const body = sv ? `<span class="trip-card-amt">${fmt(sv.saved, c)} <small>of ${fmt(sv.target, c, { compact: true })} saved</small></span>
+    <span class="bar bar-save"><span style="width:${sv.pct}%"></span></span>
+    <span class="muted small">${sv.done ? 'Savings goal reached' : `About ${fmt(sv.monthly, c)} a month to go`}</span>`
+    : `<span class="trip-card-amt">${fmt(ts.total, trip.currency)}${trip.budget ? ` <small>of ${fmt(trip.budget, trip.currency, { compact: true })}</small>` : ''}</span>
+    ${trip.budget ? `<span class="bar ${ts.total > trip.budget ? 'over' : ''}"><span style="width:${pct}%"></span></span>` : ''}`;
   return `<li><button class="trip-card st-${st}" data-action="open-trip" data-id="${trip.id}">
     <span class="trip-card-top"><b>${esc(trip.name)}</b><span>${when}</span></span>
     ${trip.destination ? `<span class="muted small">${esc(trip.destination)}</span>` : ''}
-    <span class="trip-card-amt">${fmt(ts.total, trip.currency)}${trip.budget ? ` <small>of ${fmt(trip.budget, trip.currency, { compact: true })}</small>` : ''}</span>
-    ${trip.budget ? `<span class="bar ${ts.total > trip.budget ? 'over' : ''}"><span style="width:${pct}%"></span></span>` : ''}
+    ${body}
   </button></li>`;
 }
 
@@ -34,6 +41,32 @@ export function renderTrips() {
     ${ongoing.length ? `<section class="block"><h2 class="block-title">On now</h2><ul class="trip-list">${ongoing.map(tripCard).join('')}</ul></section>` : ''}
     ${upcoming.length ? `<section class="block"><h2 class="block-title">Coming up</h2><ul class="trip-list">${upcoming.map(tripCard).join('')}</ul></section>` : ''}
     ${past.length ? `<section class="block"><h2 class="block-title">Past trips</h2><ul class="trip-list">${past.map(tripCard).join('')}</ul></section>` : ''}`;
+}
+
+function savingsBlock(trip, st) {
+  const sv = store.tripSavings(trip);
+  const c = S().settings.currency;
+  if (!sv) {
+    return st === 'upcoming' ? `<section class="block"><button class="save-start" data-action="savings-goal" data-id="${trip.id}">
+      <b>Save up for this trip</b><span class="muted small">Set a target, track what you put aside, and get a monthly reminder.</span></button></section>` : '';
+  }
+  if (st !== 'upcoming') {
+    return `<p class="muted small center saved-line">You saved ${fmt(sv.saved, c)} for this trip${sv.done ? ', the full goal' : ` of the ${fmt(sv.target, c)} goal`}.</p>`;
+  }
+  const by = shortDate(trip.startDate);
+  const plan = sv.done ? 'Goal reached. Enjoy the trip.'
+    : sv.thisMonth ? `Saved this month. About ${fmt(sv.monthly, c)} a month from ${monthName(shiftMonth(monthKey(today()), 1))} to reach it by ${by}.`
+      : `Put aside ${sv.fixedMonthly ? '' : 'about '}${fmt(sv.monthly, c)} a month to reach it by ${by}${sv.fixedMonthly && sv.fixedMonthly < sv.suggested ? `. At that rate you will be ${fmt(sv.left - sv.fixedMonthly * sv.months, c)} short; ${fmt(sv.suggested, c)} a month gets there` : ''}.`;
+  return `<section class="block savings">
+    <div class="block-head"><h2 class="block-title">Savings</h2><button class="link-btn" data-action="savings-goal" data-id="${trip.id}">Edit goal</button></div>
+    <p class="save-amt"><b>${fmt(sv.saved, c)}</b> of ${fmt(sv.target, c)} saved</p>
+    <span class="bar bar-lg bar-save"><span style="width:${sv.pct}%"></span></span>
+    <p class="muted small">${plan}${sv.remind && !sv.done ? ` Reminder on the ${ord(sv.day)} of each month.` : ''}</p>
+    ${sv.done ? '' : `<button class="btn btn-primary btn-sm" data-action="add-deposit" data-id="${trip.id}">Add money</button>`}
+    ${sv.deposits.length ? `<ul class="list deposits">${sv.deposits.slice(0, 12).map((d) => `<li class="tx-row" data-action="edit-deposit" data-id="${trip.id}" data-deposit="${d.id}">
+      <span class="tx-icon" aria-hidden="true">🐷</span><span class="tx-main"><span class="tx-title">Put aside</span><span class="tx-sub">${shortDate(d.date)}</span></span>
+      <span class="tx-amt">${fmt(d.amount, c)}</span></li>`).join('')}</ul>` : ''}
+  </section>`;
 }
 
 export function renderTrip(id) {
@@ -70,6 +103,7 @@ export function renderTrip(id) {
         <div><dt>Expenses</dt><dd>${ts.items.length}</dd></div>
       </dl>
     </section>
+    ${savingsBlock(trip, st)}
     ${cats.length ? `<section class="block"><h2 class="block-title">Where it went</h2><ul class="cat-bars">${cats.map(([id, v]) => {
       const cat = store.category(id);
       return `<li><div class="cat-bar"><span class="cb-label"><i>${cat.icon}</i>${esc(cat.name)}</span><span class="cb-val">${fmt(v, c)}</span><span class="cb-track"><span style="width:${(v / max) * 100}%"></span></span></div></li>`;

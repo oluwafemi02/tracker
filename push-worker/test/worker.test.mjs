@@ -77,6 +77,21 @@ assert.match(ics, /RRULE:FREQ=MONTHLY;INTERVAL=1;BYMONTHDAY=1/);
 r = await call('GET', `/cal/${deviceId}.ics?k=nope`);
 assert.equal(r.status, 404);
 
+// ---- several due at once: bills are batched, the monthly summary always goes alone
+{
+  const at = new Date(now + 10 * 86400e3).toISOString();
+  const many = [1, 2, 3, 4].map((n) => ({ id: `bill${n}:due`, fireAt: at, title: `Bill ${n} is due today`, body: '', url: './?tab=bills' }));
+  many.push({ id: 'summary:2026-11', fireAt: at, title: 'November: €2,140 spent', body: '€310 under budget.', url: './?tab=activity&month=2026-11', tag: 'summary:2026-11', solo: true });
+  r = await call('POST', '/sync', { deviceId, items: many }, secret);
+  assert.equal(r.status, 200);
+  const before = delivered.length;
+  sent = await runDue(env, now + 10 * 86400e3 + 60e3);
+  assert.equal(sent, 2);
+  const got = delivered.slice(before).map((d) => d.title);
+  assert.deepEqual(got, ['November: €2,140 spent', '4 reminders']);
+  assert.equal(delivered.at(-2).url, './?tab=activity&month=2026-11');
+}
+
 // ---- Apple Pay inbox
 const token = 'a1'.repeat(16);
 r = await call('POST', `/in/${deviceId}/${token}`, { amount: '€12.50', merchant: 'Rimi' });

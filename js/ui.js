@@ -110,6 +110,25 @@ export function toast(message, { action, onAction, tone } = {}) {
   toastTimer = setTimeout(() => el.classList.remove('show'), action ? 5000 : 2600);
 }
 
+// A second, longer-lived banner above the toast for alerts (category limits), so it
+// never replaces an "Added, Undo" toast.
+let noticeTimer = null;
+export function notice(message, { tone = 'near' } = {}) {
+  let el = document.getElementById('notice');
+  if (!el) {
+    el = document.createElement('div');
+    el.id = 'notice';
+    el.setAttribute('role', 'alert');
+    el.addEventListener('click', () => el.classList.remove('show'));
+    document.body.appendChild(el);
+  }
+  el.className = `notice notice-${tone}`;
+  el.textContent = message;
+  requestAnimationFrame(() => el.classList.add('show'));
+  clearTimeout(noticeTimer);
+  noticeTimer = setTimeout(() => el.classList.remove('show'), 6000);
+}
+
 // Amount input: accept "12,50" as well as "12.50".
 export function parseAmount(v) {
   const n = parseFloat(String(v || '').replace(/\s/g, '').replace(',', '.'));

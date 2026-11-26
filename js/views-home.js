@@ -4,7 +4,7 @@ import { esc, emptyState } from './ui.js';
 import { today, monthKey, monthName, parseISO, dayHeading, relativeDue, shortDate, shiftMonth, monthBounds, countOccurrences } from './dates.js';
 import { fmt } from './money.js';
 import * as store from './store.js';
-import { permission, calendarOutOfDate } from './reminders.js';
+import { permission, calendarOutOfDate, recapText } from './reminders.js';
 
 const S = () => store.getState();
 const cur = () => S().settings.currency;
@@ -105,6 +105,44 @@ function transferNudges() {
     </div>`).join('');
 }
 
+// Category limits at 80% or more this month.
+function limitsBlock() {
+  const near = store.limitStatus().filter((l) => l.level !== 'ok');
+  if (!near.length) return '';
+  const c = cur();
+  return `<section class="block">
+    <div class="block-head"><h2 class="block-title">Close to the limit</h2><button class="link-btn" data-action="limits">Limits</button></div>
+    <ul class="list limit-list">${near.map((l) => {
+      const cat = store.category(l.category);
+      return `<li><button class="limit-row lv-${l.level}" data-action="limit-cat" data-cat="${l.category}">
+        <span class="limit-top"><span><i aria-hidden="true">${cat.icon}</i> ${esc(cat.name)}</span><span>${fmt(l.spent, c)} <small>of ${fmt(l.limit, c, { compact: true })}</small></span></span>
+        <span class="bar"><span style="width:${Math.min(100, l.pct)}%"></span></span>
+        <span class="limit-note">${l.level === 'over' ? `${fmt(-l.left, c)} over` : `${fmt(l.left, c)} left`}</span>
+      </button></li>`;
+    }).join('')}</ul></section>`;
+}
+
+// Last month's summary, on Home for the first week of the month until opened.
+function recapNudge() {
+  const s = S();
+  const t = today();
+  if (s.settings.monthlySummary === false || parseISO(t).getDate() > 7) return '';
+  const key = shiftMonth(monthKey(t), -1);
+  if (s.settings.summarySeen === key) return '';
+  const text = recapText(key);
+  if (!text) return '';
+  return `<button class="nudge nudge-calm" data-action="recap" data-key="${key}"><b>${esc(text.title)}</b> ${esc(text.body)}</button>`;
+}
+
+// "Put aside €260 for Japan": shown from the reminder day until something is saved this month.
+function savingsNudges() {
+  const c = cur();
+  return store.savingsDue().map(({ trip, savings, amount }) => `<div class="nudge transfer-nudge savings-nudge">
+      <button class="nudge-text nudge-link" data-action="open-trip" data-id="${trip.id}"><b>Put aside ${fmt(amount, c)} for ${esc(trip.name)}</b> ${fmt(savings.saved, c)} of ${fmt(savings.target, c)} saved so far.</button>
+      <button class="btn btn-quiet btn-sm" data-action="deposit-done" data-id="${trip.id}" data-amount="${amount}">Done</button>
+    </div>`).join('');
+}
+
 function reminderNudge() {
   const s = S();
   if (!s.bills.some((b) => b.active)) return '';
@@ -155,9 +193,12 @@ export function renderHome() {
     </section>
     ${store.reviewCount() ? `<button class="nudge review-nudge" data-action="review-payments"><b>${store.reviewCount()} Apple Pay payment${store.reviewCount() === 1 ? '' : 's'} to check.</b> Pick a category once per shop.</button>` : ''}
     ${store.estimatedPayments().length ? `<button class="nudge" data-action="confirm-amounts"><b>${store.estimatedPayments().length === 1 ? `${esc(store.estimatedPayments()[0].note)} was logged at the usual amount.` : `${store.estimatedPayments().length} bills were logged at their usual amount.`}</b> Enter what was actually charged.</button>` : ''}
+    ${recapNudge()}
     ${transferNudges()}
+    ${savingsNudges()}
     ${reminderNudge()}
     ${attention.length ? `<section class="block"><h2 class="block-title attention">Needs paying</h2><ul class="list">${attention.map((b) => billRow(b)).join('')}</ul></section>` : ''}
+    ${limitsBlock()}
     <section class="block">
       <div class="block-head"><h2 class="block-title">Coming up</h2><button class="link-btn" data-action="tab" data-tab="bills">All bills</button></div>
       ${soon.length ? `<ul class="list">${soon.map((b) => billRow(b)).join('')}</ul>`
@@ -182,20 +223,27 @@ export function setActivityFilter({ search, cat } = {}) {
   if (search !== undefined) activitySearch = search;
   if (cat !== undefined) activityCat = cat === activityCat ? '' : cat;
 }
+export function showCategory(cat) { activityCat = cat || ''; }
 export const getActivityState = () => ({ activityMonth, activitySearch, activityCat });
 
-function bars(sum) {
+function bars(sum, key) {
   const c = cur();
   const entries = Object.entries(sum.byCat).sort((a, b) => b[1] - a[1]);
-  if (!entries.length) return '';
+  const limits = Object.fromEntries(store.limitStatus(key).map((l) => [l.category, l]));
+  const hasLimits = Object.keys(S().limits || {}).length > 0;
+  const link = `<p class="limits-link"><button class="link-btn" data-action="limits">${hasLimits ? 'Category limits' : 'Set limits for categories'}</button></p>`;
+  if (!entries.length) return hasLimits ? link : '';
   const max = entries[0][1];
   return `<ul class="cat-bars">${entries.map(([id, v]) => {
     const cat = store.category(id);
-    return `<li><button class="cat-bar ${activityCat === id ? 'on' : ''}" data-action="filter-cat" data-cat="${id}">
-      <span class="cb-label"><i>${cat.icon}</i>${esc(cat.name)}</span><span class="cb-val">${fmt(v, c)}</span>
-      <span class="cb-track"><span style="width:${Math.max(3, (v / max) * 100)}%"></span></span>
+    const l = limits[id];
+    // With a limit, the bar shows how much of the limit is used.
+    const width = l ? Math.min(100, l.pct) : (v / max) * 100;
+    return `<li><button class="cat-bar ${activityCat === id ? 'on' : ''} ${l ? `lv-${l.level}` : ''}" data-action="filter-cat" data-cat="${id}">
+      <span class="cb-label"><i>${cat.icon}</i>${esc(cat.name)}</span><span class="cb-val">${fmt(v, c)}${l ? ` <small>of ${fmt(l.limit, c, { compact: true })}</small>` : ''}</span>
+      <span class="cb-track"><span style="width:${Math.max(3, width)}%"></span></span>
     </button></li>`;
-  }).join('')}</ul>`;
+  }).join('')}</ul>${link}`;
 }
 
 function trend(key) {
@@ -246,7 +294,7 @@ export function renderActivity() {
       <button class="link-btn close-month" data-action="close-month" data-key="${key}">${store.unloggedEntry(key) ? 'Change unlogged spending' : 'Spent more than this? Close the month'}</button></div>
       ${trend(key)}
     </section>
-    ${bars(sum)}
+    ${bars(sum, key)}
     <div class="search"><input type="search" placeholder="Search notes, categories, amounts" value="${esc(activitySearch)}" data-input="activity-search" aria-label="Search"></div>
     ${activityCat ? `<p class="filter-pill">Showing ${esc(store.category(activityCat).name)} <button class="link-btn" data-action="filter-cat" data-cat="${activityCat}">Show all</button></p>` : ''}
     ${groups.length ? groups.map((g) => `<section class="day-group"><h3 class="day-head"><span>${dayHeading(g.date)}</span><span>${fmt(g.items.reduce((s, e) => s + (e.baseAmount ?? e.amount), 0), c)}</span></h3><ul class="list">${g.items.map(expenseRow).join('')}</ul></section>`).join('')

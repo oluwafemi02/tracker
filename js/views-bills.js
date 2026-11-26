@@ -118,6 +118,7 @@ export function billDetail(id) {
         <p class="hero-caption">${status === 'inactive' ? (bill.nextDue ? 'Paused' : 'Finished, all payments made') : `Next due ${shortDate(bill.nextDue)} (${relativeDue(bill.nextDue)})`}</p>
         ${bill.nextDue ? `<p class="schedule-summary">${describeSchedule(bill)}</p>` : ''}
         ${bill.accountId && store.account(bill.accountId) ? `<p class="muted small">Paid from ${esc(store.account(bill.accountId).name)}</p>` : ''}
+        ${bill.priceChanges?.length ? `<p class="muted small">Price changed from ${fmt(bill.priceChanges.at(-1).from, bill.currency)} on ${shortDate(bill.priceChanges.at(-1).date)}</p>` : ''}
         <p class="muted small">Reminder ${bill.remindDays ? `${bill.remindDays} day${bill.remindDays > 1 ? 's' : ''} before and ` : ''}on the day${bill.autopay ? '. Logged automatically on the due date.' : '.'}</p>
       </div>
       ${status !== 'inactive' ? `<div class="action-grid">

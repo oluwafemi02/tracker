@@ -9,8 +9,8 @@
 import { addDays, occurrencesBetween, parseISO, today, shortDate, FREQUENCIES, pad } from './dates.js';
 import { fmt } from './money.js';
 import { buildICS } from './ics.js';
-import { getState, attentionCount, billStatus, update, accountPlan, category, billAmount } from './store.js';
-import { monthKey, shiftMonth } from './dates.js';
+import { getState, attentionCount, billStatus, update, accountPlan, category, billAmount, monthRecap, tripStatus, tripSavings } from './store.js';
+import { monthKey, shiftMonth, monthName, dayInMonth } from './dates.js';
 
 export const isIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 export const isStandalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -62,6 +62,8 @@ export function reminderSchedule(horizonDays = 100) {
     }
   }
   items.push(...transferSchedule());
+  items.push(...summarySchedule());
+  items.push(...savingsSchedule());
   return items.filter((i) => new Date(i.fireAt) > new Date(Date.now() - 6 * 3600e3)).sort((a, b) => (a.fireAt < b.fireAt ? -1 : 1));
 }
 
@@ -89,6 +91,67 @@ export function transferSchedule(months = 4) {
         body: `${count} payment${count === 1 ? '' : 's'} this month: ${names.join(', ')}${g.byCat.length > 3 ? ' and more' : ''}.`,
         url: './?tab=bills&view=accounts',
         tag: `transfer:${g.account.id}:${key}`,
+      });
+    }
+  }
+  return items;
+}
+
+// The monthly summary, worked out from what is logged now and sent on the 1st.
+// It is refreshed on every sync, so later expenses are included.
+export function recapText(key) {
+  const s = getState();
+  const r = monthRecap(key);
+  const c = s.settings.currency;
+  const name = monthName(key);
+  if (!r.count) return null;
+  if (s.settings.hideAmountsInPush) return { title: `Your ${name} summary is ready`, body: 'Tap to see where your money went.' };
+  const parts = [];
+  if (r.underBy !== null) parts.push(r.underBy > 0 ? `${fmt(r.underBy, c)} under budget` : r.underBy < 0 ? `${fmt(-r.underBy, c)} over budget` : 'right on budget');
+  if (r.change) parts.push(`${category(r.change.category).name} ${r.change.pct > 0 ? 'up' : 'down'} ${Math.abs(r.change.pct)}% on ${monthName(shiftMonth(key, -1))}`);
+  if (r.overLimits.length) parts.push(`${r.overLimits.length === 1 ? category(r.overLimits[0]).name + ' went' : `${r.overLimits.length} categories went`} over the limit`);
+  return { title: `${name}: ${fmt(r.total, c)} spent`, body: parts.length ? parts.join(', ') + '.' : 'Tap to see where it went.' };
+}
+
+export function summarySchedule(t = today()) {
+  const s = getState();
+  if (s.settings.monthlySummary === false) return [];
+  const key = monthKey(t);
+  const text = recapText(key);
+  if (!text) return [];
+  const next = shiftMonth(key, 1);
+  return [{
+    id: `summary:${key}`,
+    fireAt: localDateTime(`${next}-01`, s.settings.remindTime).toISOString(),
+    ...text,
+    url: `./?tab=activity&month=${key}`,
+    tag: `summary:${key}`,
+    solo: true,
+  }];
+}
+
+// "Put aside €260 for Japan" on the chosen day each month until the trip starts.
+export function savingsSchedule(t = today(), months = 4) {
+  const s = getState();
+  const c = s.settings.currency;
+  const items = [];
+  for (const trip of s.trips) {
+    if (tripStatus(trip, t) !== 'upcoming') continue;
+    const sv = tripSavings(trip, t);
+    if (!sv || !sv.remind || sv.done) continue;
+    let key = monthKey(t);
+    for (let i = 0; i < months; i++, key = shiftMonth(key, 1)) {
+      const date = dayInMonth(key, sv.day);
+      if (date >= trip.startDate) break;
+      if (date < t || (i === 0 && sv.thisMonth)) continue;
+      const hide = s.settings.hideAmountsInPush;
+      items.push({
+        id: `save:${trip.id}:${key}`,
+        fireAt: localDateTime(date, s.settings.remindTime).toISOString(),
+        title: hide ? `Time to put money aside for ${trip.name}` : `Put aside ${fmt(sv.monthly, c)} for ${trip.name}`,
+        body: hide ? `${trip.name} starts ${shortDate(trip.startDate)}.` : `${fmt(sv.saved, c)} of ${fmt(sv.target, c)} saved. ${trip.name} starts ${shortDate(trip.startDate)}.`,
+        url: `./?trip=${encodeURIComponent(trip.id)}`,
+        tag: `save:${trip.id}`,
       });
     }
   }

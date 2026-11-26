@@ -110,6 +110,19 @@ export function shiftMonth(key, n) {
   return addMonths(`${key}-01`, n, 1).slice(0, 7);
 }
 
+// Whole months from one 'YYYY-MM' to another ('2026-11' to '2027-06' is 7).
+export function monthsBetween(a, b) {
+  const [y1, m1] = a.split('-').map(Number);
+  const [y2, m2] = b.split('-').map(Number);
+  return (y2 - y1) * 12 + (m2 - m1);
+}
+
+// A day in a month, clamped to the month's length (31 in February is the 28th or 29th).
+export function dayInMonth(key, day) {
+  const [y, m] = key.split('-').map(Number);
+  return `${key}-${pad(Math.min(day, daysInMonth(y, m - 1)))}`;
+}
+
 const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 const WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
@@ -162,7 +175,7 @@ export function countOccurrences(nextDue, frequency, endISO, anchorDay) {
   return n;
 }
 
-const ord = (n) => `${n}${[11, 12, 13].includes(n % 100) ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th')}`;
+export const ord = (n) => `${n}${[11, 12, 13].includes(n % 100) ? 'th' : ({ 1: 'st', 2: 'nd', 3: 'rd' }[n % 10] || 'th')}`;
 
 // "Monthly on the 10th, no end date" / "Every 2 weeks, 12 payments left, last on 4 Jun 2027" / "One time, due 3 Dec"
 export function describeSchedule({ frequency, nextDue, endDate, anchorDay }) {

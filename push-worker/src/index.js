@@ -183,6 +183,7 @@ async function handle(req, env) {
       rec.items = body.items.slice(0, MAX_ITEMS).filter((i) => i && i.id && i.fireAt).map((i) => ({
         id: String(i.id).slice(0, 120), fireAt: String(i.fireAt), title: String(i.title || '').slice(0, 120),
         body: String(i.body || '').slice(0, 240), url: String(i.url || './').slice(0, 200), tag: String(i.tag || '').slice(0, 120),
+        ...(i.solo === true ? { solo: true } : {}),
       }));
     }
     if (Array.isArray(body.bills)) rec.bills = body.bills.slice(0, 300);
@@ -265,9 +266,15 @@ export async function runDue(env, now = Date.now()) {
       });
       if (!due.length) continue;
       // Several at once (e.g. after the server was down): send one summary instead of a burst.
-      const batches = due.length > 3
-        ? [{ title: `${due.length} bill reminders`, body: due.map((d) => d.title).join('\n'), url: './?tab=bills', tag: 'summary' }]
-        : due;
+      // Items marked solo (the monthly summary) always go on their own.
+      const solo = due.filter((d) => d.solo);
+      const rest = due.filter((d) => !d.solo);
+      const batches = [
+        ...solo,
+        ...(rest.length > 3
+          ? [{ title: `${rest.length} reminders`, body: rest.map((d) => d.title).join('\n'), url: './?tab=bills', tag: 'batch' }]
+          : rest),
+      ];
       for (const item of batches) {
         const res = await deliver(env, id, rec, { title: item.title, body: item.body, url: item.url, tag: item.tag, badge: rec.badge || 0 });
         if (res.gone) break;

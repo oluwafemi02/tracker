@@ -1,13 +1,14 @@
 // Entry point: routing, actions, and lifecycle (open, resume, reminders).
 
 import * as store from './store.js';
-import { bindActions, on, toast, closeAllSheets, $, haptic } from './ui.js';
-import { today } from './dates.js';
-import { renderHome, renderActivity, setActivityMonth, setActivityFilter } from './views-home.js';
+import { bindActions, on, toast, notice, closeAllSheets, $, haptic } from './ui.js';
+import { today, monthKey } from './dates.js';
+import { fmt } from './money.js';
+import { renderHome, renderActivity, setActivityMonth, setActivityFilter, showCategory } from './views-home.js';
 import { renderBills, billDetail, payNow, setBillsView, setAccountMonth } from './views-bills.js';
 import { renderTrips, renderTrip } from './views-trips.js';
 import { renderSettings, mountSettings, backup, csv, reimport, erase, deleteCategory, recoverTrips } from './views-settings.js';
-import { expenseSheet, billSheet, tripSheet, tripExpenseSheet, reviewSheet, accountSheet, assignAccountsSheet, confirmAmountsSheet, closeMonthSheet } from './forms.js';
+import { expenseSheet, billSheet, tripSheet, tripExpenseSheet, reviewSheet, accountSheet, assignAccountsSheet, confirmAmountsSheet, closeMonthSheet, limitsSheet, savingsGoalSheet, depositSheet } from './forms.js';
 import * as rem from './reminders.js';
 import * as push from './push.js';
 import { VERSION } from './version.js';
@@ -58,7 +59,26 @@ store.subscribe(() => {
   render({ keepScroll: true });
   rem.refreshBadge();
   push.scheduleSync();
+  checkLimits();
 });
+
+// Category limits: say so once when a category reaches 80% and again when it goes over.
+function checkLimits() {
+  const alerts = store.newLimitAlerts();
+  if (!alerts.length) return;
+  const c = store.getState().settings.currency;
+  const over = alerts.filter((a) => a.threshold === 100);
+  if (alerts.length > 1) {
+    notice(`${alerts.map((a) => store.category(a.category).name).join(' and ')} ${over.length ? 'are near or over' : 'are close to'} their limits this month`, { tone: over.length ? 'over' : 'near' });
+    return;
+  }
+  const a = alerts[0];
+  const name = store.category(a.category).name;
+  notice(a.threshold === 100
+    ? `${name} is over its limit: ${fmt(a.spent, c)} of ${fmt(a.limit, c)} this month`
+    : `${name} is at ${Math.floor(a.pct)}% of its limit: ${fmt(a.spent, c)} of ${fmt(a.limit, c)}, ${fmt(a.left, c)} left`, { tone: a.threshold === 100 ? 'over' : 'near' });
+  haptic();
+}
 
 // ---------- actions
 
@@ -131,6 +151,25 @@ on('push-disconnect', async () => { await push.disconnect(); toast('Push server 
 on('review-payments', () => reviewSheet());
 on('confirm-amounts', () => confirmAmountsSheet());
 on('close-month', ({ key }) => closeMonthSheet(key));
+on('limits', () => limitsSheet());
+on('limit-cat', ({ cat }) => { setActivityMonth(monthKey(today())); showCategory(cat); go('#activity'); });
+on('recap', ({ key }) => {
+  store.update((s) => { s.settings.summarySeen = key; }, { silent: true });
+  setActivityMonth(key); setActivityFilter({ search: '' }); showCategory(''); go('#activity');
+});
+on('savings-goal', ({ id }) => savingsGoalSheet(store.getState().trips.find((t) => t.id === id)));
+on('add-deposit', ({ id }) => depositSheet(store.getState().trips.find((t) => t.id === id)));
+on('edit-deposit', ({ id, deposit }) => {
+  const trip = store.getState().trips.find((t) => t.id === id);
+  const d = trip?.savings?.deposits?.find((x) => x.id === deposit);
+  if (d) depositSheet(trip, d);
+});
+on('deposit-done', ({ id, amount }, el, ev) => {
+  ev.stopPropagation();
+  const trip = store.getState().trips.find((t) => t.id === id);
+  const d = store.saveDeposit(id, { amount: Number(amount), date: today() });
+  if (d) toast(`Put aside ${fmt(d.amount, store.getState().settings.currency)} for ${trip.name}`, { action: 'Undo', onAction: () => store.deleteDeposit(id, d.id) });
+});
 on('new-account', () => accountSheet());
 on('edit-account', ({ id }) => accountSheet(store.account(id)));
 on('assign-accounts', () => assignAccountsSheet());
@@ -222,8 +261,15 @@ function handleDeepLink() {
   const bill = params.get('bill');
   const tab = params.get('tab');
   const add = params.get('add');
+  const trip = params.get('trip');
+  const month = params.get('month');
   if (params.get('view') === 'accounts') setBillsView('accounts');
-  if (bill || tab || add) history.replaceState(null, '', location.pathname + (bill ? '#bills' : tab ? `#${tab}` : location.hash));
+  if (month && /^\d{4}-\d{2}$/.test(month)) {
+    setActivityMonth(month);
+    // Opening the monthly summary counts as seeing it.
+    store.update((s) => { s.settings.summarySeen = month; }, { silent: true });
+  }
+  if (bill || tab || add || trip) history.replaceState(null, '', location.pathname + (bill ? '#bills' : trip ? `#trip/${encodeURIComponent(trip)}` : tab ? `#${tab}` : location.hash));
   route = parseRoute();
   render();
   if (bill) setTimeout(() => billDetail(bill), 150);

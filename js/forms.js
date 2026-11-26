@@ -1,7 +1,7 @@
 // Bottom-sheet forms for expenses, bills, trips and trip expenses.
 
 import { esc, openSheet, closeSheet, toast, parseAmount, confirmSheet, haptic } from './ui.js';
-import { today, addDays, FREQUENCIES, shortDate, nthOccurrence, countOccurrences, describeSchedule, monthName } from './dates.js';
+import { today, addDays, FREQUENCIES, shortDate, nthOccurrence, countOccurrences, describeSchedule, monthName, monthKey, ord } from './dates.js';
 import { fmt, CURRENCY_CODES, fetchRate, lastRate, rememberRate, round2, rateText } from './money.js';
 import { TRIP_CATEGORIES, slug } from './categories.js';
 import * as store from './store.js';
@@ -154,6 +154,8 @@ export function expenseSheet(existing = null, { tripId } = {}) {
         const rate = conv.rate();
         if (currency !== s.settings.currency && !(rate > 0)) { err.textContent = `Enter the ${currency} to ${s.settings.currency} rate.`; return; }
         if (currency !== s.settings.currency) rememberRate(currency, s.settings.currency, rate);
+        // Editing the latest payment of a fixed bill to a new amount: offer to update the bill.
+        const change = existing?.billId && amount !== existing.amount && store.isLatestPayment(existing.billId, existing.id) ? store.priceChange(existing.billId, amount) : null;
         store.saveExpense({
           ...(existing || {}),
           amount, currency, baseAmount: round2(amount * rate), category,
@@ -164,6 +166,7 @@ export function expenseSheet(existing = null, { tripId } = {}) {
         haptic();
         closeSheet();
         toast(existing ? 'Changes saved' : `Added ${fmt(amount, currency)}`);
+        if (change) setTimeout(() => priceChangeSheet(change), 280);
       });
     },
   });
@@ -349,10 +352,13 @@ export function payBillSheet(bill) {
           const r = lastRate(bill.currency, s.settings.currency) || await fetchRate(bill.currency, s.settings.currency);
           baseAmount = r ? amount * r : amount;
         }
+        const change = store.priceChange(bill.id, amount);
         store.markBillPaid(bill.id, { paidOn: ev.target.date.value || today(), amount, baseAmount });
         haptic();
         closeSheet();
         toast(`${bill.name} paid`, { action: 'Undo', onAction: () => store.undoLastBillAction(bill.id) });
+        // A fixed bill paid a different amount: ask whether the price changed.
+        if (change && S().bills.find((b) => b.id === bill.id)?.nextDue) setTimeout(() => priceChangeSheet(change), 280);
       });
     },
   });
@@ -723,6 +729,172 @@ export function closeMonthSheet(key) {
         if (res.error) { err.textContent = `That is less than you logged (${fmt(res.logged, c)}). Check the expenses for ${name} instead.`; return; }
         closeSheet();
         toast(res.added ? `Added ${fmt(res.added, c)} as unlogged spending` : 'No change needed');
+      });
+    },
+  });
+}
+
+// ---------- price change on a fixed bill
+
+export function priceChangeSheet({ bill, from, to }) {
+  const up = to > from;
+  openSheet(`<div class="sheet-body price-change">
+      <header class="sheet-head"><h2 class="sheet-title">Did ${esc(bill.name)} ${up ? 'go up' : 'go down'}?</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+      <p class="muted">You paid ${fmt(to, bill.currency)}. The bill is set to ${fmt(from, bill.currency)}. If the price changed, update the bill so reminders and Home show the right amount.</p>
+      <div class="stack">
+        <button class="btn btn-primary btn-wide" data-update>Update to ${fmt(to, bill.currency)}</button>
+        <button class="btn btn-quiet btn-wide" data-keep>Just this time, keep ${fmt(from, bill.currency)}</button>
+      </div>
+    </div>`, {
+    onMount(sheet) {
+      sheet.querySelector('[data-update]').addEventListener('click', () => {
+        store.updateBillAmount(bill.id, to);
+        closeSheet();
+        toast(`${bill.name} is now ${fmt(to, bill.currency)}`);
+      });
+      sheet.querySelector('[data-keep]').addEventListener('click', () => closeSheet());
+    },
+  });
+}
+
+// ---------- category limits
+
+export function limitsSheet() {
+  const s = S();
+  const c = s.settings.currency;
+  const cats = store.categoriesByUse();
+  const avg = store.categoryAverages();
+  const spent = store.monthSpending(monthKey(today())).byCat;
+  openSheet(`<form class="sheet-body" novalidate>
+      <header class="sheet-head"><h2 class="sheet-title">Category limits</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+      <p class="muted small">A monthly limit for any category. You get an alert at 80% and when you go over, and Home shows the ones getting close. Leave blank for no limit.</p>
+      <ul class="limit-edit">${cats.map((cat) => `<li>
+          <span class="tx-main"><span class="tx-title"><i aria-hidden="true">${cat.icon}</i> ${esc(cat.name)}</span><span class="tx-sub">${spent[cat.id] ? `${fmt(spent[cat.id], c)} this month` : 'Nothing this month'}${avg[cat.id] ? `, usually ${fmt(avg[cat.id], c, { compact: true })}` : ''}</span></span>
+          <input class="input" name="${esc(cat.id)}" type="text" inputmode="decimal" value="${s.limits?.[cat.id] || ''}" placeholder="No limit" aria-label="Monthly limit for ${esc(cat.name)}">
+        </li>`).join('')}</ul>
+      <p class="form-error" role="alert"></p>
+      <div class="sheet-foot"><button class="btn btn-primary btn-wide">Save limits</button></div>
+    </form>`, {
+    tall: true,
+    onMount(sheet) {
+      sheet.querySelector('form').addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const map = {};
+        for (const cat of cats) {
+          const raw = ev.target.querySelector(`[name="${CSS.escape(cat.id)}"]`).value.trim();
+          if (!raw) continue;
+          const v = parseAmount(raw);
+          if (!(v > 0)) { sheet.querySelector('.form-error').textContent = `Enter an amount above zero for ${cat.name}, or leave it blank.`; return; }
+          map[cat.id] = v;
+        }
+        // Keep limits on categories not listed (none today, but safe if a category is hidden).
+        for (const [id, v] of Object.entries(S().limits || {})) if (!cats.some((x) => x.id === id)) map[id] = v;
+        store.setLimits(map);
+        closeSheet();
+        const n = Object.keys(map).length;
+        toast(n ? `${n} limit${n === 1 ? '' : 's'} saved` : 'Limits removed');
+      });
+    },
+  });
+}
+
+// ---------- trip savings
+
+export function savingsGoalSheet(trip) {
+  if (!trip) return;
+  const s = S();
+  const c = s.settings.currency;
+  const g = trip.savings || {};
+  const guess = !g.target && trip.budget && trip.currency === c ? trip.budget : '';
+  openSheet(`<form class="sheet-body" novalidate>
+      <header class="sheet-head"><h2 class="sheet-title">${g.target ? 'Savings goal' : `Save up for ${esc(trip.name)}`}</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+      <div class="field-label">How much do you want to have saved?</div>
+      <div class="amount-field">
+        <input name="target" type="text" inputmode="decimal" placeholder="0" value="${g.target || guess}" aria-label="Savings target" ${g.target ? '' : 'autofocus'}>
+        <span class="cur-fixed">${c}</span>
+      </div>
+      <label class="field"><span>Put aside each month (optional)</span><input name="monthly" class="input" type="text" inputmode="decimal" value="${g.monthly || ''}" placeholder="Worked out for you"></label>
+      <p class="schedule-summary" data-plan aria-live="polite"></p>
+      <label class="toggle"><input type="checkbox" name="remind" ${g.target ? (g.remind ? 'checked' : '') : 'checked'}><span class="toggle-ui"></span><span class="toggle-text"><b>Remind me each month</b><small>A notification to put the money aside, until the trip starts</small></span></label>
+      <label class="field"><span>On the</span><select name="day" class="input">${Array.from({ length: 28 }, (_, i) => i + 1).map((d) => `<option value="${d}" ${(g.day || 1) === d ? 'selected' : ''}>${ord(d)} of the month</option>`).join('')}</select></label>
+      <p class="form-error" role="alert"></p>
+      <div class="sheet-foot">
+        ${g.target ? '<button type="button" class="btn btn-quiet danger-text" data-remove>Remove goal</button>' : ''}
+        <button class="btn btn-primary btn-wide">${g.target ? 'Save changes' : 'Start saving'}</button>
+      </div>
+    </form>`, {
+    tall: true,
+    onMount(sheet) {
+      const form = sheet.querySelector('form');
+      const plan = sheet.querySelector('[data-plan]');
+      const show = () => {
+        const target = parseAmount(form.target.value);
+        if (!(target > 0)) { plan.textContent = ''; return; }
+        const preview = store.tripSavings({ ...trip, savings: { ...g, target, monthly: parseAmount(form.monthly.value) || 0 } });
+        plan.textContent = preview.done ? 'You have already saved this much.'
+          : `${preview.fixedMonthly ? '' : 'About '}${fmt(preview.monthly, c)} a month for ${preview.months} month${preview.months === 1 ? '' : 's'} gets you there by ${shortDate(trip.startDate)}${preview.fixedMonthly && preview.fixedMonthly < preview.suggested ? `, but you need ${fmt(preview.suggested, c)} a month to reach the full amount` : ''}.`;
+      };
+      form.target.addEventListener('input', show);
+      form.monthly.addEventListener('input', show);
+      show();
+      sheet.querySelector('[data-remove]')?.addEventListener('click', async () => {
+        if (await confirmSheet({ title: 'Remove the savings goal?', body: 'The money you logged as put aside is removed from the app too. Your bank balance is not touched.', confirm: 'Remove' })) {
+          store.removeSavingsGoal(trip.id);
+          closeSheet();
+          toast('Savings goal removed');
+        }
+      });
+      form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const target = parseAmount(form.target.value);
+        const monthlyRaw = form.monthly.value.trim();
+        const monthly = monthlyRaw ? parseAmount(monthlyRaw) : 0;
+        const err = sheet.querySelector('.form-error');
+        if (!(target > 0)) { err.textContent = 'Enter how much you want to save.'; form.target.focus(); return; }
+        if (monthlyRaw && !(monthly > 0)) { err.textContent = 'Enter a monthly amount above zero, or leave it blank.'; return; }
+        store.saveSavingsGoal(trip.id, { target, monthly, remind: form.remind.checked, day: Number(form.day.value) });
+        closeSheet();
+        toast(g.target ? 'Savings goal saved' : `Saving for ${trip.name}`);
+      });
+    },
+  });
+}
+
+export function depositSheet(trip, existing = null) {
+  if (!trip?.savings) return;
+  const c = S().settings.currency;
+  const sv = store.tripSavings(trip);
+  openSheet(`<form class="sheet-body" novalidate>
+      <header class="sheet-head"><h2 class="sheet-title">${existing ? 'Edit' : 'Put aside'} for ${esc(trip.name)}</h2><button type="button" class="icon-btn" data-close aria-label="Close">✕</button></header>
+      <div class="amount-field">
+        <input name="amount" type="text" inputmode="decimal" value="${existing ? existing.amount : (sv?.monthly || '')}" aria-label="Amount put aside" autofocus>
+        <span class="cur-fixed">${c}</span>
+      </div>
+      ${dateChips('date', existing ? existing.date : today())}
+      <p class="muted small">Only tracked here. Move the money to your savings in your bank app.</p>
+      <p class="form-error" role="alert"></p>
+      <div class="sheet-foot">
+        ${existing ? '<button type="button" class="btn btn-quiet danger-text" data-delete>Delete</button>' : ''}
+        <button class="btn btn-primary btn-wide">${existing ? 'Save changes' : 'Add to savings'}</button>
+      </div>
+    </form>`, {
+    onMount(sheet) {
+      const form = sheet.querySelector('form');
+      wireDateChips(sheet, 'date');
+      sheet.querySelector('[data-delete]')?.addEventListener('click', () => {
+        store.deleteDeposit(trip.id, existing.id);
+        closeSheet();
+        toast('Removed', { action: 'Undo', onAction: () => store.saveDeposit(trip.id, existing) });
+      });
+      form.addEventListener('submit', (ev) => {
+        ev.preventDefault();
+        const amount = parseAmount(form.amount.value);
+        if (!(amount > 0)) { sheet.querySelector('.form-error').textContent = 'Enter an amount above zero.'; form.amount.focus(); return; }
+        const d = store.saveDeposit(trip.id, { id: existing?.id, amount, date: form.date.value || today() });
+        haptic();
+        closeSheet();
+        const after = store.tripSavings(S().trips.find((t) => t.id === trip.id));
+        toast(existing ? 'Changes saved' : after?.done ? `Goal reached for ${trip.name}` : `Put aside ${fmt(d.amount, c)}`);
       });
     },
   });

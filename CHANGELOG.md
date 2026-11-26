@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0 (2026-11-26)
+- Monthly summary: on the 1st, a push with last month's total, how it compares with the budget, and the category that changed most ("Groceries up 18% on October"). Also on Home for the first week. Can be turned off in Reminders.
+- Category limits: set a monthly limit per category. An alert shows at 80% and again when you go over, Home lists categories close to their limit, and Activity shows each bar against its limit.
+- Price changes: paying a fixed bill a different amount asks whether the price changed, and updates the bill so reminders show the new amount. The bill shows when the price last changed.
+- Trip savings: set a savings target for an upcoming trip, log what you put aside, and see progress on the trip card. Optional monthly "Put aside €X" push and Home card with a Done button.
+- The push server sends the monthly summary on its own instead of folding it into a batch of bill reminders.
+
 ## 1.5.0 (2026-11-26)
 - Bills can be marked "Amount changes each time" (electricity, water). The app uses the average of the last 3 payments as the estimate everywhere, and Paid asks for the real amount, filled in with last time's.
 - Changing bills paid automatically are logged at the estimate and shown on Home to confirm the real amount.

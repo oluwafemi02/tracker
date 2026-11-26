@@ -1,6 +1,6 @@
 // App state: one JSON document in localStorage, with change subscribers.
 
-import { today, addDays, nextOccurrence, occurrencesBetween, monthBounds, monthKey, diffDays, daysInMonth, parseISO, shiftMonth } from './dates.js';
+import { today, addDays, nextOccurrence, occurrencesBetween, monthBounds, monthKey, diffDays, daysInMonth, parseISO, shiftMonth, monthsBetween, dayInMonth } from './dates.js';
 import { SPEND_CATEGORIES, TRIP_CATEGORIES, SYSTEM_CATEGORIES } from './categories.js';
 import { round2 } from './money.js';
 import { migrateLegacy, hasLegacyData } from './migrate.js';
@@ -29,6 +29,9 @@ const DEFAULT_STATE = () => ({
     transfersDone: {},
     lastExpenseAccountId: null,
     cloudBackup: { enabled: false, keyRaw: '', backupId: '', lastAt: null, lastHash: null, lastError: null },
+    monthlySummary: true,
+    summarySeen: null,
+    limitAlerts: {},
   },
   categories: SPEND_CATEGORIES.map((c) => ({ ...c, kind: 'spend' })),
   expenses: [],
@@ -37,6 +40,7 @@ const DEFAULT_STATE = () => ({
   tripExpenses: [],
   merchantRules: {},
   accounts: [],
+  limits: {},
   notified: {},
 });
 
@@ -659,4 +663,186 @@ export function closeMonth(key, realTotal, t = today()) {
     }
   });
   return { added: diff, logged };
+}
+
+// ---------- price changes on fixed bills
+
+// A fixed-amount bill was paid a different amount (a price rise, say). Returns what
+// changed so the app can offer to update the bill, or null.
+export function priceChange(billId, amount) {
+  const b = state.bills.find((x) => x.id === billId);
+  if (!b || b.variable || !b.nextDue || !(amount > 0)) return null;
+  const to = round2(amount);
+  if (Math.abs(to - b.amount) < 0.005) return null;
+  return { bill: b, from: b.amount, to };
+}
+
+// True when this expense is the bill's most recent payment (editing an old one never asks).
+export function isLatestPayment(billId, expenseId) {
+  const b = state.bills.find((x) => x.id === billId);
+  const last = [...(b?.history || [])].reverse().find((h) => !h.skipped);
+  return !!last && last.expenseId === expenseId;
+}
+
+export function updateBillAmount(id, amount, t = today()) {
+  update((s) => {
+    const b = s.bills.find((x) => x.id === id);
+    if (!b) return;
+    b.priceChanges = [...(b.priceChanges || []), { date: t, from: b.amount, to: round2(amount) }].slice(-12);
+    b.amount = round2(amount);
+  });
+}
+
+// ---------- monthly recap (the summary sent on the 1st)
+
+export function monthRecap(key) {
+  const cur = monthSpending(key);
+  const prev = monthSpending(shiftMonth(key, -1));
+  const budget = state.settings.monthlyBudget || 0;
+  // The category that changed most against the month before. Rises win over drops,
+  // and small categories or changes under 10% are left out.
+  let change = null;
+  for (const [id, v] of Object.entries(cur.byCat)) {
+    if (id === 'unlogged') continue;
+    const p = prev.byCat[id] || 0;
+    if (p < 20 || v < 20) continue;
+    const pct = Math.round(((v - p) / p) * 100);
+    if (Math.abs(pct) < 10) continue;
+    const diff = round2(v - p);
+    const better = !change || (pct > 0 && change.pct < 0) || ((pct > 0) === (change.pct > 0) && Math.abs(diff) > Math.abs(change.diff));
+    if (better) change = { category: id, pct, diff };
+  }
+  return {
+    key,
+    total: cur.total,
+    count: cur.items.length + cur.tripItems.length,
+    budget,
+    underBy: budget ? round2(budget - cur.total) : null,
+    change,
+    overLimits: limitStatus(key).filter((l) => l.level === 'over').map((l) => l.category),
+  };
+}
+
+// ---------- category limits
+
+export function setLimits(map) {
+  update((s) => {
+    s.limits = {};
+    for (const [id, v] of Object.entries(map)) if (v > 0) s.limits[id] = round2(v);
+  });
+}
+
+// Spending against each category limit for a month, fullest first.
+export function limitStatus(key = monthKey(today())) {
+  const { byCat } = monthSpending(key);
+  return Object.entries(state.limits || {})
+    .filter(([, limit]) => limit > 0)
+    .map(([id, limit]) => {
+      const spent = round2(byCat[id] || 0);
+      const pct = (spent / limit) * 100;
+      return { category: id, limit, spent, pct, left: round2(limit - spent), level: pct >= 100 ? 'over' : pct >= 80 ? 'near' : 'ok' };
+    })
+    .sort((a, b) => b.pct - a.pct);
+}
+
+// Limits that just reached 80% or 100% this month. Each one alerts once per month
+// (again only if the limit is changed).
+export function newLimitAlerts(t = today()) {
+  const key = monthKey(t);
+  const marks = state.settings.limitAlerts || {};
+  const alerts = [];
+  for (const l of limitStatus(key)) {
+    const level = l.level === 'over' ? 100 : l.level === 'near' ? 80 : 0;
+    if (!level) continue;
+    const m = marks[`${l.category}:${key}`];
+    const before = m && m.limit === l.limit ? m.level : 0;
+    if (level > before) alerts.push({ ...l, threshold: level });
+  }
+  if (alerts.length) {
+    update((s) => {
+      const keep = shiftMonth(key, -1);
+      const next = {};
+      for (const [k, v] of Object.entries(s.settings.limitAlerts || {})) if (k.slice(-7) >= keep) next[k] = v;
+      for (const a of alerts) next[`${a.category}:${key}`] = { level: a.threshold, limit: a.limit };
+      s.settings.limitAlerts = next;
+    }, { silent: true });
+  }
+  return alerts;
+}
+
+// Average monthly spending per category over the 3 full months before `key`.
+export function categoryAverages(key = monthKey(today())) {
+  const out = {};
+  for (let i = 1; i <= 3; i++) {
+    for (const [id, v] of Object.entries(monthSpending(shiftMonth(key, -i)).byCat)) out[id] = (out[id] || 0) + v / 3;
+  }
+  for (const k of Object.keys(out)) out[k] = round2(out[k]);
+  return out;
+}
+
+// ---------- trip savings
+
+// Progress towards a trip's savings goal (in the main currency), or null without a goal.
+export function tripSavings(trip, t = today()) {
+  const g = trip.savings;
+  if (!g || !(g.target > 0)) return null;
+  // Newest first; on the same day, the one added last first.
+  const deposits = (g.deposits || []).map((d, i) => ({ d, i })).sort((a, b) => (a.d.date < b.d.date ? 1 : a.d.date > b.d.date ? -1 : b.i - a.i)).map((x) => x.d);
+  const saved = round2(deposits.reduce((s, d) => s + d.amount, 0));
+  const left = round2(Math.max(0, g.target - saved));
+  const key = monthKey(t);
+  const thisMonth = deposits.some((d) => monthKey(d.date) === key);
+  // Months left to save in: this one (unless already done) up to the month the trip starts.
+  const months = Math.max(1, monthsBetween(key, monthKey(trip.startDate)) - (thisMonth ? 1 : 0));
+  const suggested = left > 0 ? Math.ceil(left / months) : 0;
+  const monthly = left > 0 ? (g.monthly > 0 ? Math.min(g.monthly, left) : suggested) : 0;
+  return {
+    target: g.target, saved, left, pct: Math.min(100, (saved / g.target) * 100), done: left <= 0,
+    months, suggested, monthly, thisMonth, remind: !!g.remind, day: Number(g.day) || 1, fixedMonthly: g.monthly > 0 ? g.monthly : 0, deposits,
+  };
+}
+
+export function saveSavingsGoal(tripId, { target, monthly, remind, day }) {
+  update((s) => {
+    const trip = s.trips.find((x) => x.id === tripId);
+    if (!trip) return;
+    trip.savings = { deposits: [], ...(trip.savings || {}), target: round2(target), monthly: round2(monthly || 0), remind: !!remind, day: Number(day) || 1 };
+  });
+}
+
+export function removeSavingsGoal(tripId) {
+  update((s) => { const trip = s.trips.find((x) => x.id === tripId); if (trip) delete trip.savings; });
+}
+
+export function saveDeposit(tripId, { id, amount, date }) {
+  let out;
+  update((s) => {
+    const trip = s.trips.find((x) => x.id === tripId);
+    if (!trip?.savings) return;
+    const list = trip.savings.deposits || (trip.savings.deposits = []);
+    const i = list.findIndex((d) => d.id === id);
+    out = { id: id || uid('s'), amount: round2(amount), date: date || today() };
+    if (i >= 0) list[i] = out; else list.push(out);
+  });
+  return out;
+}
+
+export function deleteDeposit(tripId, id) {
+  update((s) => {
+    const g = s.trips.find((x) => x.id === tripId)?.savings;
+    if (g) g.deposits = (g.deposits || []).filter((d) => d.id !== id);
+  });
+}
+
+// Trips whose monthly "put aside" day has come this month with nothing saved yet.
+export function savingsDue(t = today()) {
+  const out = [];
+  for (const trip of state.trips) {
+    if (tripStatus(trip, t) !== 'upcoming') continue;
+    const sv = tripSavings(trip, t);
+    if (!sv || !sv.remind || sv.done || sv.thisMonth) continue;
+    if (dayInMonth(monthKey(t), sv.day) > t) continue;
+    out.push({ trip, savings: sv, amount: sv.monthly });
+  }
+  return out;
 }
